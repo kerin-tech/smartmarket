@@ -1,18 +1,3 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 # 🛒 SmartMarket - Sistema de Gestión de Inventario Personal
 
 SmartMarket es una plataforma web moderna diseñada para la gestión eficiente de productos, comparación de precios y listas de compras. Construida con un enfoque en **UX/UI intuitiva** y un **Design System robusto**, permite a los usuarios mantener un control total sobre sus productos y locales favoritos.
@@ -79,19 +64,19 @@ Markdown
    git clone [https://github.com/tu-usuario/smartmarket.git](https://github.com/tu-usuario/smartmarket.git)
    cd smartmarket
    ```
-Instalar dependencias:
+## Instalar dependencias:
 
-Bash
+```Bash
 npm install
-Ejecutar en desarrollo:
+```
 
-Bash
+## Ejecutar en desarrollo:
+
+```Bash
 npm run dev
 La aplicación estará disponible en http://localhost:3000.
+```
 
-Aquí tienes el fragmento final para la sección de Roadmap y Licencia, con el formato de listas de tareas (checkboxes) y bloques de estilo Markdown para que se vea limpio en tu archivo:
-
-Markdown
 ## 📈 Roadmap de Desarrollo
 
 - [x] **FE-03:** Estructura Base y Layout Global (Sidebar + Header).
