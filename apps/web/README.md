@@ -1,92 +1,36 @@
-Aquí tienes el README.md con el formato corregido, limpio y listo para copiar. He ajustado la jerarquía de los títulos y las listas para que se rendericen correctamente en GitHub.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-🛒 SmartMarket - Sistema de Gestión de Inventario Personal
-SmartMarket es una plataforma web moderna diseñada para la gestión eficiente de productos, comparación de precios y listas de compras. Construida con un enfoque en UX/UI intuitiva y un Design System robusto, permite a los usuarios mantener un control total sobre sus productos y locales favoritos.
+## Getting Started
 
-🚀 Tecnologías Principales
-Framework: Next.js 14+ (App Router)
+First, run the development server:
 
-Lenguaje: TypeScript
-
-Estilos: Tailwind CSS
-
-Iconografía: Lucide React
-
-Validación de Formularios: React Hook Form + Zod
-
-Animaciones: Tailwind Animate & Framer Motion (opcional)
-
-📁 Estructura del Proyecto
-El proyecto sigue una arquitectura de carpetas organizada por funcionalidades y componentes reutilizables:
-
-Plaintext
-src/
-├── app/                  # Rutas y Layouts (Next.js App Router)
-│   ├── (auth)/           # Rutas de autenticación (Login/Registro)
-│   └── (dashboard)/      # Rutas principales del sistema
-│       ├── layout.tsx    # Layout con Header y Sidebar global
-│       ├── products/     # Gestión de productos
-│       │   ├── page.tsx  # Listado y filtros
-│       │   └── new/      # Página de creación (FE-04)
-│       └── dashboard/    # Vista principal / Resumen
-├── components/           # Componentes de React
-│   ├── layout/           # Header, Sidebar, BottomNav
-│   ├── ui/               # Componentes atómicos (Button, Modal, Toast)
-│   └── products/         # Componentes específicos de productos
-├── lib/                  # Utilidades, configuraciones y validaciones (Zod)
-└── styles/               # Configuraciones globales de CSS
-✨ Características Implementadas
-1. Sistema de Navegación Inteligente
-Layout Adaptativo: Header superior completo y Sidebar lateral persistente en Desktop.
-
-Mobile First: Navegación inferior (BottomNav) para una experiencia nativa en dispositivos móviles.
-
-Rutas Activas: Detección automática y resaltado de la página actual en el menú lateral y barra inferior.
-
-2. Gestión de Productos (FE-04)
-Formulario Reutilizable: Implementación lógica compartida para creación y edición de registros.
-
-Validación Estricta: Integración con Zod para asegurar integridad de datos y retroalimentación en tiempo real.
-
-UI de Selección Eficiente: Uso de Chips para categorías y unidades de medida según el Design System, mejorando la usabilidad táctil.
-
-3. Design System & Feedback
-Toasts Dinámicos: Notificaciones responsivas con posicionamiento inteligente (Top-Center en móvil / Bottom-Right en desktop).
-
-Modales de Confirmación: Diálogos con Backdrop Blur (desenfoque de fondo) para acciones destructivas como eliminación de productos.
-
-Consistencia Visual: Paleta de colores y espaciados basados estrictamente en la documentación técnica del proyecto.
-
-🛠️ Instalación y Configuración
-Clonar el repositorio:
-
-Bash
-git clone https://github.com/tu-usuario/smartmarket.git
-cd smartmarket
-Instalar dependencias:
-
-Bash
-npm install
-# o
-yarn install
-Ejecutar en desarrollo:
-
-Bash
+```bash
 npm run dev
-La aplicación estará disponible en http://localhost:3000.
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-📈 Roadmap de Desarrollo
-[x] FE-03: Estructura Base y Layout Global.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-[x] FE-04: Formulario de Productos con validación y Chips UI.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-[x] Design System: Sistema de Notificaciones Toast y Modales.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-[ ] FE-05: Implementación de Skeletons de carga para listados.
+## Learn More
 
-[ ] API: Conexión a Backend / Persistencia de datos.
+To learn more about Next.js, take a look at the following resources:
 
-[ ] UI: Modo Oscuro (Dark Mode).
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-📄 Licencia
-Este proyecto está bajo la Licencia MIT...
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
