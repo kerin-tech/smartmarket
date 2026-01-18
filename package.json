@@ -4,5 +4,12 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "axios": "^1.13.2",
+    "react-hook-form": "^7.71.1",
+    "recharts": "^3.6.0",
+    "zod": "^4.3.5",
+    "zustand": "^5.0.10"
+  }
 }
