@@ -89,4 +89,4 @@ La aplicación estará disponible en http://localhost:3000.
 [ ] UI: Modo Oscuro (Dark Mode).
 
 📄 Licencia
-Este proyecto está bajo la Licencia MIT.
+Este proyecto está bajo la Licencia MIT...
