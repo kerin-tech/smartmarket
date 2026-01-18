@@ -1,4 +1,4 @@
-# 🛒 SmartMarket - Sistema de Gestión de Inventario Personal
+# 🛒 SmartMarket
 
 SmartMarket es una plataforma web moderna diseñada para la gestión eficiente de productos, comparación de precios y listas de compras. Construida con un enfoque en **UX/UI intuitiva** y un **Design System robusto**, permite a los usuarios mantener un control total sobre sus productos y locales favoritos.
 
