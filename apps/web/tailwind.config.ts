@@ -11,19 +11,39 @@ const config: Config = {
       colors: {
         primary: {
           50: '#EFF6FF',
-          600: '#2563EB', // Color principal para botones según Colores.docx
+          600: '#2563EB',
           700: '#1D4ED8',
         },
         error: {
-          main: '#EF4444', // Según tus requerimientos de validación
-        }
+          main: '#EF4444',
+          dark: '#DC2626',
+        },
+        success: {
+          main: '#10B981',
+          dark: '#059669',
+        },
       },
       boxShadow: {
-        'primary': '0 4px 14px rgba(37, 99, 235, 0.25)', // Según Elevación.docx
+        'bottom-nav': '0 -4px 6px -1px rgba(0, 0, 0, 0.05)',
+        'primary': '0 4px 14px rgba(37, 99, 235, 0.25)',
       },
       borderRadius: {
-        'xl': '12px', // Según Espaciado/Elevación
+        'xl': '12px',
+      },
+      keyframes: {
+      modalScale: {
+        '0%': { transform: 'scale(0.95)', opacity: '0' },
+        '100%': { transform: 'scale(1)', opacity: '1' },
+      },
+      fadeIn: {
+        '0%': { opacity: '0' },
+        '100%': { opacity: '1' },
       }
+    },
+    animation: {
+      modalScale: 'modalScale 0.2s ease-out',
+      fadeIn: 'fadeIn 0.2s ease-in-out',
+    }
     },
   },
   plugins: [],

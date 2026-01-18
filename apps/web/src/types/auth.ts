@@ -11,3 +11,11 @@ export const registerSchema = z.object({ // <-- Quitamos el .z extra aquí
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export const loginSchema = z.object({
+  email: z.string().email('Ingresa un correo válido').min(1, 'El correo es requerido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+  rememberMe: z.boolean().optional(),
+});
+
+export type LoginFormData = z.infer<typeof loginSchema>;
