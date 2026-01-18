@@ -1,0 +1,8 @@
+{
+  "name": "smartmarket-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
