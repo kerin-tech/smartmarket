@@ -1,92 +1,140 @@
-# 🛒 SmartMarket APP
+# SmartMarket Frontend
 
-SmartMarket es una plataforma web moderna diseñada para la gestión eficiente de productos, comparación de precios y listas de compras. Construida con un enfoque en **UX/UI intuitiva** y un **Design System robusto**, permite a los usuarios mantener un control total sobre sus productos y locales favoritos.
+Sistema de gestión y comparación de precios alimentarios para el mercado colombiano.
 
-## 🚀 Tecnologías Principales
+## 🚀 Inicio Rápido
 
-- **Framework:** [Next.js 14+](https://nextjs.org/) (App Router)
-- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
-- **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
-- **Iconografía:** [Lucide React](https://lucide.dev/)
-- **Validación de Formularios:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-- **Animaciones:** Tailwind Animate
+```bash
+# Instalar dependencias
+npm install
 
----
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Abrir en el navegador
+http://localhost:3000
+```
 
 ## 📁 Estructura del Proyecto
 
-El proyecto sigue una arquitectura de carpetas organizada por funcionalidades y componentes reutilizables:
-
-```text
+```
 src/
-├── app/                  # Rutas y Layouts (Next.js App Router)
-│   ├── (auth)/           # Rutas de autenticación (Login/Registro)
-│   └── (dashboard)/      # Rutas principales del sistema
-│       ├── layout.tsx    # Layout con Header y Sidebar global
-│       ├── products/     # Gestión de productos
-│       │   ├── page.tsx  # Listado y filtros
-│       │   └── new/      # Página de creación (FE-04)
-│       └── dashboard/    # Vista principal / Resumen
-├── components/           # Componentes de React
-│   ├── layout/           # Header, Sidebar, BottomNav
-│   ├── ui/               # Componentes atómicos (Button, Modal, Toast)
-│   └── products/         # Componentes específicos de productos
-├── lib/                  # Utilidades, configuraciones y validaciones (Zod)
-└── styles/               # Configuraciones globales de CSS
-
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Rutas de autenticación (login, register)
+│   ├── (dashboard)/       # Rutas protegidas
+│   ├── globals.css        # Estilos globales + Design System
+│   └── layout.tsx         # Layout raíz
+├── components/
+│   ├── ui/                # Componentes UI base (Button, Input, Card, etc.)
+│   ├── forms/             # Formularios (RegisterForm, LoginForm)
+│   └── layout/            # Componentes de layout (Logo, Header, Sidebar)
+├── hooks/                 # Custom hooks (useToast)
+├── services/              # Servicios API (auth.service)
+├── stores/                # Estado global Zustand (auth.store)
+├── types/                 # Tipos TypeScript
+├── lib/                   # Utilidades y validaciones
+│   ├── utils.ts           # Funciones helper
+│   └── validations/       # Schemas Zod
+└── config/                # Configuración de la app
 ```
 
-Aquí tienes el fragmento de texto formateado correctamente en Markdown para que se vea impecable en tu archivo README.md. He corregido los niveles de los títulos, las listas y los bloques de código para asegurar que no se rompa la estructura visual.
+## 🎨 Design System
 
-Markdown
-## ✨ Características Implementadas
+### Colores
 
-### 1. Sistema de Navegación Inteligente
-* **Layout Adaptativo:** Header superior completo y Sidebar lateral persistente en Desktop.
-* **Mobile First:** Navegación inferior (**BottomNav**) para una experiencia nativa en dispositivos móviles.
-* **Rutas Activas:** Detección automática y resaltado de la página actual en el menú lateral y barra inferior mediante `usePathname`.
+| Color | Uso | Clase Tailwind |
+|-------|-----|----------------|
+| Primary (Azul) | CTAs, acciones principales | `primary-600` |
+| Secondary (Gris) | Textos, fondos, bordes | `secondary-*` |
+| Success (Verde) | Confirmaciones, éxito | `success-*` |
+| Warning (Amarillo) | Alertas, advertencias | `warning-*` |
+| Error (Rojo) | Errores, destructivos | `error-*` |
+| Info (Cyan) | Información, tips | `info-*` |
 
-### 2. Gestión de Productos (FE-04)
-* **Formulario Reutilizable:** Implementación lógica compartida para creación y edición de registros.
-* **Validación Estricta:** Integración con **Zod** para asegurar integridad de datos y retroalimentación en tiempo real.
-* **UI de Selección Eficiente:** Uso de **Chips** para categorías y unidades de medida según el Design System, optimizando la usabilidad táctil y visual.
+### Colores de Categorías
 
-### 3. Design System & Feedback
-* **Toasts Dinámicos:** Notificaciones responsivas con posicionamiento inteligente (**Top-Center** en móvil / **Bottom-Right** en desktop) y variantes de color (Success, Error, Warning, Info).
-* **Modales de Confirmación:** Diálogos con **Backdrop Blur** (desenfoque de fondo) para acciones críticas como la eliminación de productos.
-* **Consistencia Visual:** Paleta de colores, tipografía y espaciados basados estrictamente en los lineamientos de diseño del proyecto.
+| Categoría | Emoji | Clase |
+|-----------|-------|-------|
+| Frutas | 🍎 | `category-fruits` |
+| Verduras | 🥬 | `category-vegetables` |
+| Granos | 🍚 | `category-grains` |
+| Lácteos | 🥛 | `category-dairy` |
+| Carnes | 🥩 | `category-meats` |
+| Bebidas | 🥤 | `category-beverages` |
+| Limpieza | 🧹 | `category-cleaning` |
+| Otros | 📦 | `category-other` |
 
-## 🛠️ Instalación y Configuración
+### Componentes UI
 
-1. **Clonar el repositorio:**
+- **Button**: Variantes `primary`, `secondary`, `outline`, `ghost`, `danger`
+- **Input**: Con label, error, helperText, toggle password
+- **Checkbox**: Con label
+- **Card**: Variantes `default`, `bordered`, `elevated`
+- **Badge**: Para estados y categorías
+- **Toast**: Notificaciones `success`, `error`, `warning`, `info`
+- **Spinner**: Loading states
 
-   ```bash
-   git clone [https://github.com/tu-usuario/smartmarket.git](https://github.com/tu-usuario/smartmarket.git)
-   cd smartmarket
-   ```
-## Instalar dependencias:
+## 📜 Scripts Disponibles
 
-```Bash
-npm install
+```bash
+npm run dev          # Servidor de desarrollo
+npm run dev:turbo    # Servidor con Turbopack
+npm run build        # Build de producción
+npm run start        # Iniciar build de producción
+npm run lint         # Ejecutar ESLint
+npm run lint:fix     # Corregir errores de ESLint
+npm run format       # Formatear código con Prettier
+npm run format:check # Verificar formato
+npm run type-check   # Verificar tipos TypeScript
+npm run clean        # Limpiar cache y builds
 ```
 
-## Ejecutar en desarrollo:
+## 🔧 Variables de Entorno
 
-```Bash
-npm run dev
-La aplicación estará disponible en http://localhost:3000.
+Copiar `.env.example` a `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+NEXT_PUBLIC_APP_NAME=SmartMarket
+NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
-## 📈 Roadmap de Desarrollo
+## ✅ Tareas Completadas
 
-- [x] **FE-03:** Estructura Base y Layout Global (Sidebar + Header).
-- [x] **FE-04:** Formulario de Productos con validación y UI de Chips.
-- [x] **Design System:** Sistema de Notificaciones Toast y Modales de confirmación.
-- [ ] **FE-05:** Implementación de Skeletons de carga para listados.
-- [ ] **API:** Integración con servicios backend y persistencia de datos.
-- [ ] **UI:** Implementación de Modo Oscuro (Dark Mode).
+### FE-01: Formulario de Registro
+- [x] Campos: nombre, email, contraseña, confirmar contraseña
+- [x] Validación en tiempo real al perder foco (Zod)
+- [x] Botón deshabilitado si hay errores
+- [x] Loader durante envío
+- [x] Toast de confirmación tras éxito
+- [x] Redirección automática a dashboard
+- [x] Mostrar/ocultar contraseña
+- [x] Error específico si email ya existe
+- [x] Responsive (mobile y desktop)
 
----
+### FE-02: Formulario de Login
+- [x] Campos: email, contraseña
+- [x] Checkbox "Recordarme"
+- [x] Validación al enviar
+- [x] Loader durante petición
+- [x] Token guardado en localStorage
+- [x] Redirección automática a dashboard
+- [x] Error si credenciales incorrectas
+- [x] Redirige si ya hay sesión activa
+- [x] Responsive (mobile y desktop)
 
-## 📄 Licencia
-Este proyecto está bajo la Licencia **MIT**.
+## 🛠️ Stack Tecnológico
+
+- **Framework:** Next.js 14 (App Router)
+- **Lenguaje:** TypeScript 5
+- **Estilos:** Tailwind CSS 3
+- **Estado:** Zustand
+- **Formularios:** React Hook Form + Zod
+- **HTTP Client:** Axios
+- **Iconos:** Lucide React
+
+## 📱 Responsive Design
+
+- **Mobile:** < 768px
+- **Tablet:** 768px - 1023px
+- **Desktop:** ≥ 1024px

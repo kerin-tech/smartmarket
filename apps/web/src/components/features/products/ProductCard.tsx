@@ -1,50 +1,95 @@
-// apps/web/src/components/features/products/ProductCard.tsx
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { Product } from '@/types/product';
-import { useState } from 'react';
+'use client';
 
-interface Props { 
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownItem } from '@/components/ui/DropdownMenu';
+import { useProductStore } from '@/stores/product.store';
+import type { Product } from '@/types/product.types';
+import { categoryConfig } from '@/types/product.types';
+
+interface ProductCardProps {
   product: Product;
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
+  searchQuery?: string;
 }
 
-export const ProductCard = ({ product }: Props) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductCardProps) {
+  const { menuOpenForId, openMenu, closeMenu } = useProductStore();
+  const isMenuOpen = menuOpenForId === product.id;
+  const config = categoryConfig[product.category];
+
+  // Resaltar texto de búsqueda
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text;
+    
+    const regex = new RegExp(`(${query})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-warning-200 text-warning-900 rounded px-0.5">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between relative">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center text-xl">
-          {product.category === 'Frutas' ? '🍎' : '📦'}
-        </div>
-        <div>
-          <h4 className="font-bold text-gray-900">{product.name}</h4>
-          <p className="text-sm text-gray-500">{product.category} · {product.unit}</p>
-        </div>
+    <div className="flex items-center gap-3 p-4 bg-white hover:bg-secondary-50 transition-colors">
+      {/* Emoji/Icon */}
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center text-xl">
+        {config.emoji}
       </div>
 
-      <div className="relative">
-        <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium text-secondary-900 truncate">
+          {highlightText(product.name, searchQuery || '')}
+        </h3>
+        <p className="text-xs text-secondary-500">
+          {config.label} · {product.unit}
+        </p>
+      </div>
+
+      {/* Menu button */}
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            isMenuOpen ? closeMenu() : openMenu(product.id);
+          }}
+          className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+          aria-label={`Opciones para ${product.name}`}
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
         >
-          <MoreVertical size={20} />
+          <MoreVertical className="h-5 w-5" />
         </button>
 
-        {/* Estado: Menú contextual abierto */}
-        {isMenuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-2 animate-dropdownOpen">
-              <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                <Pencil size={16} /> Editar producto
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-error-main hover:bg-error-50">
-                <Trash2 size={16} /> Eliminar
-              </button>
-            </div>
-          </>
-        )}
+        <DropdownMenu isOpen={isMenuOpen} onClose={closeMenu}>
+          <DropdownItem 
+            onClick={() => {
+              closeMenu();
+              onEdit(product);
+            }}
+            icon={<Pencil className="h-4 w-4" />}
+          >
+            Editar
+          </DropdownItem>
+          <DropdownItem 
+            onClick={() => {
+              closeMenu();
+              onDelete(product);
+            }}
+            icon={<Trash2 className="h-4 w-4" />}
+            variant="danger"
+          >
+            Eliminar
+          </DropdownItem>
+        </DropdownMenu>
       </div>
     </div>
   );
-};
+}

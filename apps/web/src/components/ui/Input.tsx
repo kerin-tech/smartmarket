@@ -1,51 +1,89 @@
-'use client';
-import { InputHTMLAttributes, forwardRef, useState } from 'react';
-import { Eye, EyeOff, LucideIcon } from 'lucide-react';
+// src/components/ui/Input.tsx
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+'use client';
+
+import { forwardRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
   error?: string;
-  icon?: LucideIcon;
+  helperText?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, type, icon: Icon, ...props }, ref) => {
+const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, label, error, helperText, id, disabled, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
-
-    const togglePassword = () => setShowPassword(!showPassword);
+    const inputId = id || props.name;
 
     return (
-      <div className="flex flex-col gap-1.5 w-full animate-fade-in">
-        <label className="text-sm font-semibold text-gray-700">{label}</label>
+      <div className="w-full">
+        {label && (
+          <label
+            htmlFor={inputId}
+            className={cn(
+              'block text-sm font-medium mb-1.5',
+              disabled ? 'text-secondary-400' : 'text-secondary-700'
+            )}
+          >
+            {label}
+          </label>
+        )}
         <div className="relative">
-          {Icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <Icon size={20} />
-            </div>
-          )}
           <input
+            id={inputId}
+            type={isPassword && showPassword ? 'text' : type}
+            disabled={disabled}
+            className={cn(
+              'flex h-11 w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors',
+              'placeholder:text-secondary-400',
+              'focus:outline-none focus:ring-2 focus:ring-offset-0',
+              error
+                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
+                : 'border-secondary-300 focus:border-primary-500 focus:ring-primary-500/20',
+              disabled && 'cursor-not-allowed bg-secondary-50 text-secondary-500',
+              isPassword && 'pr-11',
+              className
+            )}
             ref={ref}
-            type={isPassword ? (showPassword ? 'text' : 'password') : type}
-            className={`w-full ${Icon ? 'pl-10' : 'px-4'} pr-10 py-3 rounded-xl border transition-all
-              ${error ? 'border-error-main ring-1 ring-error-main' : 'border-gray-200 focus:border-primary-600 focus:ring-2 focus:ring-primary-100'}
-              outline-none placeholder:text-gray-400`}
+            aria-invalid={!!error}
+            aria-describedby={
+              error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+            }
             {...props}
           />
           {isPassword && (
             <button
               type="button"
-              onClick={togglePassword}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={disabled}
+              className={cn(
+                'absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 transition-colors',
+                'hover:text-secondary-600 focus:outline-none focus:text-secondary-600',
+                disabled && 'cursor-not-allowed opacity-50'
+              )}
+              tabIndex={-1}
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           )}
         </div>
         {error && (
-          <span className="text-xs text-error-main font-medium flex items-center gap-1">
-             {error}
-          </span>
+          <p
+            id={`${inputId}-error`}
+            className="mt-1.5 text-sm text-error-600"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
+        {helperText && !error && (
+          <p id={`${inputId}-helper`} className="mt-1.5 text-sm text-secondary-500">
+            {helperText}
+          </p>
         )}
       </div>
     );
@@ -53,3 +91,5 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
+
+export { Input };

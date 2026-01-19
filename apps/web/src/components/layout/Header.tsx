@@ -1,31 +1,157 @@
-'use client';
-import { ChevronLeft, User, Menu, ChevronDown } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+// src/components/layout/Header.tsx
 
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { 
+  Menu, 
+  Bell, 
+  User, 
+  LogOut, 
+  Settings, 
+  ChevronDown,
+  X
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Logo } from './Logo';
+import { Button } from '@/components/ui/Button';
+import { useAuthStore } from '@/stores/auth.store';
+import { authService } from '@/services/auth.service';
+import { routes } from '@/config/app.config';
 
 interface HeaderProps {
-  title?: string;
-  showBack?: boolean;
-  rightAction?: React.ReactNode;
+  onMenuClick: () => void;
+  isSidebarOpen: boolean;
 }
 
-export const Header = () => {
-  return (
-    <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-50">
-      {/* Logo Izquierda */}
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">SM</div>
-        <span className="text-xl font-bold text-gray-900 tracking-tight">SmartMarket</span>
-      </div>
+export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-      {/* Perfil Derecha */}
-      <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors">
-        <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-bold">
-          C
+  const handleLogout = async () => {
+    await authService.logout();
+    logout();
+    router.push(routes.login);
+  };
+
+  return (
+    <header className="sticky top-0 z-40 bg-white border-b border-secondary-200">
+      <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+        {/* Left side */}
+        <div className="flex items-center gap-3">
+          {/* Mobile menu button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-lg text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 transition-colors"
+            aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            {isSidebarOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+
+          {/* Logo - visible on mobile */}
+          <div className="lg:hidden">
+            <Logo size="sm" showText={false} />
+          </div>
         </div>
-        <span className="hidden lg:block font-semibold text-gray-700">Carolina</span>
-        <ChevronDown size={16} className="text-gray-400" />
+
+        {/* Right side */}
+        <div className="flex items-center gap-2">
+          {/* Notifications */}
+          <button
+            className="relative p-2 rounded-lg text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 transition-colors"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-5 w-5" />
+            {/* Badge de notificación */}
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error-500 rounded-full" />
+          </button>
+
+          {/* Profile dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-2 p-1.5 pr-3 rounded-lg hover:bg-secondary-100 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                <span className="text-sm font-medium text-primary-700">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <span className="hidden sm:block text-sm font-medium text-secondary-700 max-w-[120px] truncate">
+                {user?.name || 'Usuario'}
+              </span>
+              <ChevronDown className={cn(
+                "h-4 w-4 text-secondary-400 transition-transform",
+                isProfileOpen && "rotate-180"
+              )} />
+            </button>
+
+            {/* Dropdown menu */}
+            {isProfileOpen && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsProfileOpen(false)}
+                />
+                
+                {/* Menu */}
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-secondary-200 shadow-lg z-20 py-1 animate-scale-in">
+                  {/* User info */}
+                  <div className="px-4 py-3 border-b border-secondary-100">
+                    <p className="text-sm font-medium text-secondary-900 truncate">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs text-secondary-500 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+
+                  {/* Menu items */}
+                  <div className="py-1">
+                    <Link
+                      href={routes.profile}
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      Mi perfil
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        // TODO: Abrir configuración
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configuración
+                    </button>
+                  </div>
+
+                  {/* Logout */}
+                  <div className="border-t border-secondary-100 py-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error-600 hover:bg-error-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );
-};
+}
