@@ -1,12 +1,44 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Importamos Inter como dice Tipografía.docx
-import "./globals.css";
+// src/app/layout.tsx
 
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "SmartMarket - Ahorra en tus compras",
-  description: "La mejor forma de comparar precios y ahorrar",
+  title: {
+    default: 'SmartMarket - Compara precios y ahorra',
+    template: '%s | SmartMarket',
+  },
+  description:
+    'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes con SmartMarket.',
+  keywords: [
+    'comparar precios',
+    'supermercado',
+    'ahorro',
+    'compras',
+    'mercado',
+    'Colombia',
+    'canasta familiar',
+  ],
+  authors: [{ name: 'SmartMarket' }],
+  creator: 'SmartMarket',
+  openGraph: {
+    type: 'website',
+    locale: 'es_CO',
+    siteName: 'SmartMarket',
+    title: 'SmartMarket - Compara precios y ahorra',
+    description:
+      'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SmartMarket - Compara precios y ahorra',
+    description:
+      'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -16,7 +48,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>{children}</body>
+      <body className="min-h-screen bg-secondary-50 antialiased">
+        {children}
+      </body>
     </html>
   );
 }

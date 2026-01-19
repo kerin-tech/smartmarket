@@ -1,19 +1,57 @@
-import { ReactNode } from 'react';
+// src/components/ui/EmptyState.tsx
+
+import { Package, ShoppingBag, Store, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from './Button';
+
+type EmptyStateType = 'products' | 'stores' | 'purchases' | 'default';
 
 interface EmptyStateProps {
-  icon: ReactNode;
+  type?: EmptyStateType;
   title: string;
   description: string;
-  action?: ReactNode;
+  actionLabel?: string;
+  onAction?: () => void;
+  className?: string;
 }
 
-export const EmptyState = ({ icon, title, description, action }: EmptyStateProps) => (
-  <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-fade-in">
-    <div className="bg-gray-50 p-6 rounded-3xl mb-4 text-gray-400">
-      {icon}
+const icons: Record<EmptyStateType, React.ElementType> = {
+  products: Package,
+  stores: Store,
+  purchases: ShoppingBag,
+  default: FileText,
+};
+
+const colors: Record<EmptyStateType, string> = {
+  products: 'bg-primary-100 text-primary-600',
+  stores: 'bg-warning-100 text-warning-600',
+  purchases: 'bg-success-100 text-success-600',
+  default: 'bg-secondary-100 text-secondary-600',
+};
+
+export function EmptyState({
+  type = 'default',
+  title,
+  description,
+  actionLabel,
+  onAction,
+  className,
+}: EmptyStateProps) {
+  const Icon = icons[type];
+  const colorClass = colors[type];
+
+  return (
+    <div className={cn('flex flex-col items-center justify-center py-12 px-4', className)}>
+      <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mb-4', colorClass)}>
+        <Icon className="h-8 w-8" />
+      </div>
+      <h3 className="text-lg font-semibold text-secondary-900 mb-2 text-center">{title}</h3>
+      <p className="text-sm text-secondary-500 text-center max-w-sm mb-6">{description}</p>
+      {actionLabel && onAction && (
+        <Button onClick={onAction}>
+          {actionLabel}
+        </Button>
+      )}
     </div>
-    <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-    <p className="text-gray-500 max-w-xs mb-8">{description}</p>
-    {action}
-  </div>
-);
+  );
+}
