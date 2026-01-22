@@ -67,3 +67,31 @@ export function StoreListSkeleton({ count = 6 }: StoreListSkeletonProps) {
     </div>
   );
 }
+
+interface PurchaseListSkeletonProps {
+  count?: number;
+}
+
+export function PurchaseListSkeleton({ count = 6 }: PurchaseListSkeletonProps) {
+  return (
+    <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden divide-y divide-secondary-100">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-3 p-4"
+        >
+          <Skeleton className="w-10 h-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+          <div className="text-right space-y-2">
+            <Skeleton className="h-4 w-20 ml-auto" />
+            <Skeleton className="h-3 w-16 ml-auto" />
+          </div>
+          <Skeleton className="w-8 h-8 rounded-lg" />
+        </div>
+      ))}
+    </div>
+  );
+}
