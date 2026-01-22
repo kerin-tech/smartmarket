@@ -1,8 +1,16 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt.handle";
 
-interface JwtPayload {
-  id: string;
+// Agregar esto al inicio
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email: string;
+      };
+    }
+  }
 }
 
 const checkJwt = (req: Request, res: Response, next: NextFunction) => {
