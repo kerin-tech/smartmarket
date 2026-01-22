@@ -1,6 +1,9 @@
+// src/components/ui/DropdownMenu.tsx
+
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 interface DropdownMenuProps {
@@ -9,6 +12,7 @@ interface DropdownMenuProps {
   children: React.ReactNode;
   align?: 'left' | 'right';
   className?: string;
+  triggerRef?: React.RefObject<HTMLElement>;
 }
 
 export function DropdownMenu({ 
@@ -16,15 +20,63 @@ export function DropdownMenu({
   onClose, 
   children, 
   align = 'right',
-  className 
+  className,
+  triggerRef,
 }: DropdownMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [mounted, setMounted] = useState(false);
 
+  // Esperar a que el componente esté montado en el cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calcular posición del menú basándose en el trigger
+  useEffect(() => {
+    if (!isOpen || !triggerRef?.current) return;
+
+    const updatePosition = () => {
+      const triggerRect = triggerRef.current!.getBoundingClientRect();
+      const menuWidth = 160; // min-w-[160px]
+      
+      let left = align === 'right' 
+        ? triggerRect.right - menuWidth 
+        : triggerRect.left;
+      
+      // Asegurar que no se salga de la pantalla
+      if (left < 8) left = 8;
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+      }
+
+      setPosition({
+        top: triggerRect.bottom + 4,
+        left,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, triggerRef, align]);
+
+  // Cerrar al hacer click fuera o presionar Escape
   useEffect(() => {
     if (!isOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current && 
+        !menuRef.current.contains(event.target as Node) &&
+        triggerRef?.current &&
+        !triggerRef.current.contains(event.target as Node)
+      ) {
         onClose();
       }
     };
@@ -35,7 +87,6 @@ export function DropdownMenu({
       }
     };
 
-    // Usar setTimeout para evitar que el click que abre el menú lo cierre inmediatamente
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
@@ -46,17 +97,22 @@ export function DropdownMenu({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const menuContent = (
     <div
       ref={menuRef}
       role="menu"
+      style={{
+        position: 'fixed',
+        top: position.top,
+        left: position.left,
+        zIndex: 9999,
+      }}
       className={cn(
-        'absolute z-50 mt-1 min-w-[160px] bg-white rounded-lg border border-secondary-200 shadow-lg py-1 animate-scale-in',
-        align === 'right' ? 'right-0' : 'left-0',
+        'min-w-[160px] bg-white rounded-lg border border-secondary-200 shadow-lg py-1 animate-scale-in',
         className
       )}
       onClick={(e) => e.stopPropagation()}
@@ -64,6 +120,9 @@ export function DropdownMenu({
       {children}
     </div>
   );
+
+  // Renderizar en un portal fuera del árbol DOM del card
+  return createPortal(menuContent, document.body);
 }
 
 interface DropdownItemProps {

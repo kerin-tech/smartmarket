@@ -1,3 +1,5 @@
+// src/components/features/products/ProductList.tsx
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -22,11 +24,11 @@ import {
 } from '@/stores/product.store';
 import { productService } from '@/services/product.service';
 import type { ProductFormValues } from '@/lib/validations/product.schema';
-import { categoryConfig, type CategoryKey } from '@/types/product.types';
+import { categoryOptions, getCategoryConfig } from '@/types/product.types';
 
 // Orden de categorías para mostrar
-const categoryOrder: CategoryKey[] = [
-  'fruits', 'vegetables', 'grains', 'dairy', 'meats', 'beverages', 'cleaning', 'other'
+const categoryOrder = [
+  'Frutas', 'Verduras', 'Granos', 'Lácteos', 'Carnes', 'Bebidas', 'Limpieza', 'Otros'
 ];
 
 export function ProductList() {
@@ -66,10 +68,10 @@ export function ProductList() {
     const loadProducts = async () => {
       setLoading(true);
       try {
-        const response = await productService.getAll();
+        const response = await productService.getAll({ limit: 100 });
         setProducts(response.products);
-      } catch (err) {
-        showError('Error al cargar los productos');
+      } catch (err: any) {
+        showError(err.message || 'Error al cargar los productos');
       } finally {
         setLoading(false);
       }
@@ -83,12 +85,15 @@ export function ProductList() {
     { value: 'all', label: 'Todos', count: categoryCounts.all },
     ...categoryOrder
       .filter(cat => categoryCounts[cat] > 0)
-      .map(cat => ({
-        value: cat,
-        label: categoryConfig[cat].label,
-        emoji: categoryConfig[cat].emoji,
-        count: categoryCounts[cat] || 0,
-      })),
+      .map(cat => {
+        const config = getCategoryConfig(cat);
+        return {
+          value: cat,
+          label: config.label,
+          emoji: config.emoji,
+          count: categoryCounts[cat] || 0,
+        };
+      }),
   ];
 
   // Crear o editar producto
@@ -178,7 +183,7 @@ export function ProductList() {
           const products = groupedProducts.get(categoryKey);
           if (!products || products.length === 0) return null;
 
-          const config = categoryConfig[categoryKey];
+          const config = getCategoryConfig(categoryKey);
 
           return (
             <section key={categoryKey} aria-labelledby={`category-${categoryKey}`}>
@@ -237,7 +242,7 @@ export function ProductList() {
           <FilterSelect
             options={filterOptions}
             value={selectedCategory}
-            onChange={(value) => setSelectedCategory(value as CategoryKey | 'all')}
+            onChange={(value) => setSelectedCategory(value)}
           />
         </div>
       )}
@@ -246,7 +251,7 @@ export function ProductList() {
       {!isLoading && categoryCounts.all > 0 && (
         <p className="text-sm text-secondary-500" aria-live="polite">
           {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
-          {selectedCategory !== 'all' && ` en ${categoryConfig[selectedCategory as CategoryKey]?.label}`}
+          {selectedCategory !== 'all' && ` en ${getCategoryConfig(selectedCategory).label}`}
           {searchQuery && ` para "${searchQuery}"`}
         </p>
       )}

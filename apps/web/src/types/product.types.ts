@@ -1,64 +1,69 @@
 // src/types/product.types.ts
 
-export type CategoryKey = 
-  | 'fruits' 
-  | 'vegetables' 
-  | 'meats' 
-  | 'dairy' 
-  | 'grains' 
-  | 'beverages' 
-  | 'cleaning' 
-  | 'other';
-
-export type UnitType = 'kg' | 'gr' | 'lt' | 'ml' | 'unidad';
-
 export interface Product {
   id: string;
   name: string;
-  category: CategoryKey;
-  unit: UnitType;
+  category: string;
+  brand: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export interface ProductFormData {
   name: string;
-  category: CategoryKey;
-  unit: UnitType;
+  category: string;
+  brand?: string;
 }
 
 export interface CreateProductRequest {
   name: string;
-  category: CategoryKey;
-  unit: UnitType;
+  category: string;
+  brand?: string;
 }
 
-export interface UpdateProductRequest extends CreateProductRequest {
-  id: string;
+export interface UpdateProductRequest {
+  name?: string;
+  category?: string;
+  brand?: string;
 }
 
 export interface ProductsResponse {
   products: Product[];
-  total: number;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
-// Configuración de categorías
-export const categoryConfig: Record<CategoryKey, { label: string; emoji: string; color: string }> = {
-  fruits: { label: 'Frutas', emoji: '🍎', color: 'orange' },
-  vegetables: { label: 'Verduras', emoji: '🥬', color: 'green' },
-  grains: { label: 'Granos', emoji: '🍚', color: 'yellow' },
-  dairy: { label: 'Lácteos', emoji: '🥛', color: 'sky' },
-  meats: { label: 'Carnes', emoji: '🥩', color: 'red' },
-  beverages: { label: 'Bebidas', emoji: '🥤', color: 'violet' },
-  cleaning: { label: 'Limpieza', emoji: '🧹', color: 'cyan' },
-  other: { label: 'Otros', emoji: '📦', color: 'gray' },
+// Categorías predefinidas para el select
+export const categoryOptions = [
+  { value: 'Frutas', label: 'Frutas', emoji: '🍎' },
+  { value: 'Verduras', label: 'Verduras', emoji: '🥬' },
+  { value: 'Granos', label: 'Granos', emoji: '🍚' },
+  { value: 'Lácteos', label: 'Lácteos', emoji: '🥛' },
+  { value: 'Carnes', label: 'Carnes', emoji: '🥩' },
+  { value: 'Bebidas', label: 'Bebidas', emoji: '🥤' },
+  { value: 'Limpieza', label: 'Limpieza', emoji: '🧹' },
+  { value: 'Otros', label: 'Otros', emoji: '📦' },
+] as const;
+
+// Configuración de categorías para UI
+export const categoryConfig: Record<string, { label: string; emoji: string; color: string }> = {
+  'Frutas': { label: 'Frutas', emoji: '🍎', color: 'orange' },
+  'Verduras': { label: 'Verduras', emoji: '🥬', color: 'green' },
+  'Granos': { label: 'Granos', emoji: '🍚', color: 'yellow' },
+  'Lácteos': { label: 'Lácteos', emoji: '🥛', color: 'sky' },
+  'Carnes': { label: 'Carnes', emoji: '🥩', color: 'red' },
+  'Bebidas': { label: 'Bebidas', emoji: '🥤', color: 'violet' },
+  'Limpieza': { label: 'Limpieza', emoji: '🧹', color: 'cyan' },
+  'Otros': { label: 'Otros', emoji: '📦', color: 'gray' },
 };
 
-// Configuración de unidades
-export const unitConfig: Record<UnitType, { label: string; description: string }> = {
-  kg: { label: 'kg', description: 'Kilogramos' },
-  gr: { label: 'gr', description: 'Gramos' },
-  lt: { label: 'lt', description: 'Litros' },
-  ml: { label: 'ml', description: 'Mililitros' },
-  unidad: { label: 'unidad', description: 'Unidad individual' },
+// Helper para obtener config de categoría (con fallback)
+export const getCategoryConfig = (category: string) => {
+  return categoryConfig[category] || { label: category, emoji: '📦', color: 'gray' };
 };

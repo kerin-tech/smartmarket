@@ -1,7 +1,7 @@
 // src/stores/product.store.ts
 
 import { create } from 'zustand';
-import type { Product, CategoryKey } from '@/types/product.types';
+import type { Product } from '@/types/product.types';
 
 interface ProductState {
   // Data
@@ -11,7 +11,7 @@ interface ProductState {
   
   // Filters
   searchQuery: string;
-  selectedCategory: CategoryKey | 'all';
+  selectedCategory: string;
   
   // Modal state
   isModalOpen: boolean;
@@ -32,7 +32,7 @@ interface ProductState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setSearchQuery: (query: string) => void;
-  setSelectedCategory: (category: CategoryKey | 'all') => void;
+  setSelectedCategory: (category: string) => void;
   
   // Modal actions
   openCreateModal: () => void;
@@ -92,7 +92,8 @@ export const useFilteredProducts = () => {
 
   return products.filter((product) => {
     const matchesSearch = searchQuery
-      ? product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ? product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.brand.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -116,7 +117,7 @@ export const useCategoryCounts = () => {
 export const useGroupedProducts = () => {
   const filteredProducts = useFilteredProducts();
   
-  const grouped = new Map<CategoryKey, Product[]>();
+  const grouped = new Map<string, Product[]>();
   
   filteredProducts.forEach((product) => {
     if (!grouped.has(product.category)) {
