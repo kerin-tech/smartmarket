@@ -14,7 +14,7 @@ datasource db {
 model User {
   id        String   @id @default(uuid()) @db.Uuid
   name      String   @db.VarChar(255)
-  email     String   @unique @db.VarChar(255) // @unique crea el índice automáticamente
+  email     String   @unique @db.VarChar(255)
   password  String   @db.VarChar(255)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp()
@@ -39,8 +39,8 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
 
   // Relaciones
-  user      User       @relation(fields: [userId], references: [id])
-  purchases Purchase[]
+  user          User           @relation(fields: [userId], references: [id])
+  purchaseItems PurchaseItem[]
 
   @@map("products")
 }
@@ -63,28 +63,45 @@ model Store {
 }
 
 // --------------------------------------
-// Entidad: Purchase
+// Entidad: Purchase (Cabecera de compra)
 // --------------------------------------
 model Purchase {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  productId String   @map("product_id") @db.Uuid
   storeId   String   @map("store_id") @db.Uuid
-  price     Decimal  @db.Decimal(10, 2)
-  quantity  Decimal  @db.Decimal(10, 2)
   date      DateTime @db.Date
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   // Relaciones
-  user      User    @relation(fields: [userId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
-  store     Store   @relation(fields: [storeId], references: [id])
+  user  User           @relation(fields: [userId], references: [id])
+  store Store          @relation(fields: [storeId], references: [id])
+  items PurchaseItem[]
 
-  // Índices recomendados en tu documento MVP
+  // Índices
   @@index([date])
-  @@index([productId])
   @@index([storeId])
-  
+  @@index([userId, date])
   @@map("purchases")
 }
 
+// --------------------------------------
+// Entidad: PurchaseItem (Detalle de compra)
+// --------------------------------------
+model PurchaseItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  purchaseId String   @map("purchase_id") @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  quantity   Decimal  @db.Decimal(10, 3)
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
+
+  // Relaciones
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+
+  // Índices
+  @@index([purchaseId])
+  @@index([productId])
+  @@map("purchase_items")
+}
