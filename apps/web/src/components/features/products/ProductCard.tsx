@@ -2,6 +2,7 @@
 
 'use client';
 
+import { useRef } from 'react';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownItem } from '@/components/ui/DropdownMenu';
 import { useProductStore } from '@/stores/product.store';
@@ -19,6 +20,7 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
   const { menuOpenForId, openMenu, closeMenu } = useProductStore();
   const isMenuOpen = menuOpenForId === product.id;
   const config = getCategoryConfig(product.category);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Resaltar texto de búsqueda
   const highlightText = (text: string, query: string) => {
@@ -59,6 +61,7 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
       {/* Menu button */}
       <div className="relative" onClick={(e) => e.stopPropagation()}>
         <button
+          ref={triggerRef}
           onClick={(e) => {
             e.stopPropagation();
             isMenuOpen ? closeMenu() : openMenu(product.id);
@@ -71,7 +74,11 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
           <MoreVertical className="h-5 w-5" />
         </button>
 
-        <DropdownMenu isOpen={isMenuOpen} onClose={closeMenu}>
+        <DropdownMenu 
+          isOpen={isMenuOpen} 
+          onClose={closeMenu}
+          triggerRef={triggerRef}
+        >
           <DropdownItem 
             onClick={() => {
               closeMenu();
