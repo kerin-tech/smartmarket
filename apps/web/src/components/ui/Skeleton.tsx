@@ -1,4 +1,7 @@
 // src/components/ui/Skeleton.tsx
+// Agregar este componente a tu archivo existente de Skeleton
+
+'use client';
 
 import { cn } from '@/lib/utils';
 
@@ -17,30 +20,49 @@ export function Skeleton({ className }: SkeletonProps) {
   );
 }
 
-// Skeleton para una fila de tabla de productos
-export function ProductRowSkeleton() {
+interface ProductListSkeletonProps {
+  count?: number;
+}
+
+export function ProductListSkeleton({ count = 6 }: ProductListSkeletonProps) {
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-secondary-100">
-      <Skeleton className="h-10 w-10 rounded-lg" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-3 w-24" />
-      </div>
-      <Skeleton className="h-6 w-20 rounded-full" />
-      <div className="flex gap-2">
-        <Skeleton className="h-8 w-8 rounded-lg" />
-        <Skeleton className="h-8 w-8 rounded-lg" />
-      </div>
+    <div className="space-y-4">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-3 p-4 bg-white rounded-xl border border-secondary-200"
+        >
+          <Skeleton className="w-10 h-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="w-8 h-8 rounded-lg" />
+        </div>
+      ))}
     </div>
   );
 }
 
-// Skeleton para lista de productos
-export function ProductListSkeleton({ count = 5 }: { count?: number }) {
+interface StoreListSkeletonProps {
+  count?: number;
+}
+
+export function StoreListSkeleton({ count = 6 }: StoreListSkeletonProps) {
   return (
-    <div className="bg-white rounded-xl border border-secondary-200">
-      {Array.from({ length: count }).map((_, i) => (
-        <ProductRowSkeleton key={i} />
+    <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden divide-y divide-secondary-100">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-3 p-4"
+        >
+          <Skeleton className="w-10 h-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-2/3" />
+          </div>
+          <Skeleton className="w-8 h-8 rounded-lg" />
+        </div>
       ))}
     </div>
   );
