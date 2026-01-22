@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { hash } from "bcrypt";
+import { hash, compare } from "bcrypt";
 import prisma from "@/config/database";
 import { generateToken } from "../utils/jwt.handle";
 import { successResponse, errorResponse } from "../utils/response.handle";
 import { ERROR_CODES } from "../utils/error.codes";
-import { RegisterInput } from "../schemas/auth.schema";
+import { RegisterInput, LoginInput } from "../schemas/auth.schema";
 
 const SALT_ROUNDS = 10;
 
@@ -60,6 +60,63 @@ export const registerController = async (
       { user: userResponse, token },
       "Usuario registrado exitosamente",
       201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const loginController = async (
+  req: Request<{}, {}, LoginInput>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Buscar usuario por email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    // 2. Verificar credenciales (mismo mensaje para ambos casos - seguridad)
+    if (!user) {
+      return errorResponse(
+        res,
+        "Credenciales inválidas",
+        ERROR_CODES.BAD_REQUEST.code
+      );
+    }
+
+    // 3. Comparar contraseña con bcrypt
+    const isValidPassword = await compare(password, user.password);
+
+    if (!isValidPassword) {
+      return errorResponse(
+        res,
+        "Credenciales inválidas",
+        ERROR_CODES.BAD_REQUEST.code
+      );
+    }
+
+    // 4. Generar JWT
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+    });
+
+    // 5. Formatear respuesta (sin password)
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
+
+    return successResponse(
+      res,
+      { user: userResponse, token },
+      "Inicio de sesión exitoso",
+      200
     );
   } catch (error) {
     next(error);

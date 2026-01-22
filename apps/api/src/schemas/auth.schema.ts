@@ -26,3 +26,21 @@ export const registerSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const loginSchema = z.object({
+  email: z
+    .string({
+      required_error: "El correo electrónico es requerido",
+    })
+    .email("El correo electrónico no es válido")
+    .toLowerCase()
+    .trim(),
+
+  password: z
+    .string({
+      required_error: "La contraseña es requerida",
+    })
+    .min(1, "La contraseña es requerida"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;

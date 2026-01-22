@@ -1,69 +1,99 @@
 // src/services/auth.service.ts
 
+import api from './api';
 import type {
   RegisterRequest,
   LoginRequest,
   AuthResponse,
-  ApiError,
-} from '@/types/auth.types';
+} from '@/types/auth.types.ts';
 
-// ============================================
-// MOCK - Remover cuando el backend esté listo
-// ============================================
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const mockUser = {
-  id: '1',
-  name: '',
-  email: '',
-  createdAt: new Date().toISOString(),
-};
+interface ApiSuccessResponse<T> {
+  success: boolean;
+  data: T;
+  message: string;
+}
 
 export const authService = {
+  /**
+   * Registrar nuevo usuario
+   */
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    await delay(1500);
+    const response = await api.post<ApiSuccessResponse<AuthResponse>>(
+      '/auth/register',
+      data
+    );
 
-    // Simular error de email duplicado
-    if (data.email === 'existe@test.com') {
-      throw {
-        message: 'Este correo ya está registrado',
-        statusCode: 409,
-      } as ApiError;
+    // Guardar token en localStorage
+    if (response.data.data.token) {
+      localStorage.setItem('token', response.data.data.token);
     }
 
+    // Mapear respuesta del backend al formato esperado
     return {
-      user: { ...mockUser, name: data.name, email: data.email },
-      token: 'mock-jwt-token-' + Date.now(),
+      user: {
+        id: response.data.data.user.id,
+        name: response.data.data.user.name,
+        email: response.data.data.user.email,
+        createdAt: response.data.data.user.created_at,
+      },
+      token: response.data.data.token,
     };
   },
 
+  /**
+   * Iniciar sesión
+   */
   async login(data: LoginRequest): Promise<AuthResponse> {
-    await delay(1500);
+    const response = await api.post<ApiSuccessResponse<AuthResponse>>(
+      '/auth/login',
+      data
+    );
 
-    // Simular credenciales incorrectas
-    // Para pruebas: cualquier contraseña que contenga "123" funciona
-    if (!data.password.includes('123')) {
-      throw {
-        message: 'Credenciales incorrectas',
-        statusCode: 401,
-      } as ApiError;
+    // Guardar token en localStorage
+    if (response.data.data.token) {
+      localStorage.setItem('token', response.data.data.token);
     }
 
+    // Mapear respuesta del backend al formato esperado
     return {
-      user: { ...mockUser, name: 'Usuario Demo', email: data.email },
-      token: 'mock-jwt-token-' + Date.now(),
+      user: {
+        id: response.data.data.user.id,
+        name: response.data.data.user.name,
+        email: response.data.data.user.email,
+        createdAt: response.data.data.user.created_at,
+      },
+      token: response.data.data.token,
     };
   },
 
+  /**
+   * Cerrar sesión
+   */
   async logout(): Promise<void> {
-    await delay(500);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
     }
   },
 
+  /**
+   * Verificar sesión actual (para futuro endpoint de /me)
+   */
   async verifySession(): Promise<AuthResponse | null> {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    
+    if (!token) {
+      return null;
+    }
+
+    // TODO: Implementar cuando exista endpoint GET /auth/me
+    // try {
+    //   const response = await api.get<ApiSuccessResponse<AuthResponse>>('/auth/me');
+    //   return response.data.data;
+    // } catch {
+    //   localStorage.removeItem('token');
+    //   return null;
+    // }
+
     return null;
   },
 };
