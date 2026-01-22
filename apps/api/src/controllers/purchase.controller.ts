@@ -9,10 +9,67 @@ import {
   UpdatePurchaseInput,
   PurchaseQueryInput,
 } from "../schemas/purchase.schema";
+import { Prisma } from "@prisma/client";
+
+/**
+ * Calcula el total de una compra sumando (quantity * unitPrice) de cada item
+ */
+function calculatePurchaseTotal(items: { quantity: any; unitPrice: any }[]): number {
+  return items.reduce((sum, item) => {
+    const quantity = typeof item.quantity === 'object' ? parseFloat(item.quantity.toString()) : item.quantity;
+    const unitPrice = typeof item.unitPrice === 'object' ? parseFloat(item.unitPrice.toString()) : item.unitPrice;
+    return sum + (quantity * unitPrice);
+  }, 0);
+}
+
+/**
+ * Formatea un item para la respuesta
+ */
+function formatItem(item: any) {
+  const quantity = parseFloat(item.quantity.toString());
+  const unitPrice = parseFloat(item.unitPrice.toString());
+  
+  return {
+    id: item.id,
+    productId: item.productId,
+    quantity,
+    unitPrice,
+    subtotal: quantity * unitPrice,
+    product: item.product ? {
+      id: item.product.id,
+      name: item.product.name,
+      category: item.product.category,
+      brand: item.product.brand,
+    } : undefined,
+  };
+}
+
+/**
+ * Formatea una compra para la respuesta
+ */
+function formatPurchase(purchase: any) {
+  const items = purchase.items?.map(formatItem) || [];
+  const total = calculatePurchaseTotal(items);
+  const itemCount = items.length;
+
+  return {
+    id: purchase.id,
+    date: purchase.date,
+    createdAt: purchase.createdAt,
+    store: purchase.store ? {
+      id: purchase.store.id,
+      name: purchase.store.name,
+      location: purchase.store.location,
+    } : undefined,
+    itemCount,
+    total,
+    items,
+  };
+}
 
 /**
  * GET /purchases
- * Listar compras del usuario con paginación, filtros y joins
+ * Listar compras del usuario con paginación y filtros
  */
 export const getPurchases = async (
   req: Request,
@@ -21,41 +78,37 @@ export const getPurchases = async (
 ) => {
   try {
     const userId = req.user!.id;
-    const { page, limit, month, productId, storeId, dateFrom, dateTo } = 
-      req.query as unknown as PurchaseQueryInput;
+    const { page, limit, month, storeId, search } = req.query as unknown as PurchaseQueryInput;
 
     // Construir filtros
-    const where: any = {
+    const where: Prisma.PurchaseWhereInput = {
       userId,
     };
-
-    // Filtro por producto
-    if (productId) {
-      where.productId = productId;
-    }
-
-    // Filtro por tienda
-    if (storeId) {
-      where.storeId = storeId;
-    }
 
     // Filtro por mes (YYYY-MM)
     if (month) {
       const [year, monthNum] = month.split("-").map(Number);
       const startDate = new Date(year, monthNum - 1, 1);
       const endDate = new Date(year, monthNum, 0); // Último día del mes
-      
       where.date = {
         gte: startDate,
         lte: endDate,
       };
     }
 
-    // Filtro por rango de fechas
-    if (dateFrom || dateTo) {
-      where.date = {
-        ...(dateFrom && { gte: new Date(dateFrom) }),
-        ...(dateTo && { lte: new Date(dateTo) }),
+    // Filtro por local
+    if (storeId) {
+      where.storeId = storeId;
+    }
+
+    // Filtro por búsqueda (busca en productos de la compra)
+    if (search) {
+      where.items = {
+        some: {
+          product: {
+            name: { contains: search, mode: "insensitive" },
+          },
+        },
       };
     }
 
@@ -69,20 +122,7 @@ export const getPurchases = async (
         skip,
         take: limit,
         orderBy: { date: "desc" },
-        select: {
-          id: true,
-          price: true,
-          quantity: true,
-          date: true,
-          createdAt: true,
-          product: {
-            select: {
-              id: true,
-              name: true,
-              category: true,
-              brand: true,
-            },
-          },
+        include: {
           store: {
             select: {
               id: true,
@@ -90,25 +130,28 @@ export const getPurchases = async (
               location: true,
             },
           },
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                  brand: true,
+                },
+              },
+            },
+          },
         },
       }),
       prisma.purchase.count({ where }),
     ]);
 
-    // Formatear respuesta
-    const formattedPurchases = purchases.map((p) => ({
-      id: p.id,
-      price: Number(p.price),
-      quantity: Number(p.quantity),
-      total: Number(p.price) * Number(p.quantity),
-      date: p.date,
-      createdAt: p.createdAt,
-      product: p.product,
-      store: p.store,
-    }));
-
     // Calcular metadata de paginación
     const totalPages = Math.ceil(total / limit);
+
+    // Formatear respuesta
+    const formattedPurchases = purchases.map(formatPurchase);
 
     return successResponse(
       res,
@@ -132,7 +175,7 @@ export const getPurchases = async (
 
 /**
  * GET /purchases/:id
- * Obtener una compra por ID con producto y tienda
+ * Obtener una compra por ID
  */
 export const getPurchaseById = async (
   req: Request,
@@ -145,26 +188,24 @@ export const getPurchaseById = async (
 
     const purchase = await prisma.purchase.findUnique({
       where: { id },
-      select: {
-        id: true,
-        price: true,
-        quantity: true,
-        date: true,
-        createdAt: true,
-        userId: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            brand: true,
-          },
-        },
+      include: {
         store: {
           select: {
             id: true,
             name: true,
             location: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+                brand: true,
+              },
+            },
           },
         },
       },
@@ -188,16 +229,11 @@ export const getPurchaseById = async (
       );
     }
 
-    // Formatear respuesta
-    const { userId: _, ...purchaseData } = purchase;
-    const formattedPurchase = {
-      ...purchaseData,
-      price: Number(purchase.price),
-      quantity: Number(purchase.quantity),
-      total: Number(purchase.price) * Number(purchase.quantity),
-    };
-
-    return successResponse(res, { purchase: formattedPurchase }, "Compra obtenida exitosamente");
+    return successResponse(
+      res,
+      { purchase: formatPurchase(purchase) },
+      "Compra obtenida exitosamente"
+    );
   } catch (error) {
     next(error);
   }
@@ -205,7 +241,7 @@ export const getPurchaseById = async (
 
 /**
  * POST /purchases
- * Crear una nueva compra
+ * Crear una nueva compra con items
  */
 export const createPurchase = async (
   req: Request<{}, {}, CreatePurchaseInput>,
@@ -214,34 +250,12 @@ export const createPurchase = async (
 ) => {
   try {
     const userId = req.user!.id;
-    const { productId, storeId, price, quantity, date } = req.body;
+    const { storeId, date, items } = req.body;
 
-    // Verificar que el producto existe y pertenece al usuario
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      select: { userId: true, name: true, category: true, brand: true, id: true },
-    });
-
-    if (!product) {
-      return errorResponse(
-        res,
-        "Producto no encontrado",
-        ERROR_CODES.NOT_FOUND.code
-      );
-    }
-
-    if (product.userId !== userId) {
-      return errorResponse(
-        res,
-        "El producto no te pertenece",
-        ERROR_CODES.FORBIDDEN.code
-      );
-    }
-
-    // Verificar que la tienda existe y pertenece al usuario
+    // Verificar que el local existe y pertenece al usuario
     const store = await prisma.store.findUnique({
       where: { id: storeId },
-      select: { userId: true, name: true, location: true, id: true },
+      select: { userId: true },
     });
 
     if (!store) {
@@ -255,54 +269,79 @@ export const createPurchase = async (
     if (store.userId !== userId) {
       return errorResponse(
         res,
-        "El local no te pertenece",
+        "No tienes permiso para usar este local",
         ERROR_CODES.FORBIDDEN.code
       );
     }
 
-    // Crear compra
+    // Verificar que todos los productos existen y pertenecen al usuario
+    const productIds = items.map((item) => item.productId);
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: productIds },
+      },
+      select: { id: true, userId: true },
+    });
+
+    // Verificar que todos los productos fueron encontrados
+    if (products.length !== productIds.length) {
+      return errorResponse(
+        res,
+        "Uno o más productos no fueron encontrados",
+        ERROR_CODES.NOT_FOUND.code
+      );
+    }
+
+    // Verificar que todos pertenecen al usuario
+    const invalidProducts = products.filter((p) => p.userId !== userId);
+    if (invalidProducts.length > 0) {
+      return errorResponse(
+        res,
+        "No tienes permiso para usar uno o más productos",
+        ERROR_CODES.FORBIDDEN.code
+      );
+    }
+
+    // Crear compra con items en una transacción
     const purchase = await prisma.purchase.create({
       data: {
-        productId,
-        storeId,
         userId,
-        price,
-        quantity,
+        storeId,
         date: new Date(date),
+        items: {
+          create: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
+        },
       },
-      select: {
-        id: true,
-        price: true,
-        quantity: true,
-        date: true,
-        createdAt: true,
+      include: {
+        store: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+          },
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+                brand: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    // Formatear respuesta con datos completos
-    const formattedPurchase = {
-      id: purchase.id,
-      price: Number(purchase.price),
-      quantity: Number(purchase.quantity),
-      total: Number(purchase.price) * Number(purchase.quantity),
-      date: purchase.date,
-      createdAt: purchase.createdAt,
-      product: {
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        brand: product.brand,
-      },
-      store: {
-        id: store.id,
-        name: store.name,
-        location: store.location,
-      },
-    };
-
     return successResponse(
       res,
-      { purchase: formattedPurchase },
+      { purchase: formatPurchase(purchase) },
       "Compra registrada exitosamente",
       201
     );
@@ -323,7 +362,7 @@ export const updatePurchase = async (
   try {
     const userId = req.user!.id;
     const { id } = req.params;
-    const { productId, storeId, price, quantity, date } = req.body;
+    const { storeId, date, items } = req.body;
 
     // Verificar que la compra existe y pertenece al usuario
     const existingPurchase = await prisma.purchase.findUnique({
@@ -347,31 +386,7 @@ export const updatePurchase = async (
       );
     }
 
-    // Si se actualiza el producto, verificar pertenencia
-    if (productId) {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: { userId: true },
-      });
-
-      if (!product) {
-        return errorResponse(
-          res,
-          "Producto no encontrado",
-          ERROR_CODES.NOT_FOUND.code
-        );
-      }
-
-      if (product.userId !== userId) {
-        return errorResponse(
-          res,
-          "El producto no te pertenece",
-          ERROR_CODES.FORBIDDEN.code
-        );
-      }
-    }
-
-    // Si se actualiza la tienda, verificar pertenencia
+    // Si se cambia el local, verificar que existe y pertenece al usuario
     if (storeId) {
       const store = await prisma.store.findUnique({
         where: { id: storeId },
@@ -389,61 +404,94 @@ export const updatePurchase = async (
       if (store.userId !== userId) {
         return errorResponse(
           res,
-          "El local no te pertenece",
+          "No tienes permiso para usar este local",
           ERROR_CODES.FORBIDDEN.code
         );
       }
     }
 
-    // Construir datos de actualización
-    const updateData: any = {};
-    if (productId) updateData.productId = productId;
-    if (storeId) updateData.storeId = storeId;
-    if (price !== undefined) updateData.price = price;
-    if (quantity !== undefined) updateData.quantity = quantity;
-    if (date) updateData.date = new Date(date);
+    // Si se actualizan items, verificar productos
+    if (items) {
+      const productIds = items.map((item) => item.productId);
+      const products = await prisma.product.findMany({
+        where: {
+          id: { in: productIds },
+        },
+        select: { id: true, userId: true },
+      });
 
-    // Actualizar compra
-    const purchase = await prisma.purchase.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        price: true,
-        quantity: true,
-        date: true,
-        createdAt: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            brand: true,
+      if (products.length !== productIds.length) {
+        return errorResponse(
+          res,
+          "Uno o más productos no fueron encontrados",
+          ERROR_CODES.NOT_FOUND.code
+        );
+      }
+
+      const invalidProducts = products.filter((p) => p.userId !== userId);
+      if (invalidProducts.length > 0) {
+        return errorResponse(
+          res,
+          "No tienes permiso para usar uno o más productos",
+          ERROR_CODES.FORBIDDEN.code
+        );
+      }
+    }
+
+    // Actualizar en transacción
+    const purchase = await prisma.$transaction(async (tx) => {
+      // Si hay items nuevos, eliminar los anteriores y crear los nuevos
+      if (items) {
+        await tx.purchaseItem.deleteMany({
+          where: { purchaseId: id },
+        });
+      }
+
+      // Actualizar la compra
+      return tx.purchase.update({
+        where: { id },
+        data: {
+          ...(storeId && { storeId }),
+          ...(date && { date: new Date(date) }),
+          ...(items && {
+            items: {
+              create: items.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+              })),
+            },
+          }),
+        },
+        include: {
+          store: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                  brand: true,
+                },
+              },
+            },
           },
         },
-        store: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-          },
-        },
-      },
+      });
     });
 
-    // Formatear respuesta
-    const formattedPurchase = {
-      id: purchase.id,
-      price: Number(purchase.price),
-      quantity: Number(purchase.quantity),
-      total: Number(purchase.price) * Number(purchase.quantity),
-      date: purchase.date,
-      createdAt: purchase.createdAt,
-      product: purchase.product,
-      store: purchase.store,
-    };
-
-    return successResponse(res, { purchase: formattedPurchase }, "Compra actualizada exitosamente");
+    return successResponse(
+      res,
+      { purchase: formatPurchase(purchase) },
+      "Compra actualizada exitosamente"
+    );
   } catch (error) {
     next(error);
   }
@@ -484,7 +532,7 @@ export const deletePurchase = async (
       );
     }
 
-    // Eliminar compra
+    // Eliminar compra (los items se eliminan en cascada por el schema)
     await prisma.purchase.delete({
       where: { id },
     });
