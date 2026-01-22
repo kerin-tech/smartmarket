@@ -1,10 +1,12 @@
+// src/components/features/products/ProductCard.tsx
+
 'use client';
 
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownItem } from '@/components/ui/DropdownMenu';
 import { useProductStore } from '@/stores/product.store';
 import type { Product } from '@/types/product.types';
-import { categoryConfig } from '@/types/product.types';
+import { getCategoryConfig } from '@/types/product.types';
 
 interface ProductCardProps {
   product: Product;
@@ -16,7 +18,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductCardProps) {
   const { menuOpenForId, openMenu, closeMenu } = useProductStore();
   const isMenuOpen = menuOpenForId === product.id;
-  const config = categoryConfig[product.category];
+  const config = getCategoryConfig(product.category);
 
   // Resaltar texto de búsqueda
   const highlightText = (text: string, query: string) => {
@@ -49,7 +51,8 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
           {highlightText(product.name, searchQuery || '')}
         </h3>
         <p className="text-xs text-secondary-500">
-          {config.label} · {product.unit}
+          {config.label}
+          {product.brand && ` · ${product.brand}`}
         </p>
       </div>
 

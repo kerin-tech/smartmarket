@@ -3,18 +3,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { ChipGroup } from '@/components/ui/ChipGroup';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { 
   productSchema, 
   categoryOptions, 
-  unitOptions,
   type ProductFormValues 
 } from '@/lib/validations/product.schema';
 import type { Product } from '@/types/product.types';
@@ -40,15 +38,14 @@ export function ProductForm({
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors, isValid },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     mode: 'onChange',
     defaultValues: {
       name: '',
-      category: undefined,
-      unit: undefined,
+      category: '',
+      brand: '',
     },
   });
 
@@ -58,13 +55,13 @@ export function ProductForm({
       reset({
         name: product.name,
         category: product.category,
-        unit: product.unit,
+        brand: product.brand || '',
       });
     } else {
       reset({
         name: '',
-        category: undefined,
-        unit: undefined,
+        category: '',
+        brand: '',
       });
     }
   }, [product, reset, isOpen]);
@@ -104,27 +101,20 @@ export function ProductForm({
           options={categoryOptions.map((c) => ({
             value: c.value,
             label: c.label,
-            emoji: c.emoji,
           }))}
           disabled={isLoading}
           error={errors.category?.message}
           {...register('category')}
         />
 
-        {/* Unidad de medida */}
-        <Controller
-          name="unit"
-          control={control}
-          render={({ field }) => (
-            <ChipGroup
-              label="Unidad de medida"
-              options={unitOptions}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={isLoading}
-              error={errors.unit?.message}
-            />
-          )}
+        {/* Marca */}
+        <Input
+          label="Marca (opcional)"
+          placeholder="Ej: Diana, Alpina, Colanta"
+          disabled={isLoading}
+          error={errors.brand?.message}
+          helperText={!errors.brand ? 'Ayuda a identificar mejor el producto.' : undefined}
+          {...register('brand')}
         />
 
         <ModalFooter>

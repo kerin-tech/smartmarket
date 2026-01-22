@@ -2,39 +2,39 @@
 
 import { z } from 'zod';
 
-export const categoryOptions = [
-  { value: 'fruits', label: 'Frutas', emoji: '🍎' },
-  { value: 'vegetables', label: 'Verduras', emoji: '🥬' },
-  { value: 'grains', label: 'Granos', emoji: '🍚' },
-  { value: 'dairy', label: 'Lácteos', emoji: '🥛' },
-  { value: 'meats', label: 'Carnes', emoji: '🥩' },
-  { value: 'beverages', label: 'Bebidas', emoji: '🥤' },
-  { value: 'cleaning', label: 'Limpieza', emoji: '🧹' },
-  { value: 'other', label: 'Otros', emoji: '📦' },
-] as const;
-
-export const unitOptions = [
-  { value: 'kg', label: 'kg' },
-  { value: 'gr', label: 'gr' },
-  { value: 'lt', label: 'lt' },
-  { value: 'ml', label: 'ml' },
-  { value: 'unidad', label: 'unidad' },
-] as const;
-
 export const productSchema = z.object({
   name: z
-    .string()
-    .min(1, 'El nombre es requerido')
+    .string({
+      required_error: 'El nombre es requerido',
+    })
     .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  category: z.enum(
-    ['fruits', 'vegetables', 'grains', 'dairy', 'meats', 'beverages', 'cleaning', 'other'],
-    { required_error: 'Selecciona una categoría' }
-  ),
-  unit: z.enum(
-    ['kg', 'gr', 'lt', 'ml', 'unidad'],
-    { required_error: 'Selecciona una unidad de medida' }
-  ),
+    .max(255, 'El nombre no puede exceder 255 caracteres')
+    .trim(),
+
+  category: z
+    .string({
+      required_error: 'La categoría es requerida',
+    })
+    .min(1, 'La categoría es requerida'),
+
+  brand: z
+    .string()
+    .max(255, 'La marca no puede exceder 255 caracteres')
+    .trim()
+    .optional()
+    .default(''),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
+
+// Opciones de categorías para el select
+export const categoryOptions = [
+  { value: 'Frutas', label: 'Frutas', emoji: '🍎' },
+  { value: 'Verduras', label: 'Verduras', emoji: '🥬' },
+  { value: 'Granos', label: 'Granos', emoji: '🍚' },
+  { value: 'Lácteos', label: 'Lácteos', emoji: '🥛' },
+  { value: 'Carnes', label: 'Carnes', emoji: '🥩' },
+  { value: 'Bebidas', label: 'Bebidas', emoji: '🥤' },
+  { value: 'Limpieza', label: 'Limpieza', emoji: '🧹' },
+  { value: 'Otros', label: 'Otros', emoji: '📦' },
+];
