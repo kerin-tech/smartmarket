@@ -12,7 +12,7 @@ interface DropdownMenuProps {
   children: React.ReactNode;
   align?: 'left' | 'right';
   className?: string;
-  triggerRef?: React.RefObject<HTMLElement>;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function DropdownMenu({ 

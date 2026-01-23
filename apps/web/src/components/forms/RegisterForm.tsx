@@ -19,6 +19,9 @@ import { useAuthStore } from '@/stores/auth.store';
 import { routes } from '@/config/app.config';
 import type { ApiError } from '@/types/auth.types';
 
+// Campos válidos del formulario de registro
+const validRegisterFields = ['name', 'email', 'password', 'confirmPassword'];
+
 export function RegisterForm() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
@@ -73,7 +76,7 @@ export function RegisterForm() {
       } else if (apiError.errors && apiError.errors.length > 0) {
         // Mapear errores de campo específicos del servidor
         apiError.errors.forEach((fieldError) => {
-          if (fieldError.field && fieldError.field in registerSchema.shape) {
+          if (fieldError.field && validRegisterFields.includes(fieldError.field)) {
             setError(fieldError.field as keyof RegisterFormValues, {
               type: 'manual',
               message: fieldError.message,

@@ -30,16 +30,6 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
   const isMenuOpen = openMenuId === purchase.id;
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleEdit = () => {
-    closeMenu();
-    onEdit(purchase);
-  };
-
-  const handleDelete = () => {
-    closeMenu();
-    onDelete(purchase);
-  };
-
   return (
     <div className="flex items-center gap-3 p-4 hover:bg-secondary-50 transition-colors">
       {/* Icon */}
@@ -78,30 +68,48 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
           </p>
         </div>
 
-        {/* Menu trigger */}
-        <button
-          ref={triggerRef}
-          onClick={() => setOpenMenuId(isMenuOpen ? null : purchase.id)}
-          className="p-2 rounded-lg hover:bg-secondary-100 transition-colors"
-          aria-label="Opciones"
-        >
-          <MoreVertical className="h-5 w-5 text-secondary-400" />
-        </button>
+        {/* Menu */}
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
+          <button
+            ref={triggerRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              isMenuOpen ? closeMenu() : setOpenMenuId(purchase.id);
+            }}
+            className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+            aria-label="Opciones"
+            aria-haspopup="menu"
+            aria-expanded={isMenuOpen}
+          >
+            <MoreVertical className="h-5 w-5" />
+          </button>
 
-        {/* Dropdown Menu */}
-        <DropdownMenu
-          isOpen={isMenuOpen}
-          onClose={closeMenu}
-          triggerRef={triggerRef as React.RefObject<HTMLElement>}
-          align="right"
-        >
-          <DropdownItem onClick={handleEdit} icon={<Pencil className="h-4 w-4" />}>
-            Editar
-          </DropdownItem>
-          <DropdownItem onClick={handleDelete} icon={<Trash2 className="h-4 w-4" />} variant="danger">
-            Eliminar
-          </DropdownItem>
-        </DropdownMenu>
+          <DropdownMenu 
+            isOpen={isMenuOpen} 
+            onClose={closeMenu}
+            triggerRef={triggerRef}
+          >
+            <DropdownItem 
+              onClick={() => {
+                closeMenu();
+                onEdit(purchase);
+              }}
+              icon={<Pencil className="h-4 w-4" />}
+            >
+              Editar
+            </DropdownItem>
+            <DropdownItem 
+              onClick={() => {
+                closeMenu();
+                onDelete(purchase);
+              }}
+              icon={<Trash2 className="h-4 w-4" />}
+              variant="danger"
+            >
+              Eliminar
+            </DropdownItem>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,16 @@
 // src/types/product.types.ts
 
+// Tipo para las categorías
+export type CategoryKey = 
+  | 'Frutas' 
+  | 'Verduras' 
+  | 'Granos' 
+  | 'Lácteos' 
+  | 'Carnes' 
+  | 'Bebidas' 
+  | 'Limpieza' 
+  | 'Otros';
+
 export interface Product {
   id: string;
   name: string;
