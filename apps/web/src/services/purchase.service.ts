@@ -32,9 +32,6 @@ interface ApiPurchasesResponse {
 }
 
 export const purchaseService = {
-  /**
-   * Obtener todas las compras con paginación y filtros
-   */
   async getAll(params?: { 
     page?: number; 
     limit?: number;
@@ -58,9 +55,6 @@ export const purchaseService = {
     };
   },
 
-  /**
-   * Obtener compra por ID
-   */
   async getById(id: string): Promise<Purchase> {
     const response = await api.get<ApiSuccessResponse<ApiPurchaseResponse>>(
       `/purchases/${id}`
@@ -68,9 +62,6 @@ export const purchaseService = {
     return response.data.data.purchase;
   },
 
-  /**
-   * Crear nueva compra con items
-   */
   async create(data: CreatePurchaseRequest): Promise<Purchase> {
     const response = await api.post<ApiSuccessResponse<ApiPurchaseResponse>>(
       '/purchases',
@@ -79,9 +70,6 @@ export const purchaseService = {
     return response.data.data.purchase;
   },
 
-  /**
-   * Actualizar compra
-   */
   async update(id: string, data: UpdatePurchaseRequest): Promise<Purchase> {
     const response = await api.put<ApiSuccessResponse<ApiPurchaseResponse>>(
       `/purchases/${id}`,
@@ -90,9 +78,6 @@ export const purchaseService = {
     return response.data.data.purchase;
   },
 
-  /**
-   * Eliminar compra
-   */
   async delete(id: string): Promise<void> {
     await api.delete(`/purchases/${id}`);
   },

@@ -5,7 +5,7 @@ import { PurchaseList } from '@/components/features/purchases/PurchaseList';
 
 export const metadata: Metadata = {
   title: 'Mis Compras | SmartMarket',
-  description: 'Registra y gestiona tus compras para comparar precios',
+  description: 'Gestiona y registra tus compras para comparar precios',
 };
 
 export default function PurchasesPage() {

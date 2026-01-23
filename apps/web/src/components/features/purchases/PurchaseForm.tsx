@@ -44,6 +44,7 @@ export function PurchaseForm({
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PurchaseItemFormData | null>(null);
 
+  // Cargar tiendas
   useEffect(() => {
     if (!isOpen) return;
     const loadStores = async () => {
@@ -60,6 +61,7 @@ export function PurchaseForm({
     loadStores();
   }, [isOpen]);
 
+  // Cargar datos cuando se edita
   useEffect(() => {
     if (purchase && isOpen) {
       setStoreId(purchase.store.id);
@@ -119,27 +121,61 @@ export function PurchaseForm({
 
   const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const isValid = storeId && date && items.length > 0;
-  const storeOptions = stores.map((s) => ({ value: s.id, label: s.name }));
+
+  const storeOptions = stores.map((s) => ({ 
+    value: s.id, 
+    label: s.name 
+  }));
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose} title={isEditing ? 'Editar Compra' : 'Nueva Compra'} size="lg">
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={isEditing ? 'Editar Compra' : 'Nueva Compra'}
+        size="lg"
+      >
         <div className="space-y-6">
           {loadingStores ? (
             <div className="py-8 text-center text-secondary-500">Cargando...</div>
           ) : (
             <>
+              {/* Store and Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select label="Local *" placeholder="Seleccionar local" options={storeOptions} value={storeId} onChange={setStoreId} disabled={isLoading} />
-                <Input label="Fecha *" type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={isLoading} max={new Date().toISOString().split('T')[0]} />
+                <Select
+                  label="Local"
+                  placeholder="Seleccionar local"
+                  options={storeOptions}
+                  value={storeId}
+                  onChange={(e) => setStoreId(e.target.value)}
+                  disabled={isLoading}
+                />
+                <Input
+                  label="Fecha"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  disabled={isLoading}
+                  max={new Date().toISOString().split('T')[0]}
+                />
               </div>
 
               <hr className="border-secondary-200" />
 
+              {/* Items section */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-secondary-700">Productos ({items.length})</h3>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setEditingItem(null); setIsAddItemOpen(true); }} leftIcon={<Plus className="h-4 w-4" />} disabled={isLoading}>
+                  <h3 className="text-sm font-medium text-secondary-700">
+                    Productos ({items.length})
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setEditingItem(null); setIsAddItemOpen(true); }}
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    disabled={isLoading}
+                  >
                     Agregar
                   </Button>
                 </div>
@@ -148,29 +184,55 @@ export function PurchaseForm({
                   <div className="py-8 text-center border-2 border-dashed border-secondary-200 rounded-xl">
                     <Package className="h-12 w-12 text-secondary-300 mx-auto mb-3" />
                     <p className="text-secondary-500 mb-3">Agrega productos a tu compra</p>
-                    <Button type="button" variant="outline" size="sm" onClick={() => { setEditingItem(null); setIsAddItemOpen(true); }} leftIcon={<Plus className="h-4 w-4" />}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setEditingItem(null); setIsAddItemOpen(true); }}
+                      leftIcon={<Plus className="h-4 w-4" />}
+                    >
                       Agregar producto
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {items.map((item) => (
-                      <PurchaseItemRow key={item.tempId} item={item} onEdit={handleEditItem} onDelete={handleDeleteItem} />
+                      <PurchaseItemRow
+                        key={item.tempId}
+                        item={item}
+                        onEdit={handleEditItem}
+                        onDelete={handleDeleteItem}
+                      />
                     ))}
                   </div>
                 )}
               </div>
 
+              {/* Total */}
               <div className="bg-secondary-50 rounded-xl p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-secondary-600">Total</span>
-                  <span className="text-xl font-bold text-secondary-900">{formatCurrency(total)}</span>
+                  <span className="text-xl font-bold text-secondary-900">
+                    {formatCurrency(total)}
+                  </span>
                 </div>
               </div>
 
               <ModalFooter>
-                <Button type="button" variant="secondary" onClick={handleClose} disabled={isLoading}>Cancelar</Button>
-                <Button type="button" onClick={handleSubmit} isLoading={isLoading} disabled={!isValid || isLoading}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  isLoading={isLoading}
+                  disabled={!isValid}
+                >
                   {isEditing ? 'Guardar cambios' : 'Guardar compra'}
                 </Button>
               </ModalFooter>
@@ -179,7 +241,12 @@ export function PurchaseForm({
         </div>
       </Modal>
 
-      <AddItemModal isOpen={isAddItemOpen} onClose={() => { setIsAddItemOpen(false); setEditingItem(null); }} onAddItem={handleAddItem} editingItem={editingItem} />
+      <AddItemModal
+        isOpen={isAddItemOpen}
+        onClose={() => { setIsAddItemOpen(false); setEditingItem(null); }}
+        onAddItem={handleAddItem}
+        editingItem={editingItem}
+      />
     </>
   );
 }

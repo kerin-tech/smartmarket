@@ -13,7 +13,7 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
- * Formatea una fecha en formato legible
+ * Formatea una fecha en formato corto
  */
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -25,7 +25,7 @@ export function formatDate(date: string | Date): string {
 }
 
 /**
- * Formatea una fecha en formato largo (Sábado, 18 de enero)
+ * Formatea una fecha en formato largo
  */
 export function formatDateLong(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -37,26 +37,25 @@ export function formatDateLong(date: string | Date): string {
 }
 
 /**
- * Formatea una fecha en formato corto (día/mes)
+ * Formatea mes y año
  */
-export function formatDateShort(date: string | Date): string {
+export function formatMonthYear(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'short',
+    month: 'long',
+    year: 'numeric',
   }).format(d);
 }
 
 /**
- * Formatea una fecha para input type="date"
+ * Obtiene la fecha actual en formato YYYY-MM-DD
  */
-export function formatDateForInput(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().split('T')[0];
+export function getCurrentDateString(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 /**
- * Obtiene el mes y año actual en formato YYYY-MM
+ * Obtiene el mes actual en formato YYYY-MM
  */
 export function getCurrentMonth(): string {
   const now = new Date();
