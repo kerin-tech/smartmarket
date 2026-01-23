@@ -13,7 +13,7 @@ export interface JwtPayload {
  */
 export const generateToken = (payload: JwtPayload): string => {
   const options: SignOptions = {
-    expiresIn: JWT_EXPIRES_IN,
+    expiresIn: (process.env.JWT_EXPIRES_IN || '24h') as any
   };
 
   return jwt.sign(payload, JWT_SECRET, options);
