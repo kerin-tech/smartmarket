@@ -94,6 +94,7 @@ model PurchaseItem {
   productId  String   @map("product_id") @db.Uuid
   quantity   Decimal  @db.Decimal(10, 3)
   unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  discountPercentage Float    @default(0)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
 
   // Relaciones
