@@ -117,6 +117,7 @@ export const getMonthlyAnalytics = async (
  * GET /api/v1/analytics/summary
  * Obtiene resumen general de todas las compras del usuario
  */
+
 export const getSummary = async (
   req: Request,
   res: Response,
@@ -125,41 +126,33 @@ export const getSummary = async (
   try {
     const userId = req.user!.id;
 
-    // Obtener conteos y totales
     const [purchaseStats, storeCount, productCount] = await Promise.all([
-      // Stats de compras
       prisma.purchase.findMany({
         where: { userId },
         include: { items: true },
       }),
-      // Conteo de tiendas
       prisma.store.count({
         where: { userId },
       }),
-      // Conteo de productos
       prisma.product.count({
         where: { userId },
       }),
     ]);
 
-    // Calcular totales
     let totalSpent = 0;
     let totalItems = 0;
     const storeSpending: Record<string, number> = {};
 
     purchaseStats.forEach((purchase) => {
       const purchaseTotal = purchase.items.reduce(
-        (sum, item) => sum + parseFloat(item.quantity.toString()) * parseFloat(item.unitPrice.toString()),
+        (sum, item) => sum + Number(item.quantity) * Number(item.unitPrice),
         0
       );
       totalSpent += purchaseTotal;
       totalItems += purchase.items.length;
-      
-      // Acumular por tienda
       storeSpending[purchase.storeId] = (storeSpending[purchase.storeId] || 0) + purchaseTotal;
     });
 
-    // Encontrar la tienda donde más se gasta
     let topStoreId: string | null = null;
     let topStoreSpending = 0;
     Object.entries(storeSpending).forEach(([storeId, spending]) => {
@@ -169,8 +162,9 @@ export const getSummary = async (
       }
     });
 
-    // Obtener nombre de la tienda top
-    let topStore = null;
+    // CORRECCIÓN DE TIPO (El error TS2322 que vimos antes)
+    let topStore: { id: string; name: string; totalSpent: number } | null = null;
+    
     if (topStoreId) {
       const store = await prisma.store.findUnique({
         where: { id: topStoreId },
@@ -195,10 +189,11 @@ export const getSummary = async (
         : 0,
       topStore,
     });
-  } catch (error) {
+  } catch (error) { // Asegúrate de que estas líneas existan
     next(error);
-  }
+  } // <--- ESTA LLAVE ES LA QUE PROBABLEMENTE FALTABA
 };
+
 
 /**
  * GET /api/v1/analytics/by-store
