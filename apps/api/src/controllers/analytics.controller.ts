@@ -117,7 +117,6 @@ export const getMonthlyAnalytics = async (
  * GET /api/v1/analytics/summary
  * Obtiene resumen general de todas las compras del usuario
  */
-
 export const getSummary = async (
   req: Request,
   res: Response,
@@ -126,33 +125,41 @@ export const getSummary = async (
   try {
     const userId = req.user!.id;
 
+    // Obtener conteos y totales
     const [purchaseStats, storeCount, productCount] = await Promise.all([
+      // Stats de compras
       prisma.purchase.findMany({
         where: { userId },
         include: { items: true },
       }),
+      // Conteo de tiendas
       prisma.store.count({
         where: { userId },
       }),
+      // Conteo de productos
       prisma.product.count({
         where: { userId },
       }),
     ]);
 
+    // Calcular totales
     let totalSpent = 0;
     let totalItems = 0;
     const storeSpending: Record<string, number> = {};
 
     purchaseStats.forEach((purchase) => {
       const purchaseTotal = purchase.items.reduce(
-        (sum, item) => sum + Number(item.quantity) * Number(item.unitPrice),
+        (sum, item) => sum + parseFloat(item.quantity.toString()) * parseFloat(item.unitPrice.toString()),
         0
       );
       totalSpent += purchaseTotal;
       totalItems += purchase.items.length;
+      
+      // Acumular por tienda
       storeSpending[purchase.storeId] = (storeSpending[purchase.storeId] || 0) + purchaseTotal;
     });
 
+    // Encontrar la tienda donde más se gasta
     let topStoreId: string | null = null;
     let topStoreSpending = 0;
     Object.entries(storeSpending).forEach(([storeId, spending]) => {
@@ -162,9 +169,8 @@ export const getSummary = async (
       }
     });
 
-    // CORRECCIÓN DE TIPO (El error TS2322 que vimos antes)
+    // Obtener nombre de la tienda top
     let topStore: { id: string; name: string; totalSpent: number } | null = null;
-    
     if (topStoreId) {
       const store = await prisma.store.findUnique({
         where: { id: topStoreId },
@@ -189,11 +195,10 @@ export const getSummary = async (
         : 0,
       topStore,
     });
-  } catch (error) { // Asegúrate de que estas líneas existan
+  } catch (error) {
     next(error);
-  } // <--- ESTA LLAVE ES LA QUE PROBABLEMENTE FALTABA
+  }
 };
-
 
 /**
  * GET /api/v1/analytics/by-store
@@ -375,3 +380,186 @@ function formatMonthLabel(monthKey: string): string {
   const label = date.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+/**
+ * GET /api/v1/analytics/compare-prices
+ * Compara precios de un producto en diferentes tiendas
+ * Query params:
+ *   - productId: UUID del producto (requerido)
+ */
+export const comparePrices = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user!.id;
+    const { productId } = req.query;
+
+    // Validar que se envió productId
+    if (!productId || typeof productId !== 'string') {
+      return errorResponse(
+        res,
+        'El parámetro productId es requerido',
+        ERROR_CODES.BAD_REQUEST.code
+      );
+    }
+
+    // Verificar que el producto existe y pertenece al usuario
+    const product = await prisma.product.findFirst({
+      where: {
+        id: productId,
+        userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        brand: true,
+      },
+    });
+
+    if (!product) {
+      return errorResponse(
+        res,
+        'Producto no encontrado',
+        ERROR_CODES.NOT_FOUND.code
+      );
+    }
+
+    // Obtener todos los items de compra para este producto
+    const purchaseItems = await prisma.purchaseItem.findMany({
+      where: {
+        productId,
+        purchase: {
+          userId,
+        },
+      },
+      include: {
+        purchase: {
+          select: {
+            id: true,
+            date: true,
+            storeId: true,
+            store: {
+              select: {
+                id: true,
+                name: true,
+                location: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        purchase: {
+          date: 'desc',
+        },
+      },
+    });
+
+    // Si no hay compras del producto
+    if (purchaseItems.length === 0) {
+      return successResponse(res, {
+        product,
+        comparison: [],
+        bestOption: null,
+        totalPurchases: 0,
+        message: 'No hay compras registradas para este producto',
+      });
+    }
+
+    // Agrupar por tienda y calcular estadísticas
+    const storeStats: Record<string, {
+      store: { id: string; name: string; location: string };
+      prices: number[];
+      lastPrice: number;
+      lastDate: Date;
+      count: number;
+    }> = {};
+
+    purchaseItems.forEach((item) => {
+      const storeId = item.purchase.storeId;
+      const unitPrice = parseFloat(item.unitPrice.toString());
+      const purchaseDate = new Date(item.purchase.date);
+
+      if (!storeStats[storeId]) {
+        storeStats[storeId] = {
+          store: item.purchase.store,
+          prices: [],
+          lastPrice: unitPrice,
+          lastDate: purchaseDate,
+          count: 0,
+        };
+      }
+
+      storeStats[storeId].prices.push(unitPrice);
+      storeStats[storeId].count += 1;
+
+      // Actualizar último precio si esta compra es más reciente
+      if (purchaseDate > storeStats[storeId].lastDate) {
+        storeStats[storeId].lastPrice = unitPrice;
+        storeStats[storeId].lastDate = purchaseDate;
+      }
+    });
+
+    // Calcular estadísticas y formatear respuesta
+    const comparison = Object.values(storeStats)
+      .map((stat) => {
+        const prices = stat.prices;
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+
+        return {
+          store: stat.store,
+          minPrice: Math.round(minPrice * 100) / 100,
+          maxPrice: Math.round(maxPrice * 100) / 100,
+          avgPrice: Math.round(avgPrice * 100) / 100,
+          lastPrice: Math.round(stat.lastPrice * 100) / 100,
+          lastDate: stat.lastDate.toISOString().split('T')[0],
+          purchaseCount: stat.count,
+          priceVariation: prices.length > 1
+            ? Math.round(((maxPrice - minPrice) / minPrice) * 10000) / 100
+            : 0,
+        };
+      })
+      // Ordenar por precio promedio (menor primero)
+      .sort((a, b) => a.avgPrice - b.avgPrice);
+
+    // Identificar la mejor opción (menor precio promedio)
+    const bestOption = comparison.length > 0
+      ? {
+          storeId: comparison[0].store.id,
+          storeName: comparison[0].store.name,
+          avgPrice: comparison[0].avgPrice,
+          lastPrice: comparison[0].lastPrice,
+          savings: comparison.length > 1
+            ? Math.round((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) * 100) / 100
+            : 0,
+          savingsPercentage: comparison.length > 1
+            ? Math.round(((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) / comparison[comparison.length - 1].avgPrice) * 10000) / 100
+            : 0,
+        }
+      : null;
+
+    // Calcular estadísticas globales del producto
+    const allPrices = purchaseItems.map((item) => parseFloat(item.unitPrice.toString()));
+    const globalStats = {
+      minPrice: Math.round(Math.min(...allPrices) * 100) / 100,
+      maxPrice: Math.round(Math.max(...allPrices) * 100) / 100,
+      avgPrice: Math.round((allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length) * 100) / 100,
+      totalPurchases: purchaseItems.length,
+      storesCount: comparison.length,
+    };
+
+    return successResponse(res, {
+      product,
+      comparison,
+      bestOption,
+      globalStats,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
