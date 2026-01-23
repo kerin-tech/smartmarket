@@ -10,6 +10,7 @@ import {
   getByStore,
   getByCategory,
   comparePrices,
+  getTopProducts,
 } from "../controllers/analytics.controller";
 
 const router: Router = Router();
@@ -18,46 +19,51 @@ const router: Router = Router();
 router.use(checkJwt);
 
 /**
- * GET /api/v1/analytics/monthly
- * @summary Obtener métricas mensuales de compras
- * @tags Analytics
- * @security BearerAuth
- * @param {number} months.query - Número de meses (default: 6, max: 24)
+ * @route   GET /api/v1/analytics/monthly
+ * @desc    Obtener métricas mensuales de compras
+ * @query   months - Número de meses (default: 6, max: 24)
+ * @access  Private
  */
 router.get("/monthly", validateQuery(monthsQuerySchema), getMonthlyAnalytics);
 
 /**
- * GET /api/v1/analytics/summary
- * @summary Obtener resumen general de todas las compras (Total, Ahorros, etc)
- * @tags Analytics
- * @security BearerAuth
+ * @route   GET /api/v1/analytics/summary
+ * @desc    Obtener resumen general de todas las compras
+ * @query   month - Filtrar por mes específico (formato YYYY-MM, opcional)
+ * @access  Private
  */
 router.get("/summary", getSummary);
 
 /**
- * GET /api/v1/analytics/by-store
- * @summary Obtener gastos agrupados por tienda
- * @tags Analytics
- * @security BearerAuth
- * @param {number} months.query - Número de meses
+ * @route   GET /api/v1/analytics/top-products
+ * @desc    Obtener productos más comprados ordenados por gasto total
+ * @query   limit - Número de productos (default: 5, max: 20)
+ * @query   month - Filtrar por mes específico (formato YYYY-MM, opcional)
+ * @access  Private
+ */
+router.get("/top-products", getTopProducts);
+
+/**
+ * @route   GET /api/v1/analytics/by-store
+ * @desc    Obtener gastos agrupados por tienda
+ * @query   months - Número de meses (default: 6, max: 24)
+ * @access  Private
  */
 router.get("/by-store", validateQuery(monthsQuerySchema), getByStore);
 
 /**
- * GET /api/v1/analytics/by-category
- * @summary Obtener gastos agrupados por categoría
- * @tags Analytics
- * @security BearerAuth
- * @param {number} months.query - Número de meses
+ * @route   GET /api/v1/analytics/by-category
+ * @desc    Obtener gastos agrupados por categoría
+ * @query   months - Número de meses (default: 6, max: 24)
+ * @access  Private
  */
 router.get("/by-category", validateQuery(monthsQuerySchema), getByCategory);
 
 /**
- * GET /api/v1/analytics/compare-prices
- * @summary Comparar precios de un producto en diferentes tiendas
- * @tags Analytics
- * @security BearerAuth
- * @param {string} productId.query.required - UUID del producto
+ * @route   GET /api/v1/analytics/compare-prices
+ * @desc    Comparar precios de un producto en diferentes tiendas
+ * @query   productId - UUID del producto (requerido)
+ * @access  Private
  */
 router.get("/compare-prices", comparePrices);
 

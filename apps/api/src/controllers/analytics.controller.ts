@@ -116,6 +116,8 @@ export const getMonthlyAnalytics = async (
 /**
  * GET /api/v1/analytics/summary
  * Obtiene resumen general de todas las compras del usuario
+ * Query params:
+ *   - month: filtrar por mes específico (formato YYYY-MM, opcional)
  */
 export const getSummary = async (
   req: Request,
@@ -124,19 +126,35 @@ export const getSummary = async (
 ) => {
   try {
     const userId = req.user!.id;
+    const monthParam = req.query.month as string | undefined;
+
+    // Calcular rango de fechas si se especifica mes
+    let dateFilter: { gte?: Date; lt?: Date } | undefined;
+    let periodLabel: string | undefined;
+
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [year, month] = monthParam.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1); // Primer día del siguiente mes
+      dateFilter = { gte: startDate, lt: endDate };
+      periodLabel = formatMonthLabel(monthParam);
+    }
 
     // Obtener conteos y totales
     const [purchaseStats, storeCount, productCount] = await Promise.all([
       // Stats de compras
       prisma.purchase.findMany({
-        where: { userId },
+        where: { 
+          userId,
+          ...(dateFilter && { date: dateFilter }),
+        },
         include: { items: true },
       }),
-      // Conteo de tiendas
+      // Conteo de tiendas (total del usuario, no filtrado por mes)
       prisma.store.count({
         where: { userId },
       }),
-      // Conteo de productos
+      // Conteo de productos (total del usuario, no filtrado por mes)
       prisma.product.count({
         where: { userId },
       }),
@@ -194,6 +212,130 @@ export const getSummary = async (
         ? Math.round((totalSpent / purchaseStats.length) * 100) / 100 
         : 0,
       topStore,
+      ...(periodLabel && { period: periodLabel }),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/v1/analytics/top-products
+ * Obtiene los productos más comprados ordenados por gasto total
+ * Query params:
+ *   - limit: número de productos a retornar (default: 5, max: 20)
+ *   - month: filtrar por mes específico (formato YYYY-MM, opcional)
+ */
+export const getTopProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user!.id;
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 5, 1), 20);
+    const monthParam = req.query.month as string | undefined;
+
+    // Calcular rango de fechas si se especifica mes
+    let dateFilter: { gte?: Date; lt?: Date } | undefined;
+    let periodLabel: string | undefined;
+
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [year, month] = monthParam.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
+      dateFilter = { gte: startDate, lt: endDate };
+      periodLabel = formatMonthLabel(monthParam);
+    }
+
+    // Obtener items de compras con productos
+    const purchaseItems = await prisma.purchaseItem.findMany({
+      where: {
+        purchase: {
+          userId,
+          ...(dateFilter && { date: dateFilter }),
+        },
+      },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            brand: true,
+          },
+        },
+      },
+    });
+
+    // Agrupar por producto
+    const productData: Record<string, {
+      product: {
+        id: string;
+        name: string;
+        category: string;
+        brand: string;
+      };
+      totalSpent: number;
+      totalQuantity: number;
+      purchaseCount: number;
+      avgPrice: number;
+      prices: number[];
+    }> = {};
+
+    purchaseItems.forEach((item) => {
+      const productId = item.product.id;
+      const quantity = parseFloat(item.quantity.toString());
+      const unitPrice = parseFloat(item.unitPrice.toString());
+      const itemTotal = quantity * unitPrice;
+
+      if (!productData[productId]) {
+        productData[productId] = {
+          product: item.product,
+          totalSpent: 0,
+          totalQuantity: 0,
+          purchaseCount: 0,
+          avgPrice: 0,
+          prices: [],
+        };
+      }
+
+      productData[productId].totalSpent += itemTotal;
+      productData[productId].totalQuantity += quantity;
+      productData[productId].purchaseCount += 1;
+      productData[productId].prices.push(unitPrice);
+    });
+
+    // Calcular promedios y ordenar por gasto total
+    const topProducts = Object.values(productData)
+      .map((data) => ({
+        ...data.product,
+        totalSpent: Math.round(data.totalSpent * 100) / 100,
+        totalQuantity: Math.round(data.totalQuantity * 1000) / 1000,
+        purchaseCount: data.purchaseCount,
+        avgPrice: Math.round((data.prices.reduce((sum, p) => sum + p, 0) / data.prices.length) * 100) / 100,
+        minPrice: Math.round(Math.min(...data.prices) * 100) / 100,
+        maxPrice: Math.round(Math.max(...data.prices) * 100) / 100,
+      }))
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, limit);
+
+    // Calcular total general para porcentajes
+    const grandTotal = Object.values(productData).reduce((sum, p) => sum + p.totalSpent, 0);
+
+    // Agregar porcentaje a cada producto
+    const topProductsWithPercentage = topProducts.map((product) => ({
+      ...product,
+      percentage: grandTotal > 0 
+        ? Math.round((product.totalSpent / grandTotal) * 10000) / 100 
+        : 0,
+    }));
+
+    return successResponse(res, {
+      topProducts: topProductsWithPercentage,
+      totalProducts: Object.keys(productData).length,
+      grandTotal: Math.round(grandTotal * 100) / 100,
+      ...(periodLabel && { period: periodLabel }),
     });
   } catch (error) {
     next(error);
