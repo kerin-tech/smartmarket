@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import { JwtPayload } from 'jsonwebtoken';
 import { verifyToken } from "../utils/jwt.handle";
+
 
 // Agregar esto al inicio
 declare global {
