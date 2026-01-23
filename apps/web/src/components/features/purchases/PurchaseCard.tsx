@@ -92,7 +92,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
         <DropdownMenu
           isOpen={isMenuOpen}
           onClose={closeMenu}
-          triggerRef={triggerRef}
+          triggerRef={triggerRef as React.RefObject<HTMLElement>}
           align="right"
         >
           <DropdownItem onClick={handleEdit} icon={<Pencil className="h-4 w-4" />}>
