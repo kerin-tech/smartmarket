@@ -1,5 +1,3 @@
-// src/components/features/purchases/PurchaseForm.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -70,6 +68,7 @@ export function PurchaseForm({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        discountPercentage: item.discountPercentage, 
         product: item.product,
         tempId: item.id,
       })));
@@ -79,6 +78,26 @@ export function PurchaseForm({
       setItems([]);
     }
   }, [purchase, isOpen]);
+
+  // Lógica de cálculo de totales y ahorros
+  const summary = items.reduce((acc, item) => {
+    const base = item.quantity * item.unitPrice;
+    const discount = base * ((item.discountPercentage || 0) / 100);
+    
+    return {
+      totalBase: acc.totalBase + base,
+      totalFinal: acc.totalFinal + (base - discount),
+      totalSavings: acc.totalSavings + discount,
+      discountedItemsCount: (item.discountPercentage || 0) > 0 
+        ? acc.discountedItemsCount + 1 
+        : acc.discountedItemsCount
+    };
+  }, { totalBase: 0, totalFinal: 0, totalSavings: 0, discountedItemsCount: 0 });
+
+  // Porcentaje de ahorro efectivo total
+  const effectiveSavingsPercentage = summary.totalBase > 0 
+    ? Math.round((summary.totalSavings / summary.totalBase) * 100) 
+    : 0;
 
   const handleClose = () => {
     setStoreId('');
@@ -114,12 +133,12 @@ export function PurchaseForm({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        discountPercentage: item.discountPercentage || 0,
       })),
     };
     await onSubmit(data);
   };
 
-  const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const isValid = storeId && date && items.length > 0;
 
   const storeOptions = stores.map((s) => ({ 
@@ -140,7 +159,7 @@ export function PurchaseForm({
             <div className="py-8 text-center text-secondary-500">Cargando...</div>
           ) : (
             <>
-              {/* Store and Date */}
+              {/* Selector de Local y Fecha */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select
                   label="Local"
@@ -162,7 +181,7 @@ export function PurchaseForm({
 
               <hr className="border-secondary-200" />
 
-              {/* Items section */}
+              {/* Lista de Productos */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-secondary-700">
@@ -195,7 +214,7 @@ export function PurchaseForm({
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {items.map((item) => (
                       <PurchaseItemRow
                         key={item.tempId}
@@ -208,12 +227,33 @@ export function PurchaseForm({
                 )}
               </div>
 
-              {/* Total */}
-              <div className="bg-secondary-50 rounded-xl p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-secondary-600">Total</span>
+              {/* Caja de Total con Ahorro Efectivo */}
+              <div className="bg-secondary-50 rounded-xl p-4 space-y-2">
+                {summary.totalSavings > 0 && (
+                  <div className="flex justify-between items-center pb-2 border-b border-secondary-200/50">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-secondary-700">
+                        Ahorro ({summary.discountedItemsCount} {summary.discountedItemsCount === 1 ? 'prod.' : 'prods.'})
+                      </span>
+                      <span className="text-[10px] text-secondary-500 uppercase tracking-wider font-semibold">
+                        Ahorro efectivo
+                      </span>
+                    </div>
+                    <div className="text-right flex flex-col">
+                      <span className="text-sm font-bold text-green-600">
+                        -{formatCurrency(summary.totalSavings)}
+                      </span>
+                      <span className="text-[10px] font-bold text-green-600/80">
+                        {effectiveSavingsPercentage}% dto. total
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-md font-medium text-secondary-700">Total a pagar</span>
                   <span className="text-xl font-bold text-secondary-900">
-                    {formatCurrency(total)}
+                    {formatCurrency(summary.totalFinal)}
                   </span>
                 </div>
               </div>

@@ -1,5 +1,3 @@
-// src/types/purchase.types.ts
-
 export interface PurchaseItemProduct {
   id: string;
   name: string;
@@ -11,15 +9,16 @@ export interface PurchaseItem {
   id: string;
   productId: string;
   quantity: number;
-  unitPrice: number;
-  subtotal: number;
+  unitPrice: number;        // Precio de lista (original)
+  discountPercentage: number; 
+  subtotal: number;         // (quantity * unitPrice) - descuento
   product: PurchaseItemProduct;
 }
 
 export interface PurchaseStore {
   id: string;
   name: string;
-  location: string;
+  location?: string; // Opcional si el backend no siempre lo envía
 }
 
 export interface Purchase {
@@ -28,15 +27,18 @@ export interface Purchase {
   createdAt: string;
   store: PurchaseStore;
   itemCount: number;
-  total: number;
+  total: number;          // Total real pagado (con descuentos)
+  totalBase?: number;    // Opcional
+  totalSavings?: number; // Opcional
   items: PurchaseItem[];
 }
 
-// Para el formulario de crear/editar
+// Para el formulario de crear/editar (Sincronizado con AddItemModal)
 export interface PurchaseItemFormData {
   productId: string;
   quantity: number;
   unitPrice: number;
+  discountPercentage: number; // Cambiado a requerido para evitar errores en cálculos
   product?: PurchaseItemProduct;
   tempId?: string;
 }
@@ -47,7 +49,7 @@ export interface PurchaseFormData {
   items: PurchaseItemFormData[];
 }
 
-// Request al backend
+// Request al backend (Lo que viaja por la red)
 export interface CreatePurchaseRequest {
   storeId: string;
   date: string;
@@ -55,6 +57,7 @@ export interface CreatePurchaseRequest {
     productId: string;
     quantity: number;
     unitPrice: number;
+    discountPercentage: number; 
   }[];
 }
 
@@ -65,6 +68,7 @@ export interface UpdatePurchaseRequest {
     productId: string;
     quantity: number;
     unitPrice: number;
+    discountPercentage: number;
   }[];
 }
 
@@ -94,4 +98,5 @@ export interface PurchasesByMonth {
   monthLabel: string;
   purchases: Purchase[];
   total: number;
+  totalSavings?: number; // Opcional: para mostrar ahorro mensual
 }

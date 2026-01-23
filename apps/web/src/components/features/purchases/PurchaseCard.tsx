@@ -1,9 +1,7 @@
-// src/components/features/purchases/PurchaseCard.tsx
-
 'use client';
 
 import { useRef } from 'react';
-import { MoreVertical, Pencil, Trash2, MapPin } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, MapPin, Tag } from 'lucide-react';
 import { DropdownMenu, DropdownItem } from '@/components/ui/DropdownMenu';
 import { usePurchaseStore } from '@/stores/purchase.store';
 import { formatCurrency } from '@/utils/formatters';
@@ -30,8 +28,27 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
   const isMenuOpen = openMenuId === purchase.id;
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // --- LÓGICA DE CÁLCULO LOCAL (FRONTEND ONLY) ---
+  // Calculamos el ahorro sumando lo que se descontó en cada item
+  const totalSavings = purchase.items?.reduce((acc, item) => {
+    const base = item.quantity * item.unitPrice;
+    const discount = base * ((item.discountPercentage || 0) / 100);
+    return acc + discount;
+  }, 0) || 0;
+
+  // El total base es lo que se pagó + lo que se ahorró
+  const totalBase = purchase.total + totalSavings;
+  
+  const hasDiscount = totalSavings > 0;
+  
+  // Porcentaje de ahorro efectivo sobre el total de la factura
+  const effectiveSavingsPercentage = hasDiscount && totalBase > 0
+    ? Math.round((totalSavings / totalBase) * 100)
+    : 0;
+  // -----------------------------------------------
+
   return (
-    <div className="flex items-center gap-3 p-4 hover:bg-secondary-50 transition-colors">
+    <div className="flex items-center gap-3 p-4 hover:bg-secondary-50 transition-colors border-b border-secondary-100 last:border-0">
       {/* Icon */}
       <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
         <MapPin className="h-5 w-5 text-primary-600" />
@@ -46,6 +63,12 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
           <h3 className="text-base font-semibold text-secondary-900 truncate">
             {purchase.store.name}
           </h3>
+          {hasDiscount && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">
+              <Tag className="h-2.5 w-2.5" />
+              {effectiveSavingsPercentage}%
+            </span>
+          )}
         </div>
         <p className="text-sm text-secondary-500 capitalize">
           {formatDateLong(purchase.date)}
@@ -59,13 +82,19 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        <div className="text-right">
+        <div className="text-right min-w-[100px]">
           <p className="text-base font-semibold text-secondary-900">
             {formatCurrency(purchase.total)}
           </p>
-          <p className="text-sm text-secondary-500">
-            {purchase.itemCount} {purchase.itemCount === 1 ? 'producto' : 'productos'}
-          </p>
+          {hasDiscount ? (
+            <p className="text-[10px] font-bold text-green-600">
+              Ahorraste {formatCurrency(totalSavings)}
+            </p>
+          ) : (
+            <p className="text-sm text-secondary-500">
+              {purchase.itemCount} {purchase.itemCount === 1 ? 'producto' : 'productos'}
+            </p>
+          )}
         </div>
 
         {/* Menu */}
@@ -77,9 +106,6 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
               isMenuOpen ? closeMenu() : setOpenMenuId(purchase.id);
             }}
             className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
-            aria-label="Opciones"
-            aria-haspopup="menu"
-            aria-expanded={isMenuOpen}
           >
             <MoreVertical className="h-5 w-5" />
           </button>
