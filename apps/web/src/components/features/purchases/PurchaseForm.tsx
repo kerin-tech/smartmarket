@@ -94,6 +94,7 @@ export function PurchaseForm({
     };
   }, { totalBase: 0, totalFinal: 0, totalSavings: 0, discountedItemsCount: 0 });
 
+  // Porcentaje de ahorro efectivo total
   const effectiveSavingsPercentage = summary.totalBase > 0 
     ? Math.round((summary.totalSavings / summary.totalBase) * 100) 
     : 0;
@@ -158,31 +159,31 @@ export function PurchaseForm({
             <div className="py-8 text-center text-secondary-500">Cargando...</div>
           ) : (
             <>
-              {/* CORRECCIÓN: Contenedor con ancho controlado y min-w-0 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                <div className="w-full min-w-0">
-                  <Select
-                    label="Local"
-                    placeholder="Seleccionar local"
-                    options={storeOptions}
-                    value={storeId}
-                    onChange={(e) => setStoreId(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                {/* min-w-0 es vital aquí para que el input date no desborde en móviles */}
-                <div className="w-full min-w-0">
-                  <Input
-                    label="Fecha"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    disabled={isLoading}
-                    max={new Date().toISOString().split('T')[0]}
-                    className="w-full"
-                  />
-                </div>
-              </div>
+              {/* Selector de Local y Fecha */}
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+  <div className="w-full">
+    <Select
+      label="Local"
+      placeholder="Seleccionar local"
+      options={storeOptions}
+      value={storeId}
+      onChange={(e) => setStoreId(e.target.value)}
+      disabled={isLoading}
+    />
+  </div>
+  <div className="w-full">
+    <Input
+      label="Fecha"
+      type="date"
+      value={date}
+      onChange={(e) => setDate(e.target.value)}
+      disabled={isLoading}
+      max={new Date().toISOString().split('T')[0]}
+      // Añadimos una clase para asegurar que el input ocupe el 100% real
+      className="w-full min-w-0" 
+    />
+  </div>
+</div>
 
               <hr className="border-secondary-200" />
 
@@ -219,8 +220,7 @@ export function PurchaseForm({
                     </Button>
                   </div>
                 ) : (
-                  // Limitamos la altura de la lista para evitar que el modal crezca infinitamente
-                  <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 scrollbar-hide">
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {items.map((item) => (
                       <PurchaseItemRow
                         key={item.tempId}
@@ -233,13 +233,13 @@ export function PurchaseForm({
                 )}
               </div>
 
-              {/* Caja de Total */}
+              {/* Caja de Total con Ahorro Efectivo */}
               <div className="bg-secondary-50 rounded-xl p-4 space-y-2">
                 {summary.totalSavings > 0 && (
                   <div className="flex justify-between items-center pb-2 border-b border-secondary-200/50">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-secondary-700">
-                        Ahorro ({summary.discountedItemsCount})
+                        Ahorro ({summary.discountedItemsCount} {summary.discountedItemsCount === 1 ? 'prod.' : 'prods.'})
                       </span>
                       <span className="text-[10px] text-secondary-500 uppercase tracking-wider font-semibold">
                         Ahorro efectivo
