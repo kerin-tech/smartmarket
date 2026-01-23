@@ -150,7 +150,7 @@ const config: Config = {
       // TIPOGRAFÍA
       // ===========================================
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: [ 'var(--font-dm-sans)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display-lg': ['3rem', { lineHeight: '1.2', fontWeight: '700' }],      // 48px

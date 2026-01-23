@@ -1,7 +1,15 @@
-// src/app/layout.tsx
-
 import type { Metadata } from 'next';
+// 1. Importamos la fuente desde el módulo de Google de Next.js
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
+
+// 2. Configuramos la fuente
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  // Definimos la variable CSS que usará Tailwind
+  variable: '--font-dm-sans', 
+});
 
 export const metadata: Metadata = {
   title: {
@@ -47,10 +55,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="min-h-screen bg-secondary-50 antialiased">
-        {children}
+    // 3. Agregamos la variable de la fuente al tag html
+    <html lang="es" className={`${dmSans.variable}`}>
+      {/* 4. Aplicamos 'font-sans' al body para que Tailwind use DM Sans */}
+      <body className="min-h-screen bg-secondary-50 font-sans antialiased">
+        {children}  
       </body>
     </html>
-  );
+  );  
 }

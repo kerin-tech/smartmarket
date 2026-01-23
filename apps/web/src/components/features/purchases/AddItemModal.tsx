@@ -27,12 +27,18 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
   const [loading, setLoading] = useState(false);
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [quantity, setQuantity] = useState<string>('1');
+  const [unitPrice, setUnitPrice] = useState<string>('0');
 
   const [hasDiscount, setHasDiscount] = useState(false);
-  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-  const [totalPaidWithDiscount, setTotalPaidWithDiscount] = useState<number>(0);
+  const [discountPercentage, setDiscountPercentage] = useState<string>('0');
+  const [totalPaidWithDiscount, setTotalPaidWithDiscount] = useState<string>('0');
+
+  // Helper para convertir strings de input a números reales
+  const toNumber = (val: string | number) => {
+    const stringVal = String(val).replace(/,/g, '.');
+    return parseFloat(stringVal) || 0;
+  };
 
   // Cargar productos
   useEffect(() => {
@@ -58,18 +64,19 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
       const product = products.find((p) => p.id === editingItem.productId);
       if (product) {
         setSelectedProduct(product);
-        setQuantity(editingItem.quantity);
-        setUnitPrice(editingItem.unitPrice); 
+        setQuantity(String(editingItem.quantity));
+        setUnitPrice(String(editingItem.unitPrice)); 
         
         if (editingItem.discountPercentage && editingItem.discountPercentage > 0) {
           setHasDiscount(true);
-          setDiscountPercentage(editingItem.discountPercentage);
-          const total = (editingItem.quantity * editingItem.unitPrice) * (1 - (editingItem.discountPercentage / 100));
-          setTotalPaidWithDiscount(Number(total.toFixed(2)));
+          setDiscountPercentage(String(editingItem.discountPercentage));
+          const base = editingItem.quantity * editingItem.unitPrice;
+          const total = base * (1 - (editingItem.discountPercentage / 100));
+          setTotalPaidWithDiscount(total.toFixed(2));
         } else {
           setHasDiscount(false);
-          setDiscountPercentage(0);
-          setTotalPaidWithDiscount(editingItem.quantity * editingItem.unitPrice);
+          setDiscountPercentage('0');
+          setTotalPaidWithDiscount((editingItem.quantity * editingItem.unitPrice).toString());
         }
         setStep('details');
       }
@@ -86,30 +93,35 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     );
   }, [search, products]);
 
-  const totalListPrice = quantity * unitPrice;
+  const numQty = toNumber(quantity);
+  const numPrice = toNumber(unitPrice);
+  const totalListPrice = numQty * numPrice;
 
   // Sincronización de totales
   useEffect(() => {
     if (!hasDiscount) {
-      setTotalPaidWithDiscount(Number(totalListPrice.toFixed(2)));
-      setDiscountPercentage(0);
+      setTotalPaidWithDiscount(totalListPrice.toFixed(2));
+      setDiscountPercentage('0');
     } else {
-      const newTotal = totalListPrice * (1 - (discountPercentage / 100));
-      setTotalPaidWithDiscount(Number(newTotal.toFixed(2)));
+      const disc = toNumber(discountPercentage);
+      const newTotal = totalListPrice * (1 - (disc / 100));
+      setTotalPaidWithDiscount(newTotal.toFixed(2));
     }
-  }, [hasDiscount, totalListPrice, quantity, unitPrice, discountPercentage]);
+  }, [hasDiscount, totalListPrice]);
 
-  const handleDiscountPercentChange = (percent: number) => {
-    setDiscountPercentage(percent);
-    const newTotal = totalListPrice * (1 - (percent / 100));
-    setTotalPaidWithDiscount(Number(newTotal.toFixed(2)));
+  const handleDiscountPercentChange = (val: string) => {
+    setDiscountPercentage(val);
+    const disc = toNumber(val);
+    const newTotal = totalListPrice * (1 - (disc / 100));
+    setTotalPaidWithDiscount(newTotal.toFixed(2));
   };
 
-  const handleTotalPaidChange = (finalTotal: number) => {
-    setTotalPaidWithDiscount(finalTotal);
+  const handleTotalPaidChange = (val: string) => {
+    setTotalPaidWithDiscount(val);
+    const finalTotal = toNumber(val);
     if (totalListPrice > 0) {
       const percent = ((totalListPrice - finalTotal) / totalListPrice) * 100;
-      setDiscountPercentage(Number(percent.toFixed(2)));
+      setDiscountPercentage(percent.toFixed(2));
     }
   };
 
@@ -117,9 +129,9 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     if (!selectedProduct) return;
     const item: PurchaseItemFormData = {
       productId: selectedProduct.id,
-      quantity,
-      unitPrice: unitPrice, 
-      discountPercentage: hasDiscount ? discountPercentage : 0,
+      quantity: numQty,
+      unitPrice: numPrice, 
+      discountPercentage: hasDiscount ? toNumber(discountPercentage) : 0,
       product: {
         id: selectedProduct.id,
         name: selectedProduct.name,
@@ -135,10 +147,10 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
   const handleClose = () => {
     setStep('select');
     setSelectedProduct(null);
-    setQuantity(1);
-    setUnitPrice(0);
+    setQuantity('1');
+    setUnitPrice('0');
     setHasDiscount(false);
-    setDiscountPercentage(0);
+    setDiscountPercentage('0');
     setSearch('');
     onClose();
   };
@@ -153,7 +165,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     setSelectedProduct(null);
   };
 
-  const isValid = selectedProduct && quantity > 0 && unitPrice > 0;
+  const isValid = selectedProduct && numQty > 0 && numPrice > 0;
 
   return (
     <Modal
@@ -216,18 +228,18 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Cantidad"
-              type="number"
-              step="0.001"
-              value={quantity || ''}
-              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+              type="text"
+              inputMode="decimal"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
               autoFocus
             />
             <Input
               label="Precio unitario lista"
-              type="number"
-              step="0.01"
-              value={unitPrice || ''}
-              onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+              type="text"
+              inputMode="decimal"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
             />
           </div>
 
@@ -246,28 +258,27 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
               <div className="grid grid-cols-2 gap-4 pt-2 border-t border-secondary-100">
                 <Input
                   label="% Descuento"
-                  type="number"
-                  step="0.01"
-                  value={discountPercentage || ''}
-                  onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
+                  type="text"
+                  inputMode="decimal"
+                  value={discountPercentage}
+                  onChange={(e) => handleDiscountPercentChange(e.target.value)}
                 />
                 <Input
                   label="Total ítem (Factura)"
-                  type="number"
-                  step="0.01"
-                  value={totalPaidWithDiscount || ''}
-                  onChange={(e) => handleTotalPaidChange(parseFloat(e.target.value) || 0)}
+                  type="text"
+                  inputMode="decimal"
+                  value={totalPaidWithDiscount}
+                  onChange={(e) => handleTotalPaidChange(e.target.value)}
                 />
               </div>
             )}
           </div>
 
-          {/* CAJA DE TOTAL: Ahora consistente con PurchaseForm */}
           <div className="bg-secondary-50 rounded-xl p-4 space-y-2">
             {hasDiscount && (
               <div className="flex justify-between items-center pb-2 border-b border-secondary-200/50">
                 <span className="text-sm font-medium text-secondary-700">Ahorro en este producto</span>
-                <span className="font-medium text-green-600">-{formatCurrency(totalListPrice - totalPaidWithDiscount)}</span>
+                <span className="font-medium text-green-600">-{formatCurrency(totalListPrice - toNumber(totalPaidWithDiscount))}</span>
               </div>
             )}
             
@@ -276,12 +287,12 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
                 <span className="text-md font-medium text-secondary-700">Subtotal</span>
                 {hasDiscount && (
                    <span className="text-[10px] text-secondary-500 line-through">
-                    Base: {formatCurrency(totalListPrice)}
+                   Base: {formatCurrency(totalListPrice)}
                    </span>
                 )}
               </div>
               <span className="text-xl font-bold text-secondary-900">
-                {formatCurrency(totalPaidWithDiscount)}
+                {formatCurrency(toNumber(totalPaidWithDiscount))}
               </span>
             </div>
           </div>
