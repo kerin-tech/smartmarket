@@ -18,41 +18,46 @@ const router: Router = Router();
 router.use(checkJwt);
 
 /**
- * @route   GET /api/v1/analytics/monthly
- * @desc    Obtener métricas mensuales de compras
- * @query   months - Número de meses (default: 6, max: 24)
- * @access  Private
+ * GET /api/v1/analytics/monthly
+ * @summary Obtener métricas mensuales de compras
+ * @tags Analytics
+ * @security BearerAuth
+ * @param {number} months.query - Número de meses (default: 6, max: 24)
  */
 router.get("/monthly", validateQuery(monthsQuerySchema), getMonthlyAnalytics);
 
 /**
- * @route   GET /api/v1/analytics/summary
- * @desc    Obtener resumen general de todas las compras
- * @access  Private
+ * GET /api/v1/analytics/summary
+ * @summary Obtener resumen general de todas las compras (Total, Ahorros, etc)
+ * @tags Analytics
+ * @security BearerAuth
  */
 router.get("/summary", getSummary);
 
 /**
- * @route   GET /api/v1/analytics/by-store
- * @desc    Obtener gastos agrupados por tienda
- * @query   months - Número de meses (default: 6, max: 24)
- * @access  Private
+ * GET /api/v1/analytics/by-store
+ * @summary Obtener gastos agrupados por tienda
+ * @tags Analytics
+ * @security BearerAuth
+ * @param {number} months.query - Número de meses
  */
 router.get("/by-store", validateQuery(monthsQuerySchema), getByStore);
 
 /**
- * @route   GET /api/v1/analytics/by-category
- * @desc    Obtener gastos agrupados por categoría
- * @query   months - Número de meses (default: 6, max: 24)
- * @access  Private
+ * GET /api/v1/analytics/by-category
+ * @summary Obtener gastos agrupados por categoría
+ * @tags Analytics
+ * @security BearerAuth
+ * @param {number} months.query - Número de meses
  */
 router.get("/by-category", validateQuery(monthsQuerySchema), getByCategory);
 
 /**
- * @route   GET /api/v1/analytics/compare-prices
- * @desc    Comparar precios de un producto en diferentes tiendas
- * @query   productId - UUID del producto (requerido)
- * @access  Private
+ * GET /api/v1/analytics/compare-prices
+ * @summary Comparar precios de un producto en diferentes tiendas
+ * @tags Analytics
+ * @security BearerAuth
+ * @param {string} productId.query.required - UUID del producto
  */
 router.get("/compare-prices", comparePrices);
 
