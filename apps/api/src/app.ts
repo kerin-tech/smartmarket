@@ -25,7 +25,11 @@ class App {
   }
 
   private setMiddlewares(): void {
-  this.express.use(cors());
+  this.express.use(cors({
+    origin: '*', // Permite peticiones desde Vercel o local
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
   this.express.use(morgan('dev'));
   this.express.use(nocache());
   this.express.use(express.json());
