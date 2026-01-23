@@ -37,9 +37,8 @@ export interface PurchaseItemFormData {
   productId: string;
   quantity: number;
   unitPrice: number;
-  // Campos para UI (no se envían al backend)
   product?: PurchaseItemProduct;
-  tempId?: string; // ID temporal para manejo en UI
+  tempId?: string;
 }
 
 export interface PurchaseFormData {
@@ -91,8 +90,8 @@ export interface PurchaseFilters {
 
 // Para agrupar compras por mes en UI
 export interface PurchasesByMonth {
-  monthKey: string; // YYYY-MM
-  monthLabel: string; // "ENERO 2025"
+  monthKey: string;
+  monthLabel: string;
   purchases: Purchase[];
   total: number;
 }

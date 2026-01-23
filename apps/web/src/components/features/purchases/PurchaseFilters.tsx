@@ -4,8 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { X, Search } from 'lucide-react';
-import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
 import { usePurchaseStore } from '@/stores/purchase.store';
 import { storeService } from '@/services/store.service';
 import type { Store } from '@/types/store.types';
@@ -54,73 +52,71 @@ export function PurchaseFilters() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchValue]);
-
-  const storeOptions = [
-    { value: '', label: 'Todos los locales' },
-    ...stores.map((s) => ({ value: s.id, label: s.name })),
-  ];
-
-  const allMonthOptions = [
-    { value: '', label: 'Todos los meses' },
-    ...monthOptions,
-  ];
+  }, [searchValue, filters.search, setFilters]);
 
   const hasActiveFilters = filters.month || filters.storeId || filters.search;
 
   if (loading) {
     return (
       <div className="flex gap-3">
-        <div className="h-10 w-48 bg-secondary-200 rounded-lg animate-pulse" />
-        <div className="h-10 w-40 bg-secondary-200 rounded-lg animate-pulse" />
+        <div className="h-10 w-48 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="h-10 w-40 bg-gray-200 rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-400" />
-          <input
-            type="text"
-            placeholder="Buscar compra..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-secondary-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-          />
-          {searchValue && (
-            <button
-              onClick={() => setSearchValue('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <Select
-          placeholder="Local"
-          options={storeOptions}
-          value={filters.storeId || ''}
-          onChange={(value) => setFilters({ storeId: value || undefined })}
-          className="w-44"
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Buscar compra..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
         />
-
-        <Select
-          placeholder="Mes"
-          options={allMonthOptions}
-          value={filters.month || ''}
-          onChange={(value) => setFilters({ month: value || undefined })}
-          className="w-44"
-        />
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} leftIcon={<X className="h-4 w-4" />}>
-            Limpiar
-          </Button>
+        {searchValue && (
+          <button
+            onClick={() => setSearchValue('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
         )}
       </div>
+
+      <select
+        value={filters.storeId || ''}
+        onChange={(e) => setFilters({ storeId: e.target.value || undefined })}
+        className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        <option value="">Todos los locales</option>
+        {stores.map((s) => (
+          <option key={s.id} value={s.id}>{s.name}</option>
+        ))}
+      </select>
+
+      <select
+        value={filters.month || ''}
+        onChange={(e) => setFilters({ month: e.target.value || undefined })}
+        className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        <option value="">Todos los meses</option>
+        {monthOptions.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+
+      {hasActiveFilters && (
+        <button
+          onClick={resetFilters}
+          className="flex items-center gap-1 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+        >
+          <X className="h-4 w-4" />
+          Limpiar
+        </button>
+      )}
     </div>
   );
 }

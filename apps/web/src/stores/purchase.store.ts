@@ -4,15 +4,10 @@ import { create } from 'zustand';
 import type { Purchase, PurchaseFilters, PurchasesByMonth } from '@/types/purchase.types';
 
 interface PurchaseState {
-  // Data
   purchases: Purchase[];
   isLoading: boolean;
   error: string | null;
-  
-  // Filters
   filters: PurchaseFilters;
-  
-  // Pagination
   pagination: {
     page: number;
     limit: number;
@@ -21,16 +16,12 @@ interface PurchaseState {
     hasNext: boolean;
     hasPrev: boolean;
   };
-  
-  // Modal state
   isModalOpen: boolean;
   editingPurchase: Purchase | null;
-  
-  // Delete confirmation
   isDeleteModalOpen: boolean;
   deletingPurchase: Purchase | null;
+  openMenuId: string | null;
 
-  // Actions
   setPurchases: (purchases: Purchase[]) => void;
   addPurchase: (purchase: Purchase) => void;
   updatePurchase: (purchase: Purchase) => void;
@@ -41,15 +32,13 @@ interface PurchaseState {
   setPage: (page: number) => void;
   setFilters: (filters: PurchaseFilters) => void;
   resetFilters: () => void;
-  
-  // Modal actions
   openCreateModal: () => void;
   openEditModal: (purchase: Purchase) => void;
   closeModal: () => void;
-  
-  // Delete modal actions
   openDeleteModal: (purchase: Purchase) => void;
   closeDeleteModal: () => void;
+  setOpenMenuId: (id: string | null) => void;
+  closeMenu: () => void;
 }
 
 const initialFilters: PurchaseFilters = {
@@ -77,6 +66,7 @@ export const usePurchaseStore = create<PurchaseState>((set) => ({
   editingPurchase: null,
   isDeleteModalOpen: false,
   deletingPurchase: null,
+  openMenuId: null,
 
   setPurchases: (purchases) => set({ purchases }),
   addPurchase: (purchase) => set((state) => ({ 
@@ -98,29 +88,25 @@ export const usePurchaseStore = create<PurchaseState>((set) => ({
   })),
   setFilters: (filters) => set((state) => ({ 
     filters: { ...state.filters, ...filters },
-    pagination: { ...state.pagination, page: 1 } // Reset page on filter change
+    pagination: { ...state.pagination, page: 1 }
   })),
   resetFilters: () => set({ filters: initialFilters, pagination: { ...initialPagination } }),
-
   openCreateModal: () => set({ isModalOpen: true, editingPurchase: null }),
   openEditModal: (purchase) => set({ isModalOpen: true, editingPurchase: purchase }),
   closeModal: () => set({ isModalOpen: false, editingPurchase: null }),
-
   openDeleteModal: (purchase) => set({ isDeleteModalOpen: true, deletingPurchase: purchase }),
   closeDeleteModal: () => set({ isDeleteModalOpen: false, deletingPurchase: null }),
+  setOpenMenuId: (id) => set({ openMenuId: id }),
+  closeMenu: () => set({ openMenuId: null }),
 }));
 
-/**
- * Selector para calcular el total de todas las compras visibles
- */
+// Helper para calcular total
 export const useTotalAmount = () => {
   const purchases = usePurchaseStore((state) => state.purchases);
   return purchases.reduce((sum, p) => sum + p.total, 0);
 };
 
-/**
- * Selector para agrupar compras por mes
- */
+// Helper para agrupar por mes
 export const usePurchasesByMonth = (): PurchasesByMonth[] => {
   const purchases = usePurchaseStore((state) => state.purchases);
   
@@ -148,6 +134,5 @@ export const usePurchasesByMonth = (): PurchasesByMonth[] => {
     return acc;
   }, {} as Record<string, PurchasesByMonth>);
   
-  // Ordenar por mes (más reciente primero)
   return Object.values(grouped).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
 };
