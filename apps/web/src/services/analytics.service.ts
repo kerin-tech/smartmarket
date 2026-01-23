@@ -6,6 +6,7 @@ import type {
   SummaryResponse,
   ByStoreResponse,
   ByCategoryResponse,
+  PriceComparisonResponse,
 } from '@/types/analytics.types';
 
 interface ApiSuccessResponse<T> {
@@ -60,4 +61,18 @@ export const analyticsService = {
     );
     return response.data.data;
   },
+
+  /**
+ * Obtener comparativa de precios para un producto específico
+ * Ajustado para enviar productId como Query Parameter (?productId=...)
+ */
+async comparePrices(productId: string): Promise<PriceComparisonResponse> {
+  const response = await api.get<ApiSuccessResponse<PriceComparisonResponse>>(
+    '/analytics/compare-prices', // Quitamos el /${productId} de aquí
+    { 
+      params: { productId } // Esto genera automáticamente el ?productId=...
+    }
+  );
+  return response.data.data;
+},
 };
