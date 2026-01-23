@@ -3,11 +3,6 @@
 @tailwind utilities;
 
 /* ===========================================
-   GOOGLE FONTS - Inter
-   =========================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* ===========================================
    BASE STYLES
    =========================================== */
 @layer base {
@@ -16,7 +11,7 @@
   }
 
   body {
-    @apply font-sans text-secondary-900 bg-secondary-50 antialiased;
+    @apply text-secondary-900 bg-secondary-50 antialiased;
   }
 
   /* Focus visible para accesibilidad */
@@ -107,148 +102,53 @@
   }
 
   /* Button sizes */
-  .btn-sm {
-    @apply h-9 px-3 text-body-sm;
-  }
-
-  .btn-md {
-    @apply h-11 px-4 text-body-md;
-  }
-
-  .btn-lg {
-    @apply h-12 px-6 text-body-lg;
-  }
+  .btn-sm { @apply h-9 px-3 text-body-sm; }
+  .btn-md { @apply h-11 px-4 text-body-md; }
+  .btn-lg { @apply h-12 px-6 text-body-lg; }
 
   /* Badge */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-caption font-medium;
   }
 
-  .badge-primary {
-    @apply badge bg-primary-100 text-primary-700;
-  }
-
-  .badge-success {
-    @apply badge bg-success-100 text-success-700;
-  }
-
-  .badge-warning {
-    @apply badge bg-warning-100 text-warning-700;
-  }
-
-  .badge-error {
-    @apply badge bg-error-100 text-error-700;
-  }
-
-  .badge-info {
-    @apply badge bg-info-100 text-info-700;
-  }
+  .badge-primary { @apply badge bg-primary-100 text-primary-700; }
+  .badge-success { @apply badge bg-success-100 text-success-700; }
+  .badge-warning { @apply badge bg-warning-100 text-warning-700; }
+  .badge-error { @apply badge bg-error-100 text-error-700; }
+  .badge-info { @apply badge bg-info-100 text-info-700; }
 
   /* Category badges */
-  .badge-fruits {
-    @apply badge bg-category-fruits-light text-category-fruits-dark;
-  }
+  .badge-fruits { @apply badge bg-category-fruits-light text-category-fruits-dark; }
+  .badge-vegetables { @apply badge bg-category-vegetables-light text-category-vegetables-dark; }
+  .badge-grains { @apply badge bg-category-grains-light text-category-grains-dark; }
+  .badge-dairy { @apply badge bg-category-dairy-light text-category-dairy-dark; }
+  .badge-meats { @apply badge bg-category-meats-light text-category-meats-dark; }
+  .badge-beverages { @apply badge bg-category-beverages-light text-category-beverages-dark; }
+  .badge-cleaning { @apply badge bg-category-cleaning-light text-category-cleaning-dark; }
+  .badge-other { @apply badge bg-category-other-light text-category-other-dark; }
 
-  .badge-vegetables {
-    @apply badge bg-category-vegetables-light text-category-vegetables-dark;
-  }
-
-  .badge-grains {
-    @apply badge bg-category-grains-light text-category-grains-dark;
-  }
-
-  .badge-dairy {
-    @apply badge bg-category-dairy-light text-category-dairy-dark;
-  }
-
-  .badge-meats {
-    @apply badge bg-category-meats-light text-category-meats-dark;
-  }
-
-  .badge-beverages {
-    @apply badge bg-category-beverages-light text-category-beverages-dark;
-  }
-
-  .badge-cleaning {
-    @apply badge bg-category-cleaning-light text-category-cleaning-dark;
-  }
-
-  .badge-other {
-    @apply badge bg-category-other-light text-category-other-dark;
-  }
-
-  /* Link styles */
-  .link {
-    @apply text-primary-600 hover:text-primary-700 transition-colors underline-offset-2 hover:underline;
-  }
-
-  /* Form label */
-  .label {
-    @apply block text-label text-secondary-700 mb-1.5;
-  }
-
-  /* Helper text */
-  .helper-text {
-    @apply mt-1.5 text-body-sm text-secondary-500;
-  }
-
-  .error-text {
-    @apply mt-1.5 text-body-sm text-error-600;
-  }
-
-  /* Divider */
-  .divider {
-    @apply border-t border-secondary-200;
-  }
-
-  /* Container */
-  .container-app {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
+  /* Form elements */
+  .label { @apply block text-label text-secondary-700 mb-1.5; }
+  .helper-text { @apply mt-1.5 text-body-sm text-secondary-500; }
+  .error-text { @apply mt-1.5 text-body-sm text-error-600; }
+  .divider { @apply border-t border-secondary-200; }
+  .container-app { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
 }
 
 /* ===========================================
    UTILITY CLASSES
    =========================================== */
 @layer utilities {
-  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-  /* Truncate multiline */
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Safe area for mobile */
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-top { padding-top: env(safe-area-inset-top); }
 }

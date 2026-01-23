@@ -160,24 +160,30 @@ export function PurchaseForm({
           ) : (
             <>
               {/* Selector de Local y Fecha */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                  label="Local"
-                  placeholder="Seleccionar local"
-                  options={storeOptions}
-                  value={storeId}
-                  onChange={(e) => setStoreId(e.target.value)}
-                  disabled={isLoading}
-                />
-                <Input
-                  label="Fecha"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  disabled={isLoading}
-                  max={new Date().toISOString().split('T')[0]}
-                />
-              </div>
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+  <div className="w-full">
+    <Select
+      label="Local"
+      placeholder="Seleccionar local"
+      options={storeOptions}
+      value={storeId}
+      onChange={(e) => setStoreId(e.target.value)}
+      disabled={isLoading}
+    />
+  </div>
+  <div className="w-full">
+    <Input
+      label="Fecha"
+      type="date"
+      value={date}
+      onChange={(e) => setDate(e.target.value)}
+      disabled={isLoading}
+      max={new Date().toISOString().split('T')[0]}
+      // Añadimos una clase para asegurar que el input ocupe el 100% real
+      className="w-full min-w-0" 
+    />
+  </div>
+</div>
 
               <hr className="border-secondary-200" />
 
