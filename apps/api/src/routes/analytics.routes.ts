@@ -9,6 +9,7 @@ import {
   getSummary,
   getByStore,
   getByCategory,
+  comparePrices,
 } from "../controllers/analytics.controller";
 
 const router: Router = Router();
@@ -46,5 +47,13 @@ router.get("/by-store", validateQuery(monthsQuerySchema), getByStore);
  * @access  Private
  */
 router.get("/by-category", validateQuery(monthsQuerySchema), getByCategory);
+
+/**
+ * @route   GET /api/v1/analytics/compare-prices
+ * @desc    Comparar precios de un producto en diferentes tiendas
+ * @query   productId - UUID del producto (requerido)
+ * @access  Private
+ */
+router.get("/compare-prices", comparePrices);
 
 export default router;

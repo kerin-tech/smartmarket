@@ -1,8 +1,7 @@
 // src/schemas/purchase.schema.ts
-
 import { z } from "zod";
 
-// Schema para un item de compra
+// Schema para un item de compra (ACTUALIZADO)
 const purchaseItemSchema = z.object({
   productId: z
     .string({
@@ -25,84 +24,39 @@ const purchaseItemSchema = z.object({
     })
     .positive("El precio debe ser mayor a 0")
     .max(99999999.99, "El precio excede el límite permitido"),
+
+  // NUEVO CAMPO PARA DESCUENTO
+  discountPercentage: z
+    .number({
+      invalid_type_error: "El descuento debe ser un número",
+    })
+    .min(0, "El descuento no puede ser negativo")
+    .max(100, "El descuento no puede ser mayor al 100%")
+    .default(0)
+    .optional(),
 });
 
-// Schema para crear una compra
+// El resto de los esquemas (createPurchaseSchema, updatePurchaseSchema, etc.) se mantienen igual
 export const createPurchaseSchema = z.object({
-  storeId: z
-    .string({
-      required_error: "El local es requerido",
-    })
-    .uuid("ID de local inválido"),
-
-  date: z
-    .string({
-      required_error: "La fecha es requerida",
-    })
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Fecha inválida",
-    }),
-
-  items: z
-    .array(purchaseItemSchema, {
-      required_error: "Debe agregar al menos un producto",
-    })
-    .min(1, "Debe agregar al menos un producto")
-    .max(100, "Máximo 100 productos por compra"),
+  storeId: z.string().uuid(),
+  date: z.string().refine((val) => !isNaN(Date.parse(val))),
+  items: z.array(purchaseItemSchema).min(1).max(100),
 });
 
-// Schema para actualizar una compra
 export const updatePurchaseSchema = z.object({
-  storeId: z
-    .string()
-    .uuid("ID de local inválido")
-    .optional(),
-
-  date: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Fecha inválida",
-    })
-    .optional(),
-
-  items: z
-    .array(purchaseItemSchema)
-    .min(1, "Debe agregar al menos un producto")
-    .max(100, "Máximo 100 productos por compra")
-    .optional(),
+  storeId: z.string().uuid().optional(),
+  date: z.string().refine((val) => !isNaN(Date.parse(val))).optional(),
+  items: z.array(purchaseItemSchema).min(1).max(100).optional(),
 });
 
-// Schema para query params
 export const purchaseQuerySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 1))
-    .pipe(z.number().min(1, "La página debe ser mayor a 0")),
-
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 20))
-    .pipe(z.number().min(1).max(100, "El límite máximo es 100")),
-
-  month: z
-    .string()
-    .regex(/^\d{4}-\d{2}$/, "Formato de mes inválido (YYYY-MM)")
-    .optional(),
-
-  storeId: z
-    .string()
-    .uuid("ID de local inválido")
-    .optional(),
-
-  search: z
-    .string()
-    .max(100, "Búsqueda muy larga")
-    .optional(),
+  page: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 1)).pipe(z.number().min(1)),
+  limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : 20)).pipe(z.number().min(1).max(100)),
+  month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  storeId: z.string().uuid().optional(),
+  search: z.string().max(100).optional(),
 });
 
-// Types inferidos
 export type CreatePurchaseInput = z.infer<typeof createPurchaseSchema>;
 export type UpdatePurchaseInput = z.infer<typeof updatePurchaseSchema>;
 export type PurchaseQueryInput = z.infer<typeof purchaseQuerySchema>;

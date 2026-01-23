@@ -61,3 +61,8 @@ export function getCurrentMonth(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
+
+export const formatDateRelative = (date: string | Date): string => {
+  const d = new Date(date);
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+};

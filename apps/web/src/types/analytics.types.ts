@@ -91,3 +91,50 @@ export interface MonthHistory {
   byStore: StoreBreakdown[];
   trend: MonthlyData[];
 }
+
+// Para comparativo de precios
+export interface PriceComparisonStore {
+  store: {
+    id: string;
+    name: string;
+    location: string;
+  };
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
+  lastPrice: number;
+  lastDate: string;
+  purchaseCount: number;
+  priceVariation: number;
+}
+
+export interface PriceComparisonProduct {
+  id: string;
+  name: string;
+  category: string;
+  brand: string;
+}
+
+export interface PriceComparisonBestOption {
+  storeId: string;
+  storeName: string;
+  avgPrice: number;
+  lastPrice: number;
+  savings: number;
+  savingsPercentage: number;
+}
+
+export interface PriceComparisonGlobalStats {
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
+  totalPurchases: number;
+  storesCount: number;
+}
+
+export interface PriceComparisonResponse {
+  product: PriceComparisonProduct;
+  comparison: PriceComparisonStore[];
+  bestOption: PriceComparisonBestOption | null;
+  globalStats: PriceComparisonGlobalStats;
+}

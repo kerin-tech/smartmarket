@@ -24,145 +24,98 @@ router.use(checkJwt);
 
 /**
  * GET /api/v1/{env}/purchases
- * @summary Listar compras del usuario
+ * @summary Listar compras del usuario con filtros
  * @tags Purchases
  * @security BearerAuth
- * @param {integer} page.query - Número de página - default: 1
- * @param {integer} limit.query - Compras por página - default: 10
- * @param {string} month.query - Filtrar por mes (YYYY-MM)
- * @param {string} productId.query - Filtrar por producto
- * @param {string} storeId.query - Filtrar por tienda
- * @param {string} dateFrom.query - Fecha desde (YYYY-MM-DD)
- * @param {string} dateTo.query - Fecha hasta (YYYY-MM-DD)
- * @return {PurchaseListResponse} 200 - Lista de compras
- * @return {ErrorResponse} 401 - No autorizado
  */
 router.get("/", validateQuery(purchaseQuerySchema), getPurchases);
 
 /**
  * GET /api/v1/{env}/purchases/{id}
- * @summary Obtener compra por ID
+ * @summary Obtener el detalle de una compra específica
  * @tags Purchases
  * @security BearerAuth
- * @param {string} id.path.required - ID de la compra
- * @return {PurchaseResponse} 200 - Compra encontrada
- * @return {ErrorResponse} 401 - No autorizado
- * @return {ErrorResponse} 403 - Sin permiso
- * @return {ErrorResponse} 404 - No encontrada
  */
 router.get("/:id", getPurchaseById);
 
 /**
  * POST /api/v1/{env}/purchases
- * @summary Registrar nueva compra
+ * @summary Registrar una nueva compra con múltiples productos y descuentos
  * @tags Purchases
  * @security BearerAuth
  * @param {CreatePurchaseRequest} request.body.required - Datos de la compra
- * @return {PurchaseResponse} 201 - Compra registrada
- * @return {ErrorResponse} 400 - Error de validación
- * @return {ErrorResponse} 401 - No autorizado
- * @return {ErrorResponse} 403 - Producto o tienda no pertenece al usuario
- * @return {ErrorResponse} 404 - Producto o tienda no encontrada
- * @example request - Ejemplo
- * {
- *   "productId": "uuid-producto",
- *   "storeId": "uuid-tienda",
- *   "price": 5500,
- *   "quantity": 2,
- *   "date": "2025-01-22"
- * }
  */
 router.post("/", validateSchema(createPurchaseSchema), createPurchase);
 
 /**
  * PUT /api/v1/{env}/purchases/{id}
- * @summary Actualizar compra
+ * @summary Actualizar los datos o ítems de una compra existente
  * @tags Purchases
  * @security BearerAuth
- * @param {string} id.path.required - ID de la compra
  * @param {UpdatePurchaseRequest} request.body.required - Datos a actualizar
- * @return {PurchaseResponse} 200 - Compra actualizada
- * @return {ErrorResponse} 400 - Error de validación
- * @return {ErrorResponse} 401 - No autorizado
- * @return {ErrorResponse} 403 - Sin permiso
- * @return {ErrorResponse} 404 - No encontrada
  */
 router.put("/:id", validateSchema(updatePurchaseSchema), updatePurchase);
 
 /**
  * DELETE /api/v1/{env}/purchases/{id}
- * @summary Eliminar compra
+ * @summary Eliminar una compra del registro
  * @tags Purchases
  * @security BearerAuth
- * @param {string} id.path.required - ID de la compra
- * @return {SuccessResponse} 200 - Compra eliminada
- * @return {ErrorResponse} 401 - No autorizado
- * @return {ErrorResponse} 403 - Sin permiso
- * @return {ErrorResponse} 404 - No encontrada
  */
 router.delete("/:id", deletePurchase);
 
 export default router;
 
 /**
- * Tipos para Swagger
- * @typedef {object} CreatePurchaseRequest
- * @property {string} productId.required - ID del producto
- * @property {string} storeId.required - ID de la tienda
- * @property {number} price.required - Precio (mayor a 0)
+ * DEFINICIONES PARA SWAGGER (Actualizadas a la nueva estructura)
+ */
+
+/**
+ * @typedef {object} PurchaseItemRequest
+ * @property {string} productId.required - ID del producto (UUID)
  * @property {number} quantity.required - Cantidad (mayor a 0)
- * @property {string} date.required - Fecha de compra (YYYY-MM-DD)
+ * @property {number} unitPrice.required - Precio unitario (mayor a 0)
+ * @property {number} discountPercentage - Porcentaje de descuento (0-100)
+ */
+
+/**
+ * @typedef {object} CreatePurchaseRequest
+ * @property {string} storeId.required - ID de la tienda (UUID)
+ * @property {string} date.required - Fecha (YYYY-MM-DD)
+ * @property {array<PurchaseItemRequest>} items.required - Lista de productos comprados
  */
 
 /**
  * @typedef {object} UpdatePurchaseRequest
- * @property {string} productId - ID del producto
  * @property {string} storeId - ID de la tienda
- * @property {number} price - Precio
+ * @property {string} date - Fecha
+ * @property {array<PurchaseItemRequest>} items - Nueva lista de productos
+ */
+
+/**
+ * @typedef {object} PurchaseItemResponse
+ * @property {string} id - ID del registro del ítem
+ * @property {string} productId - ID del producto
  * @property {number} quantity - Cantidad
- * @property {string} date - Fecha de compra
+ * @property {number} unitPrice - Precio por unidad
+ * @property {number} discountPercentage - Descuento aplicado
+ * @property {number} subtotal - Total del ítem tras descuento
+ * @property {object} product - Datos básicos del producto (nombre, marca, etc)
  */
 
 /**
- * @typedef {object} PurchaseProduct
- * @property {string} id - ID del producto
- * @property {string} name - Nombre
- * @property {string} category - Categoría
- * @property {string} brand - Marca
- */
-
-/**
- * @typedef {object} PurchaseStore
- * @property {string} id - ID de la tienda
- * @property {string} name - Nombre
- * @property {string} location - Ubicación
- */
-
-/**
- * @typedef {object} Purchase
+ * @typedef {object} PurchaseResponseData
  * @property {string} id - ID de la compra
- * @property {number} price - Precio unitario
- * @property {number} quantity - Cantidad
- * @property {number} total - Total (price * quantity)
  * @property {string} date - Fecha de compra
- * @property {string} createdAt - Fecha de registro
- * @property {PurchaseProduct} product - Producto
- * @property {PurchaseStore} store - Tienda
- */
-
-/**
- * @typedef {object} PurchaseListResponse
- * @property {boolean} success - true
- * @property {object} data
- * @property {array<Purchase>} data.purchases - Lista de compras
- * @property {Pagination} data.pagination - Información de paginación
- * @property {string} message - Mensaje
+ * @property {number} total - Total de la compra (suma de subtotales)
+ * @property {number} itemCount - Cantidad de productos diferentes
+ * @property {object} store - Datos de la tienda
+ * @property {array<PurchaseItemResponse>} items - Detalle de los productos
  */
 
 /**
  * @typedef {object} PurchaseResponse
- * @property {boolean} success - true
- * @property {object} data
- * @property {Purchase} data.purchase - Compra
- * @property {string} message - Mensaje
+ * @property {boolean} success - Estado de la operación
+ * @property {PurchaseResponseData} data - Información de la compra
+ * @property {string} message - Mensaje de confirmación
  */
