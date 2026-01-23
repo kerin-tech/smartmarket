@@ -25,14 +25,22 @@ class App {
   }
 
   private setMiddlewares(): void {
-    this.express.use(cors());
-    this.express.use(morgan('dev'));
-    this.express.use(nocache());
-    this.express.use(express.json());
-    this.express.use(express.urlencoded({ extended: true }));
-    this.express.use(helmet());
-    this.express.use(express.static('public'));
-  }
+  this.express.use(cors());
+  this.express.use(morgan('dev'));
+  this.express.use(nocache());
+  this.express.use(express.json());
+  this.express.use(express.urlencoded({ extended: true }));
+  
+  // Modifica Helmet para permitir los scripts de Swagger
+  this.express.use(
+    helmet({
+        contentSecurityPolicy: false, // Permite que carguen los scripts de Swagger
+        hsts: false,                 // Evita que el navegador fuerce HTTPS
+      })
+  );
+  
+  this.express.use(express.static('public'));
+}
 
   private disableSettings(): void {
     this.express.disable('x-powered-by');
