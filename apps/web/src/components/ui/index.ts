@@ -6,7 +6,6 @@ export * from './Checkbox';
 export * from './Select';
 export * from './Card';
 export * from './Badge';
-export * from './CategoryBadge';
 export * from './Toast';
 export * from './Spinner';
 export * from './Modal';
