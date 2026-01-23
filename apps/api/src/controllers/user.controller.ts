@@ -1,5 +1,6 @@
 import { type NextFunction, type Request } from 'express';
-import { type users } from '@prisma/client';
+// Prisma genera 'User' en singular
+import { type User } from '@prisma/client'; 
 import { HttpStatusCode } from 'axios';
 import UserService from '@/services/user.service';
 import { type CustomResponse } from '@/types/common.type';
@@ -10,7 +11,8 @@ export default class UserController extends Api {
 
   public createUser = async (
     req: Request,
-    res: CustomResponse<users>,
+    // CORRECCIÓN: Cambiado de <users> a <User>
+    res: CustomResponse<User>, 
     next: NextFunction
   ) => {
     try {

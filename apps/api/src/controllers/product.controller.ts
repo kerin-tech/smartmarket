@@ -265,18 +265,23 @@ export const deleteProduct = async (
       );
     }
 
-    // Verificar si tiene compras asociadas
-    const purchasesCount = await prisma.purchase.count({
+    // --- CÓDIGO CORREGIDO ---
+    
+    // Verificar si tiene detalles de compras asociados
+    // Cambiamos 'purchase' por 'purchaseItem' porque ahí es donde vive 'productId'
+    const purchasesCount = await prisma.purchaseItem.count({
       where: { productId: id },
     });
 
     if (purchasesCount > 0) {
       return errorResponse(
         res,
-        `No se puede eliminar el producto porque tiene ${purchasesCount} compra(s) asociada(s)`,
+        `No se puede eliminar el producto porque tiene ${purchasesCount} detalle(s) de compra asociado(s)`,
         ERROR_CODES.CONFLICT.code
       );
     }
+    
+    // -------------------------
 
     // Eliminar producto
     await prisma.product.delete({
