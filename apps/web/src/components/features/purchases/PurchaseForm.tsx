@@ -173,15 +173,19 @@ export function PurchaseForm({
   </div>
   <div className="w-full">
     <Input
-      label="Fecha"
-      type="date"
-      value={date}
-      onChange={(e) => setDate(e.target.value)}
-      disabled={isLoading}
-      max={new Date().toISOString().split('T')[0]}
-      // Añadimos una clase para asegurar que el input ocupe el 100% real
-      className="w-full min-w-0" 
-    />
+  label="Fecha"
+  type="date"
+  value={date}
+  onChange={(e) => setDate(e.target.value)}
+  disabled={isLoading}
+  max={new Date().toISOString().split('T')[0]}
+  className="w-full min-w-0 appearance-none [&::-webkit-date-and-time-value]:text-left"
+  style={{ 
+    WebkitAppearance: 'none',
+    maxWidth: '100%',
+    boxSizing: 'border-box'
+  }}
+/>
   </div>
 </div>
 
