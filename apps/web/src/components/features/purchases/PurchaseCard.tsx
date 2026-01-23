@@ -2,8 +2,9 @@
 
 'use client';
 
+import { useRef } from 'react';
 import { MoreVertical, Pencil, Trash2, MapPin } from 'lucide-react';
-import { DropdownMenu } from '@/components/ui/DropdownMenu';
+import { DropdownMenu, DropdownItem } from '@/components/ui/DropdownMenu';
 import { usePurchaseStore } from '@/stores/purchase.store';
 import { formatCurrency } from '@/utils/formatters';
 import type { Purchase } from '@/types/purchase.types';
@@ -27,26 +28,17 @@ function formatDateLong(date: string): string {
 export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: PurchaseCardProps) {
   const { openMenuId, setOpenMenuId, closeMenu } = usePurchaseStore();
   const isMenuOpen = openMenuId === purchase.id;
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const menuItems = [
-    {
-      label: 'Editar',
-      icon: Pencil,
-      onClick: () => {
-        closeMenu();
-        onEdit(purchase);
-      },
-    },
-    {
-      label: 'Eliminar',
-      icon: Trash2,
-      onClick: () => {
-        closeMenu();
-        onDelete(purchase);
-      },
-      variant: 'danger' as const,
-    },
-  ];
+  const handleEdit = () => {
+    closeMenu();
+    onEdit(purchase);
+  };
+
+  const handleDelete = () => {
+    closeMenu();
+    onDelete(purchase);
+  };
 
   return (
     <div className="flex items-center gap-3 p-4 hover:bg-secondary-50 transition-colors">
@@ -86,21 +78,30 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
           </p>
         </div>
 
-        {/* Menu */}
+        {/* Menu trigger */}
+        <button
+          ref={triggerRef}
+          onClick={() => setOpenMenuId(isMenuOpen ? null : purchase.id)}
+          className="p-2 rounded-lg hover:bg-secondary-100 transition-colors"
+          aria-label="Opciones"
+        >
+          <MoreVertical className="h-5 w-5 text-secondary-400" />
+        </button>
+
+        {/* Dropdown Menu */}
         <DropdownMenu
-          items={menuItems}
           isOpen={isMenuOpen}
-          onToggle={() => setOpenMenuId(isMenuOpen ? null : purchase.id)}
           onClose={closeMenu}
-          trigger={
-            <button
-              className="p-2 rounded-lg hover:bg-secondary-100 transition-colors"
-              aria-label="Opciones"
-            >
-              <MoreVertical className="h-5 w-5 text-secondary-400" />
-            </button>
-          }
-        />
+          triggerRef={triggerRef}
+          align="right"
+        >
+          <DropdownItem onClick={handleEdit} icon={<Pencil className="h-4 w-4" />}>
+            Editar
+          </DropdownItem>
+          <DropdownItem onClick={handleDelete} icon={<Trash2 className="h-4 w-4" />} variant="danger">
+            Eliminar
+          </DropdownItem>
+        </DropdownMenu>
       </div>
     </div>
   );
