@@ -16,9 +16,9 @@ export interface ModalProps {
 }
 
 const sizes = {
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
 };
 
 export function Modal({
@@ -65,19 +65,13 @@ export function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Container para centrar y scroll 
-         1. min-h-full: Permite que el contenedor crezca si el modal es alto.
-         2. items-center: Centra verticalmente si cabe en pantalla.
-         3. p-4: Padding de seguridad en móviles.
-         4. sm:p-0: En desktop quitamos padding del contenedor y usamos margin en el modal (ver abajo).
-      */}
-      <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-        
+      {/* Container para centrar */}
+      <div className="min-h-full flex items-center justify-center p-4">
         {/* Modal */}
         <div
           ref={modalRef}
@@ -85,12 +79,7 @@ export function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           className={cn(
-            'relative w-full bg-white rounded-xl shadow-2xl text-left transform transition-all',
-            'animate-scale-in',
-            // CLAVE: sm:my-8 añade margen vertical solo en desktop/tablet.
-            // Esto evita que el modal toque los bordes arriba/abajo al hacer scroll
-            // y soluciona el "salto" visual cuando es muy alto.
-            'sm:my-8', 
+            'relative w-full bg-white rounded-xl shadow-2xl animate-scale-in',
             sizes[size]
           )}
         >
@@ -102,7 +91,7 @@ export function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="p-1 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="h-5 w-5" />
@@ -111,9 +100,7 @@ export function Modal({
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4">
-            {children}
-          </div>
+          <div className="px-6 py-4">{children}</div>
         </div>
       </div>
     </div>
@@ -131,7 +118,7 @@ export function ModalFooter({
   return (
     <div
       className={cn(
-        'flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 mt-4 border-t border-secondary-200',
+        'flex items-center justify-end gap-3 pt-4 mt-4 border-t border-secondary-200',
         className
       )}
     >
