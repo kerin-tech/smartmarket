@@ -422,34 +422,68 @@ export const comparePrices = async (req: Request, res: Response, next: NextFunct
     const purchaseItems = await prisma.purchaseItem.findMany({
       where: { productId, purchase: { userId } },
       include: { purchase: { include: { store: true } } },
-      orderBy: { purchase: { date: 'desc' } },
+      orderBy: { purchase: { date: 'desc' } }, // Importante: Descendente para que el index 0 sea el último
     });
 
     const storeStats: Record<string, any> = {};
+
     purchaseItems.forEach((item) => {
       const storeId = item.purchase.storeId;
       const unitPrice = Number(item.unitPrice);
       const purchaseDate = new Date(item.purchase.date);
 
       if (!storeStats[storeId]) {
-        storeStats[storeId] = { store: item.purchase.store, prices: [], lastPrice: unitPrice, lastDate: purchaseDate };
+        storeStats[storeId] = {
+          store: item.purchase.store,
+          prices: [],
+          lastPrice: unitPrice,
+          lastDate: purchaseDate,
+          minPrice: unitPrice,
+          minPriceDate: purchaseDate
+        };
       }
+
       storeStats[storeId].prices.push(unitPrice);
+
       if (purchaseDate > storeStats[storeId].lastDate) {
         storeStats[storeId].lastPrice = unitPrice;
         storeStats[storeId].lastDate = purchaseDate;
       }
+
+      if (unitPrice < storeStats[storeId].minPrice) {
+        storeStats[storeId].minPrice = unitPrice;
+        storeStats[storeId].minPriceDate = purchaseDate;
+      }
     });
 
-    const comparison = Object.values(storeStats).map((stat: any) => ({
-      store: stat.store,
-      minPrice: Math.min(...stat.prices),
-      maxPrice: Math.max(...stat.prices),
-      avgPrice: Math.round((stat.prices.reduce((s: any, p: any) => s + p, 0) / stat.prices.length) * 100) / 100,
-      lastPrice: stat.lastPrice,
-      lastDate: stat.lastDate.toISOString().split('T')[0]
-    })).sort((a, b) => a.avgPrice - b.avgPrice);
+    const comparison = Object.values(storeStats).map((stat: any) => {
+  const lastPrice = stat.lastPrice;
+  const previousPrice = stat.prices.length > 1 ? stat.prices[1] : null;
+  
+  // Determinamos la tendencia
+  let trend: 'up' | 'down' | 'stable' = 'stable';
+  if (previousPrice !== null) {
+    if (lastPrice < previousPrice) trend = 'down';
+    else if (lastPrice > previousPrice) trend = 'up';
+  }
+
+  return {
+    store: stat.store,
+    minPrice: stat.minPrice,
+    minPriceDate: stat.minPriceDate.toISOString().split('T')[0],
+    maxPrice: Math.max(...stat.prices),
+    avgPrice: Math.round((stat.prices.reduce((s: any, p: any) => s + p, 0) / stat.prices.length) * 100) / 100,
+    lastPrice: lastPrice,
+    lastDate: stat.lastDate.toISOString().split('T')[0],
+    purchaseCount: stat.prices.length,
+    // Enviamos la tendencia clara al front
+    previousPrice,
+    trend 
+  };
+  }).sort((a, b) => a.minPrice - b.minPrice);
 
     return successResponse(res, { product, comparison });
-  } catch (error) { next(error); }
+  } catch (error) { 
+    next(error); 
+  }
 };
