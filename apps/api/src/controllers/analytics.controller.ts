@@ -6,10 +6,34 @@ import { successResponse, errorResponse } from "../utils/response.handle";
 import { ERROR_CODES } from "../utils/error.codes";
 
 /**
+ * HELPER: Calcula totales de un item de compra de forma segura y consistente.
+ * Maneja los campos Decimal de Prisma convirtiéndolos a Number.
+ */
+const calculateItemTotals = (item: any) => {
+  const quantity = Number(item.quantity || 0);
+  const unitPrice = Number(item.unitPrice || 0);
+  const discountPercentage = Number(item.discountPercentage || 0);
+
+  const base = quantity * unitPrice;
+  const savings = base * (discountPercentage / 100);
+  const total = base - savings;
+
+  return { base, savings, total, quantity };
+};
+
+/**
+ * HELPER: Formatea etiqueta de mes (ej: "2024-01" -> "Enero 2024")
+ */
+function formatMonthLabel(monthKey: string): string {
+  const [year, month] = monthKey.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const label = date.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/**
  * GET /api/v1/analytics/monthly
  * Obtiene métricas mensuales de compras
- * Query params:
- *   - months: número de meses a retornar (default: 6, max: 24)
  */
 export const getMonthlyAnalytics = async (
   req: Request,
@@ -20,67 +44,58 @@ export const getMonthlyAnalytics = async (
     const userId = req.user!.id;
     const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
 
-    // Calcular fecha de inicio (N meses atrás desde el primer día del mes actual)
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
-    // Obtener todas las compras del período
     const purchases = await prisma.purchase.findMany({
       where: {
         userId,
-        date: {
-          gte: startDate,
-        },
+        date: { gte: startDate },
       },
-      include: {
-        items: true,
-      },
-      orderBy: {
-        date: 'asc',
-      },
+      include: { items: true },
+      orderBy: { date: 'asc' },
     });
 
-    // Agrupar por mes
-    const monthlyData: Record<string, { 
-      totalSpent: number; 
-      totalPurchases: number;
-      totalItems: number;
-    }> = {};
+    const monthlyData: Record<string, any> = {};
 
-    // Inicializar todos los meses del período (incluso los vacíos)
+    // Inicializar meses
     for (let i = 0; i < months; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       monthlyData[monthKey] = {
-        totalSpent: 0,
-        totalPurchases: 0,
-        totalItems: 0,
+        totalSpent: 0, totalBase: 0, totalSavings: 0, totalPurchases: 0, totalItems: 0,
       };
     }
 
-    // Calcular métricas por mes
     purchases.forEach((purchase) => {
       const date = new Date(purchase.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       
       if (monthlyData[monthKey]) {
-        const purchaseTotal = purchase.items.reduce(
-          (sum, item) => sum + parseFloat(item.quantity.toString()) * parseFloat(item.unitPrice.toString()),
-          0
-        );
-        
-        monthlyData[monthKey].totalSpent += purchaseTotal;
+        let pBase = 0;
+        let pSavings = 0;
+
+        purchase.items.forEach((item) => {
+          const { base, savings } = calculateItemTotals(item);
+          pBase += base;
+          pSavings += savings;
+        });
+
+        monthlyData[monthKey].totalBase += pBase;
+        monthlyData[monthKey].totalSavings += pSavings;
+        monthlyData[monthKey].totalSpent += (pBase - pSavings);
         monthlyData[monthKey].totalPurchases += 1;
         monthlyData[monthKey].totalItems += purchase.items.length;
       }
     });
 
-    // Convertir a array ordenado (más reciente primero)
     const monthlyAnalytics = Object.entries(monthlyData)
-      .map(([month, data]) => ({
+      .map(([month, data]: [string, any]) => ({
         month,
         monthLabel: formatMonthLabel(month),
         totalSpent: Math.round(data.totalSpent * 100) / 100,
+        totalBase: Math.round(data.totalBase * 100) / 100,
+        totalSavings: Math.round(data.totalSavings * 100) / 100,
         totalPurchases: data.totalPurchases,
         totalItems: data.totalItems,
         averagePerPurchase: data.totalPurchases > 0 
@@ -89,14 +104,13 @@ export const getMonthlyAnalytics = async (
       }))
       .sort((a, b) => b.month.localeCompare(a.month));
 
-    // Calcular totales generales
     const summary = {
       totalSpent: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) * 100) / 100,
+      totalBase: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalBase, 0) * 100) / 100,
+      totalSavings: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalSavings, 0) * 100) / 100,
       totalPurchases: monthlyAnalytics.reduce((sum, m) => sum + m.totalPurchases, 0),
       totalItems: monthlyAnalytics.reduce((sum, m) => sum + m.totalItems, 0),
-      averageMonthlySpent: Math.round(
-        (monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) / months) * 100
-      ) / 100,
+      averageMonthlySpent: Math.round((monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) / months) * 100) / 100,
       period: {
         months,
         startDate: startDate.toISOString().split('T')[0],
@@ -104,10 +118,7 @@ export const getMonthlyAnalytics = async (
       },
     };
 
-    return successResponse(res, {
-      monthly: monthlyAnalytics,
-      summary,
-    });
+    return successResponse(res, { monthly: monthlyAnalytics, summary });
   } catch (error) {
     next(error);
   }
@@ -116,88 +127,70 @@ export const getMonthlyAnalytics = async (
 /**
  * GET /api/v1/analytics/summary
  * Obtiene resumen general de todas las compras del usuario
- * Query params:
- *   - month: filtrar por mes específico (formato YYYY-MM, opcional)
  */
-export const getSummary = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getSummary = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const monthParam = req.query.month as string | undefined;
 
-    // Calcular rango de fechas si se especifica mes
-    let dateFilter: { gte?: Date; lt?: Date } | undefined;
+    let dateFilter: any;
     let periodLabel: string | undefined;
 
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
       const [year, month] = monthParam.split('-').map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 1); // Primer día del siguiente mes
-      dateFilter = { gte: startDate, lt: endDate };
+      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
       periodLabel = formatMonthLabel(monthParam);
     }
 
-    // Obtener conteos y totales
     const [purchaseStats, storeCount, productCount] = await Promise.all([
-      // Stats de compras
       prisma.purchase.findMany({
-        where: { 
-          userId,
-          ...(dateFilter && { date: dateFilter }),
-        },
+        where: { userId, ...(dateFilter && { date: dateFilter }) },
         include: { items: true },
       }),
-      // Conteo de tiendas (total del usuario, no filtrado por mes)
-      prisma.store.count({
-        where: { userId },
-      }),
-      // Conteo de productos (total del usuario, no filtrado por mes)
-      prisma.product.count({
-        where: { userId },
-      }),
+      prisma.store.count({ where: { userId } }),
+      prisma.product.count({ where: { userId } }),
     ]);
 
-    // Calcular totales
     let totalSpent = 0;
     let totalItems = 0;
     const storeSpending: Record<string, number> = {};
 
     purchaseStats.forEach((purchase) => {
-      const purchaseTotal = purchase.items.reduce(
-        (sum, item) => sum + parseFloat(item.quantity.toString()) * parseFloat(item.unitPrice.toString()),
-        0
-      );
-      totalSpent += purchaseTotal;
-      totalItems += purchase.items.length;
+      let pTotal = 0;
+      purchase.items.forEach(item => {
+        const { total } = calculateItemTotals(item);
+        pTotal += total;
+      });
       
-      // Acumular por tienda
-      storeSpending[purchase.storeId] = (storeSpending[purchase.storeId] || 0) + purchaseTotal;
+      totalSpent += pTotal;
+      totalItems += purchase.items.length;
+      storeSpending[purchase.storeId] = (storeSpending[purchase.storeId] || 0) + pTotal;
     });
 
-    // Encontrar la tienda donde más se gasta
     let topStoreId: string | null = null;
     let topStoreSpending = 0;
-    Object.entries(storeSpending).forEach(([storeId, spending]) => {
+    Object.entries(storeSpending).forEach(([id, spending]) => {
       if (spending > topStoreSpending) {
-        topStoreId = storeId;
+        topStoreId = id;
         topStoreSpending = spending;
       }
     });
 
-    // Obtener nombre de la tienda top
+    // 1. Tipamos el objeto para que TS no se queje de la estructura
     let topStore: { id: string; name: string; totalSpent: number } | null = null;
+
     if (topStoreId) {
-      const store = await prisma.store.findUnique({
-        where: { id: topStoreId },
-        select: { id: true, name: true },
+      const store = await prisma.store.findUnique({ 
+        where: { id: topStoreId }, 
+        select: { id: true, name: true } 
       });
+
       if (store) {
+        // 2. Usamos el spread y nos aseguramos de que totalSpent sea el tipo esperado
         topStore = {
-          ...store,
-          totalSpent: Math.round(topStoreSpending * 100) / 100,
+          id: store.id,
+          name: store.name,
+          totalSpent: Math.round(topStoreSpending * 100) / 100
         };
       }
     }
@@ -208,9 +201,7 @@ export const getSummary = async (
       totalItems,
       totalStores: storeCount,
       totalProducts: productCount,
-      averagePerPurchase: purchaseStats.length > 0 
-        ? Math.round((totalSpent / purchaseStats.length) * 100) / 100 
-        : 0,
+      averagePerPurchase: purchaseStats.length > 0 ? Math.round((totalSpent / purchaseStats.length) * 100) / 100 : 0,
       topStore,
       ...(periodLabel && { period: periodLabel }),
     });
@@ -221,73 +212,33 @@ export const getSummary = async (
 
 /**
  * GET /api/v1/analytics/top-products
- * Obtiene los productos más comprados ordenados por gasto total
- * Query params:
- *   - limit: número de productos a retornar (default: 5, max: 20)
- *   - month: filtrar por mes específico (formato YYYY-MM, opcional)
  */
-export const getTopProducts = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getTopProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 5, 1), 20);
     const monthParam = req.query.month as string | undefined;
 
-    // Calcular rango de fechas si se especifica mes
-    let dateFilter: { gte?: Date; lt?: Date } | undefined;
+    let dateFilter: any;
     let periodLabel: string | undefined;
 
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
       const [year, month] = monthParam.split('-').map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 1);
-      dateFilter = { gte: startDate, lt: endDate };
+      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
       periodLabel = formatMonthLabel(monthParam);
     }
 
-    // Obtener items de compras con productos
     const purchaseItems = await prisma.purchaseItem.findMany({
-      where: {
-        purchase: {
-          userId,
-          ...(dateFilter && { date: dateFilter }),
-        },
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            brand: true,
-          },
-        },
-      },
+      where: { purchase: { userId, ...(dateFilter && { date: dateFilter }) } },
+      include: { product: true },
     });
 
-    // Agrupar por producto
-    const productData: Record<string, {
-      product: {
-        id: string;
-        name: string;
-        category: string;
-        brand: string;
-      };
-      totalSpent: number;
-      totalQuantity: number;
-      purchaseCount: number;
-      avgPrice: number;
-      prices: number[];
-    }> = {};
+    const productData: Record<string, any> = {};
 
     purchaseItems.forEach((item) => {
       const productId = item.product.id;
-      const quantity = parseFloat(item.quantity.toString());
-      const unitPrice = parseFloat(item.unitPrice.toString());
-      const itemTotal = quantity * unitPrice;
+      const { total, quantity } = calculateItemTotals(item);
+      const unitPrice = Number(item.unitPrice);
 
       if (!productData[productId]) {
         productData[productId] = {
@@ -295,40 +246,34 @@ export const getTopProducts = async (
           totalSpent: 0,
           totalQuantity: 0,
           purchaseCount: 0,
-          avgPrice: 0,
           prices: [],
         };
       }
 
-      productData[productId].totalSpent += itemTotal;
+      productData[productId].totalSpent += total;
       productData[productId].totalQuantity += quantity;
       productData[productId].purchaseCount += 1;
       productData[productId].prices.push(unitPrice);
     });
 
-    // Calcular promedios y ordenar por gasto total
     const topProducts = Object.values(productData)
-      .map((data) => ({
+      .map((data: any) => ({
         ...data.product,
         totalSpent: Math.round(data.totalSpent * 100) / 100,
         totalQuantity: Math.round(data.totalQuantity * 1000) / 1000,
         purchaseCount: data.purchaseCount,
-        avgPrice: Math.round((data.prices.reduce((sum, p) => sum + p, 0) / data.prices.length) * 100) / 100,
+        avgPrice: Math.round((data.prices.reduce((s: number, p: number) => s + p, 0) / data.prices.length) * 100) / 100,
         minPrice: Math.round(Math.min(...data.prices) * 100) / 100,
         maxPrice: Math.round(Math.max(...data.prices) * 100) / 100,
       }))
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, limit);
 
-    // Calcular total general para porcentajes
-    const grandTotal = Object.values(productData).reduce((sum, p) => sum + p.totalSpent, 0);
+    const grandTotal = Object.values(productData).reduce((sum, p: any) => sum + p.totalSpent, 0);
 
-    // Agregar porcentaje a cada producto
     const topProductsWithPercentage = topProducts.map((product) => ({
       ...product,
-      percentage: grandTotal > 0 
-        ? Math.round((product.totalSpent / grandTotal) * 10000) / 100 
-        : 0,
+      percentage: grandTotal > 0 ? Math.round((product.totalSpent / grandTotal) * 10000) / 100 : 0,
     }));
 
     return successResponse(res, {
@@ -344,85 +289,68 @@ export const getTopProducts = async (
 
 /**
  * GET /api/v1/analytics/by-store
- * Obtiene gastos agrupados por tienda
  */
-export const getByStore = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getByStore = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
+    const monthParam = req.query.month as string | undefined;
     const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
 
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months + 1);
-    startDate.setDate(1);
+    let dateFilter: any;
+    let periodLabel: string | undefined;
 
-    // Obtener compras con tiendas
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [year, month] = monthParam.split('-').map(Number);
+      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
+      periodLabel = formatMonthLabel(monthParam);
+    } else {
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - months + 1);
+      startDate.setDate(1);
+      dateFilter = { gte: startDate };
+    }
+
     const purchases = await prisma.purchase.findMany({
-      where: {
-        userId,
-        date: { gte: startDate },
-      },
-      include: {
-        store: {
-          select: { id: true, name: true, location: true },
-        },
-        items: true,
-      },
+      where: { userId, date: dateFilter },
+      include: { store: true, items: true },
     });
 
-    // Agrupar por tienda
-    const storeData: Record<string, {
-      store: { id: string; name: string; location: string };
-      totalSpent: number;
-      totalPurchases: number;
-      totalItems: number;
-    }> = {};
+    const storeData: Record<string, any> = {};
 
     purchases.forEach((purchase) => {
       const storeId = purchase.store.id;
-      
       if (!storeData[storeId]) {
         storeData[storeId] = {
-          store: purchase.store,
-          totalSpent: 0,
-          totalPurchases: 0,
-          totalItems: 0,
+          store: purchase.store, totalSpent: 0, totalBase: 0, totalSavings: 0, totalPurchases: 0, totalItems: 0,
         };
       }
 
-      const purchaseTotal = purchase.items.reduce(
-        (sum, item) => sum + parseFloat(item.quantity.toString()) * parseFloat(item.unitPrice.toString()),
-        0
-      );
+      let pBase = 0, pSavings = 0;
+      purchase.items.forEach(item => {
+        const { base, savings } = calculateItemTotals(item);
+        pBase += base; pSavings += savings;
+      });
 
-      storeData[storeId].totalSpent += purchaseTotal;
+      storeData[storeId].totalBase += pBase;
+      storeData[storeId].totalSavings += pSavings;
+      storeData[storeId].totalSpent += (pBase - pSavings);
       storeData[storeId].totalPurchases += 1;
       storeData[storeId].totalItems += purchase.items.length;
     });
 
-    // Convertir a array y ordenar por gasto
     const byStore = Object.values(storeData)
-      .map((data) => ({
+      .map((data: any) => ({
         ...data.store,
         totalSpent: Math.round(data.totalSpent * 100) / 100,
+        totalBase: Math.round(data.totalBase * 100) / 100,
+        totalSavings: Math.round(data.totalSavings * 100) / 100,
         totalPurchases: data.totalPurchases,
         totalItems: data.totalItems,
-        averagePerPurchase: data.totalPurchases > 0
-          ? Math.round((data.totalSpent / data.totalPurchases) * 100) / 100
-          : 0,
+        averagePerPurchase: data.totalPurchases > 0 ? Math.round((data.totalSpent / data.totalPurchases) * 100) / 100 : 0,
       }))
       .sort((a, b) => b.totalSpent - a.totalSpent);
 
-    return successResponse(res, {
-      byStore,
-      period: {
-        months,
-        startDate: startDate.toISOString().split('T')[0],
-      },
-    });
+    return successResponse(res, { byStore, ...(periodLabel && { period: periodLabel }) });
   } catch (error) {
     next(error);
   }
@@ -430,228 +358,118 @@ export const getByStore = async (
 
 /**
  * GET /api/v1/analytics/by-category
- * Obtiene gastos agrupados por categoría de producto
  */
-export const getByCategory = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getByCategory = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
+    const monthParam = req.query.month as string | undefined;
     const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
 
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months + 1);
-    startDate.setDate(1);
+    let dateFilter: any;
+    let periodLabel: string | undefined;
 
-    // Obtener items de compras con productos
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [year, month] = monthParam.split('-').map(Number);
+      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
+      periodLabel = formatMonthLabel(monthParam);
+    } else {
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - months + 1);
+      startDate.setDate(1);
+      dateFilter = { gte: startDate };
+    }
+
     const purchaseItems = await prisma.purchaseItem.findMany({
-      where: {
-        purchase: {
-          userId,
-          date: { gte: startDate },
-        },
-      },
-      include: {
-        product: {
-          select: { category: true },
-        },
-      },
+      where: { purchase: { userId, date: dateFilter } },
+      include: { product: true },
     });
 
-    // Agrupar por categoría
-    const categoryData: Record<string, {
-      totalSpent: number;
-      totalItems: number;
-      totalQuantity: number;
-    }> = {};
+    const categoryData: Record<string, any> = {};
 
     purchaseItems.forEach((item) => {
       const category = item.product.category;
-      
+      const { base, savings, total, quantity } = calculateItemTotals(item);
+
       if (!categoryData[category]) {
-        categoryData[category] = {
-          totalSpent: 0,
-          totalItems: 0,
-          totalQuantity: 0,
-        };
+        categoryData[category] = { totalSpent: 0, totalBase: 0, totalSavings: 0, totalItems: 0, totalQuantity: 0 };
       }
 
-      const quantity = parseFloat(item.quantity.toString());
-      const unitPrice = parseFloat(item.unitPrice.toString());
-
-      categoryData[category].totalSpent += quantity * unitPrice;
+      categoryData[category].totalBase += base;
+      categoryData[category].totalSavings += savings;
+      categoryData[category].totalSpent += total;
       categoryData[category].totalItems += 1;
       categoryData[category].totalQuantity += quantity;
     });
 
-    // Calcular total para porcentajes
-    const grandTotal = Object.values(categoryData).reduce((sum, c) => sum + c.totalSpent, 0);
+    const grandTotal = Object.values(categoryData).reduce((sum, c: any) => sum + c.totalSpent, 0);
 
-    // Convertir a array con porcentajes
     const byCategory = Object.entries(categoryData)
-      .map(([category, data]) => ({
+      .map(([category, data]: [string, any]) => ({
         category,
         totalSpent: Math.round(data.totalSpent * 100) / 100,
+        totalBase: Math.round(data.totalBase * 100) / 100,
+        totalSavings: Math.round(data.totalSavings * 100) / 100,
         totalItems: data.totalItems,
         totalQuantity: Math.round(data.totalQuantity * 1000) / 1000,
-        percentage: grandTotal > 0 
-          ? Math.round((data.totalSpent / grandTotal) * 10000) / 100 
-          : 0,
+        percentage: grandTotal > 0 ? Math.round((data.totalSpent / grandTotal) * 10000) / 100 : 0,
       }))
       .sort((a, b) => b.totalSpent - a.totalSpent);
 
-    return successResponse(res, {
-      byCategory,
-      grandTotal: Math.round(grandTotal * 100) / 100,
-      period: {
-        months,
-        startDate: startDate.toISOString().split('T')[0],
-      },
-    });
+    return successResponse(res, { byCategory, grandTotal: Math.round(grandTotal * 100) / 100, ...(periodLabel && { period: periodLabel }) });
   } catch (error) {
     next(error);
   }
 };
 
-// Helper para formatear etiqueta de mes
-function formatMonthLabel(monthKey: string): string {
-  const [year, month] = monthKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  const label = date.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
 /**
  * GET /api/v1/analytics/compare-prices
- * Compara precios de un producto en diferentes tiendas
- * Query params:
- *   - productId: UUID del producto (requerido)
  */
-export const comparePrices = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const comparePrices = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const { productId } = req.query;
 
-    // Validar que se envió productId
     if (!productId || typeof productId !== 'string') {
-      return errorResponse(
-        res,
-        'El parámetro productId es requerido',
-        ERROR_CODES.BAD_REQUEST.code
-      );
+      return errorResponse(res, 'El parámetro productId es requerido', ERROR_CODES.BAD_REQUEST.code);
     }
 
-    // Verificar que el producto existe y pertenece al usuario
-    const product = await prisma.product.findFirst({
-      where: {
-        id: productId,
-        userId,
-      },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        brand: true,
-      },
-    });
+    const product = await prisma.product.findFirst({ where: { id: productId, userId }, select: { id: true, name: true, category: true, brand: true } });
+    if (!product) return errorResponse(res, 'Producto no encontrado', ERROR_CODES.NOT_FOUND.code);
 
-    if (!product) {
-      return errorResponse(
-        res,
-        'Producto no encontrado',
-        ERROR_CODES.NOT_FOUND.code
-      );
-    }
-
-    // Obtener todos los items de compra para este producto
     const purchaseItems = await prisma.purchaseItem.findMany({
-      where: {
-        productId,
-        purchase: {
-          userId,
-        },
-      },
-      include: {
-        purchase: {
-          select: {
-            id: true,
-            date: true,
-            storeId: true,
-            store: {
-              select: {
-                id: true,
-                name: true,
-                location: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        purchase: {
-          date: 'desc',
-        },
-      },
+      where: { productId, purchase: { userId } },
+      include: { purchase: { include: { store: true } } },
+      orderBy: { purchase: { date: 'desc' } },
     });
 
-    // Si no hay compras del producto
     if (purchaseItems.length === 0) {
-      return successResponse(res, {
-        product,
-        comparison: [],
-        bestOption: null,
-        totalPurchases: 0,
-        message: 'No hay compras registradas para este producto',
-      });
+      return successResponse(res, { product, comparison: [], bestOption: null, totalPurchases: 0 });
     }
 
-    // Agrupar por tienda y calcular estadísticas
-    const storeStats: Record<string, {
-      store: { id: string; name: string; location: string };
-      prices: number[];
-      lastPrice: number;
-      lastDate: Date;
-      count: number;
-    }> = {};
+    const storeStats: Record<string, any> = {};
 
     purchaseItems.forEach((item) => {
       const storeId = item.purchase.storeId;
-      const unitPrice = parseFloat(item.unitPrice.toString());
+      const unitPrice = Number(item.unitPrice);
       const purchaseDate = new Date(item.purchase.date);
 
       if (!storeStats[storeId]) {
-        storeStats[storeId] = {
-          store: item.purchase.store,
-          prices: [],
-          lastPrice: unitPrice,
-          lastDate: purchaseDate,
-          count: 0,
-        };
+        storeStats[storeId] = { store: item.purchase.store, prices: [], lastPrice: unitPrice, lastDate: purchaseDate, count: 0 };
       }
 
       storeStats[storeId].prices.push(unitPrice);
       storeStats[storeId].count += 1;
-
-      // Actualizar último precio si esta compra es más reciente
       if (purchaseDate > storeStats[storeId].lastDate) {
         storeStats[storeId].lastPrice = unitPrice;
         storeStats[storeId].lastDate = purchaseDate;
       }
     });
 
-    // Calcular estadísticas y formatear respuesta
     const comparison = Object.values(storeStats)
-      .map((stat) => {
-        const prices = stat.prices;
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+      .map((stat: any) => {
+        const minPrice = Math.min(...stat.prices);
+        const maxPrice = Math.max(...stat.prices);
+        const avgPrice = stat.prices.reduce((s: number, p: number) => s + p, 0) / stat.prices.length;
 
         return {
           store: stat.store,
@@ -661,46 +479,30 @@ export const comparePrices = async (
           lastPrice: Math.round(stat.lastPrice * 100) / 100,
           lastDate: stat.lastDate.toISOString().split('T')[0],
           purchaseCount: stat.count,
-          priceVariation: prices.length > 1
-            ? Math.round(((maxPrice - minPrice) / minPrice) * 10000) / 100
-            : 0,
+          priceVariation: stat.prices.length > 1 ? Math.round(((maxPrice - minPrice) / minPrice) * 10000) / 100 : 0,
         };
       })
-      // Ordenar por precio promedio (menor primero)
       .sort((a, b) => a.avgPrice - b.avgPrice);
 
-    // Identificar la mejor opción (menor precio promedio)
-    const bestOption = comparison.length > 0
-      ? {
-          storeId: comparison[0].store.id,
-          storeName: comparison[0].store.name,
-          avgPrice: comparison[0].avgPrice,
-          lastPrice: comparison[0].lastPrice,
-          savings: comparison.length > 1
-            ? Math.round((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) * 100) / 100
-            : 0,
-          savingsPercentage: comparison.length > 1
-            ? Math.round(((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) / comparison[comparison.length - 1].avgPrice) * 10000) / 100
-            : 0,
-        }
-      : null;
+    const bestOption = comparison.length > 0 ? {
+      storeId: comparison[0].store.id,
+      storeName: comparison[0].store.name,
+      avgPrice: comparison[0].avgPrice,
+      lastPrice: comparison[0].lastPrice,
+      savings: comparison.length > 1 ? Math.round((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) * 100) / 100 : 0,
+      savingsPercentage: comparison.length > 1 ? Math.round(((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) / comparison[comparison.length - 1].avgPrice) * 10000) / 100 : 0,
+    } : null;
 
-    // Calcular estadísticas globales del producto
-    const allPrices = purchaseItems.map((item) => parseFloat(item.unitPrice.toString()));
+    const allPrices = purchaseItems.map(item => Number(item.unitPrice));
     const globalStats = {
       minPrice: Math.round(Math.min(...allPrices) * 100) / 100,
       maxPrice: Math.round(Math.max(...allPrices) * 100) / 100,
-      avgPrice: Math.round((allPrices.reduce((sum, p) => sum + p, 0) / allPrices.length) * 100) / 100,
+      avgPrice: Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100,
       totalPurchases: purchaseItems.length,
       storesCount: comparison.length,
     };
 
-    return successResponse(res, {
-      product,
-      comparison,
-      bestOption,
-      globalStats,
-    });
+    return successResponse(res, { product, comparison, bestOption, globalStats });
   } catch (error) {
     next(error);
   }
