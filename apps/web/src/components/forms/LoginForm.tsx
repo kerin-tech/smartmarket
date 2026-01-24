@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { LogIn, AlertCircle } from 'lucide-react'; // Añadido AlertCircle
 
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -22,8 +23,8 @@ import type { ApiError } from '@/types/auth.types';
 
 export function LoginForm() {
   const router = useRouter();
-  const { isAuthenticated, setAuth, setLoading } = useAuthStore();
-  const { toasts, removeToast, success, error: showError } = useToast();
+  const { isAuthenticated, setAuth } = useAuthStore();
+  const { toasts, removeToast, success } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
@@ -33,7 +34,7 @@ export function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: 'onSubmit', // Validación al enviar
+    mode: 'onSubmit',
     defaultValues: {
       email: '',
       password: '',
@@ -41,7 +42,6 @@ export function LoginForm() {
     },
   });
 
-  // Redirigir si ya hay sesión activa
   useEffect(() => {
     if (isAuthenticated) {
       router.push(routes.dashboard);
@@ -58,31 +58,20 @@ export function LoginForm() {
         password: data.password,
       });
 
-      // Guardar autenticación en el store
       setAuth(response.user, response.token);
-
-      // Si marcó "Recordarme", el token ya se guarda en localStorage por defecto
-      // Si no lo marcó, podríamos usar sessionStorage en su lugar (implementación futura)
-
-      // Mostrar mensaje de éxito
       success(`¡Bienvenido de nuevo, ${response.user.name}!`);
 
-      // Redireccionar al dashboard
       setTimeout(() => {
         router.push(routes.dashboard);
       }, 1000);
     } catch (err) {
       const apiError = err as ApiError;
-
-      // Manejar errores de credenciales
       if (apiError.statusCode === 401 || apiError.statusCode === 404) {
         setGeneralError('Correo electrónico o contraseña incorrectos');
       } else if (apiError.statusCode === 429) {
         setGeneralError('Demasiados intentos. Por favor, espera unos minutos.');
       } else {
-        setGeneralError(
-          apiError.message || 'Error al iniciar sesión. Por favor, intenta de nuevo.'
-        );
+        setGeneralError(apiError.message || 'Error al iniciar sesión.');
       }
     } finally {
       setIsSubmitting(false);
@@ -92,45 +81,45 @@ export function LoginForm() {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        {/* Error general */}
+        
+        {/* --- CUADRO DE ERROR GENERAL (Basado en el estilo de tus Toasts) --- */}
         {generalError && (
           <div
-            className="rounded-lg bg-error-50 border border-error-200 p-4 text-sm text-error-700"
+            className={cn(
+              "flex items-center gap-3 w-full p-4 rounded-xl border shadow-sm animate-in fade-in slide-in-from-top-2",
+              "bg-red-50 border-red-200 text-red-800", // Estilo Light
+              "dark:bg-red-950/30 dark:border-red-900 dark:text-red-300" // Estilo Dark (sacado de tu Toast)
+            )}
             role="alert"
           >
-            {generalError}
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500 dark:text-red-400" />
+            <p className="flex-1 text-sm font-bold leading-tight">
+              {generalError}
+            </p>
           </div>
         )}
 
+        {/* ... (resto de los Inputs: Email y Password) */}
+
         <Input
           label="Correo electrónico"
-          type="email"
-          placeholder="tu@correo.com"
-          autoComplete="email"
-          disabled={isSubmitting}
-          error={errors.email?.message}
           {...register('email')}
+          error={errors.email?.message}
+          // Asegúrate de que tu componente Input use el color 'danger' o 'red' para el texto de error
         />
 
         <Input
           label="Contraseña"
           type="password"
-          placeholder="Tu contraseña"
-          autoComplete="current-password"
-          disabled={isSubmitting}
-          error={errors.password?.message}
           {...register('password')}
+          error={errors.password?.message}
         />
 
         <div className="flex items-center justify-between">
-          <Checkbox
-            label="Recordarme"
-            disabled={isSubmitting}
-            {...register('rememberMe')}
-          />
+          <Checkbox label="Recordarme" {...register('rememberMe')} />
           <Link
             href={routes.forgotPassword}
-            className="text-sm text-primary-600 hover:text-primary-500 transition-colors"
+            className="text-sm text-primary-600 hover:text-primary-500 transition-colors font-medium"
           >
             ¿Olvidaste tu contraseña?
           </Link>
@@ -141,7 +130,7 @@ export function LoginForm() {
           fullWidth
           size="lg"
           isLoading={isSubmitting}
-          leftIcon={!isSubmitting ? <LogIn className="h-5 w-5" /> : undefined}
+          leftIcon={<LogIn className="h-5 w-5" />}
         >
           Iniciar sesión
         </Button>
@@ -149,11 +138,12 @@ export function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿No tienes cuenta?{' '}
-        <Link href={routes.register} className="link font-medium">
+        <Link href={routes.register} className="text-primary-600 hover:underline font-bold">
           Regístrate
         </Link>
       </p>
 
+      {/* Renderizado de Toasts de éxito o errores globales */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   );
