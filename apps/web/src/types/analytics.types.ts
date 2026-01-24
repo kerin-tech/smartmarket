@@ -106,6 +106,8 @@ export interface PriceComparisonStore {
   lastDate: string;
   purchaseCount: number;
   priceVariation: number;
+  previousPrice?: number | null;
+  trend?: 'up' | 'down' | 'stable';
 }
 
 export interface PriceComparisonProduct {
@@ -118,12 +120,13 @@ export interface PriceComparisonProduct {
 export interface PriceComparisonBestOption {
   storeId: string;
   storeName: string;
-  avgPrice: number;
+  price: number;
   lastPrice: number;
-  price: number; // <--- AGREGAR ESTO
   savings: number;
   savingsPercentage: number;
-  lastDate?: string; // Agregado por si acaso lo usas
+  trend: 'up' | 'down' | 'stable';
+  lastDate: string; // <--- Debe llamarse exactamente así
+  purchaseCount: number;
 }
 
 export interface PriceComparisonGlobalStats {
