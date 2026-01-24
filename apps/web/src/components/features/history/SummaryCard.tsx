@@ -89,7 +89,7 @@ export function SummaryCard({
         
         {/* Compras */}
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary-500/10 text-primary-500 rounded-xl">
+          <div className="p-2.5 bg-primary-100 text-primary-500 rounded-xl">
             <ShoppingCart className="h-5 w-5" />
           </div>
           <div>
@@ -102,7 +102,7 @@ export function SummaryCard({
 
         {/* Productos */}
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary-500/10 text-primary-500 rounded-xl">
+          <div className="p-2.5 bg-primary-100 text-primary-500 rounded-xl">
             <Package className="h-5 w-5" />
           </div>
           <div>

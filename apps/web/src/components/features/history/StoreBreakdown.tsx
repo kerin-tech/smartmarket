@@ -38,9 +38,10 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
       <div className="space-y-4">
         {stores.map((store) => {
-          const percentage = totalSpent > 0 
-            ? Math.round((store.totalSpent / totalSpent) * 100)
-            : 0;
+  // Protección: Si el porcentaje es mayor a 100, algo anda mal con el filtro
+  const percentage = totalSpent > 0 
+    ? Math.min(Math.round((store.totalSpent / totalSpent) * 100), 100) 
+    : 0;
 
           return (
             <div

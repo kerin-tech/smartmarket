@@ -44,39 +44,22 @@ export const analyticsService = {
    * Obtener gastos por tienda
    * @param options - Opciones de filtro
    */
-  async getByStore(options?: { months?: number; month?: string }): Promise<ByStoreResponse> {
-    const params: Record<string, any> = {};
-    if (options?.month) {
-      params.month = options.month;
-    } else if (options?.months) {
-      params.months = options.months;
-    }
-    
-    const response = await api.get<ApiSuccessResponse<ByStoreResponse>>(
-      '/analytics/by-store',
-      { params }
-    );
-    return response.data.data;
-  },
+  async getByStore(options?: { month?: string }) {
+
+  const response = await api.get('/analytics/by-store', { params: options });
+  return response.data.data;
+},
 
   /**
    * Obtener gastos por categoría
    * @param options - Opciones de filtro
    */
-  async getByCategory(options?: { months?: number; month?: string }): Promise<ByCategoryResponse> {
-    const params: Record<string, any> = {};
-    if (options?.month) {
-      params.month = options.month;
-    } else if (options?.months) {
-      params.months = options.months;
-    }
-    
-    const response = await api.get<ApiSuccessResponse<ByCategoryResponse>>(
-      '/analytics/by-category',
-      { params }
-    );
-    return response.data.data;
-  },
+  async getByCategory({ month }: { month: string }) {
+  const response = await api.get('/analytics/by-category', { params: { month } });
+  // El controlador que te envié devuelve successResponse(res, { byCategory, grandTotal })
+  // Por lo tanto, los datos están en response.data.data
+  return response.data.data; 
+},
 
   /**
    * Comparar precios de un producto en diferentes tiendas
