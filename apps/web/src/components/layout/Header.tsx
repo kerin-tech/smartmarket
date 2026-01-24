@@ -10,6 +10,8 @@ import {
   User, 
   LogOut, 
   ChevronDown,
+  Menu, // Nuevo import
+  X     // Nuevo import
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
@@ -17,7 +19,13 @@ import { useAuthStore } from '@/stores/auth.store';
 import { authService } from '@/services/auth.service';
 import { routes } from '@/config/app.config';
 
-export function Header() {
+// Definimos la interfaz para recibir las props desde DashboardLayout
+interface HeaderProps {
+  onMenuClick: () => void;
+  isSidebarOpen: boolean;
+}
+
+export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
@@ -37,11 +45,21 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-card border-b border-color">
+    <header className="sticky top-0 z-40 bg-card border-b border-color transition-all duration-300">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         
         {/* --- SECCIÓN IZQUIERDA --- */}
         <div className="flex items-center gap-4">
+          
+          {/* Botón Toggle Sidebar (Solo Mobile) */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 -ml-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none"
+            aria-label="Toggle Menu"
+          >
+            {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+
           {/* Mobile: Logo SMK */}
           <div className="lg:hidden">
             <Logo size="sm" showText={false} />
@@ -56,7 +74,7 @@ export function Header() {
         </div>
 
         {/* --- SECCIÓN CENTRO (Mobile Only) --- */}
-        <div className="lg:hidden absolute left-1/2 -translate-x-1/2">
+        <div className="lg:hidden absolute left-1/2 -translate-x-1/2 pointer-events-none">
           <h1 className="text-sm font-bold text-foreground uppercase tracking-wider">
             {getPageTitle()}
           </h1>
