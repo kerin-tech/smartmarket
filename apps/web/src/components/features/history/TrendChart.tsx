@@ -10,9 +10,10 @@ interface TrendChartProps {
   data: MonthlyData[];
   currentMonth: string;
   isLoading?: boolean;
+  onMonthClick?: (month: string) => void; // Prop añadida para interactividad
 }
 
-export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
+export function TrendChart({ data, currentMonth, isLoading, onMonthClick }: TrendChartProps) {
   if (isLoading) {
     return <TrendChartSkeleton />;
   }
@@ -35,14 +36,13 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
     );
   }
 
-  // Encontrar el máximo para calcular alturas
   const maxValue = Math.max(...chartData.map((d) => d.totalSpent), 1);
 
-  // Formatear etiqueta de mes corta (ej: "Ene")
   const getShortMonth = (monthKey: string) => {
     const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+    const label = date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+    return label.charAt(0).toUpperCase() + label.slice(1);
   };
 
   return (
@@ -58,31 +58,33 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
           const isSelected = item.month === currentMonth;
 
           return (
-            <div
+            <button // Cambiado de div a button para accesibilidad y clics
               key={item.month}
-              className="flex-1 flex flex-col items-center gap-2"
+              onClick={() => onMonthClick?.(item.month)}
+              className="flex-1 flex flex-col items-center gap-2 group outline-none"
+              type="button"
             >
-              {/* Valor */}
+              {/* Valor superior */}
               <span className={cn(
-                'text-xs font-medium transition-colors',
-                isSelected ? 'text-primary-600' : 'text-muted-foreground'
+                'text-[10px] sm:text-xs font-medium transition-colors duration-300',
+                isSelected ? 'text-primary-600' : 'text-muted-foreground group-hover:text-foreground'
               )}>
                 {item.totalSpent > 0 ? formatCurrency(item.totalSpent) : '-'}
               </span>
               
-              {/* Barra */}
-              <div className="w-full flex justify-center">
+              {/* Contenedor de Barra */}
+              <div className="w-full flex justify-center items-end h-full">
                 <div
                   className={cn(
-                    'w-full max-w-12 rounded-t-md transition-all duration-500',
-                    isSelected ? 'bg-primary-500' : 'bg-secondary-200'
+                    'w-full max-w-12 rounded-t-md transition-all duration-500 ease-out',
+                    isSelected 
+                      ? 'bg-primary-500 shadow-[0_-4px_12px_rgba(var(--primary-500),0.2)]' 
+                      : 'bg-secondary-200 group-hover:bg-secondary-300'
                   )}
-                  style={{ height: `${Math.max(height, 4)}%` }}
-                  role="img"
-                  aria-label={`${item.monthLabel}: ${formatCurrency(item.totalSpent)}`}
+                  style={{ height: `${Math.max(height, 6)}%` }}
                 />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -92,15 +94,16 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
         {chartData.map((item) => {
           const isSelected = item.month === currentMonth;
           return (
-            <span
+            <button
               key={item.month}
+              onClick={() => onMonthClick?.(item.month)}
               className={cn(
-                'flex-1 text-center text-xs font-medium capitalize transition-colors',
-                isSelected ? 'text-primary-600' : 'text-muted-foreground'
+                'flex-1 text-center text-xs font-medium capitalize transition-colors outline-none',
+                isSelected ? 'text-primary-600' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {getShortMonth(item.month)}
-            </span>
+            </button>
           );
         })}
       </div>

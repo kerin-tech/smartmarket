@@ -30,49 +30,63 @@ export const analyticsService = {
 
   /**
    * Obtener resumen general
+   * @param month - Mes específico (formato YYYY-MM, opcional)
    */
-  async getSummary(): Promise<SummaryResponse> {
+  async getSummary(month?: string): Promise<SummaryResponse> {
     const response = await api.get<ApiSuccessResponse<SummaryResponse>>(
-      '/analytics/summary'
+      '/analytics/summary',
+      { params: month ? { month } : {} }
     );
     return response.data.data;
   },
 
   /**
    * Obtener gastos por tienda
-   * @param months - Número de meses a obtener (default: 6)
+   * @param options - Opciones de filtro
    */
-  async getByStore(months: number = 6): Promise<ByStoreResponse> {
+  async getByStore(options?: { months?: number; month?: string }): Promise<ByStoreResponse> {
+    const params: Record<string, any> = {};
+    if (options?.month) {
+      params.month = options.month;
+    } else if (options?.months) {
+      params.months = options.months;
+    }
+    
     const response = await api.get<ApiSuccessResponse<ByStoreResponse>>(
       '/analytics/by-store',
-      { params: { months } }
+      { params }
     );
     return response.data.data;
   },
 
   /**
    * Obtener gastos por categoría
-   * @param months - Número de meses a obtener (default: 6)
+   * @param options - Opciones de filtro
    */
-  async getByCategory(months: number = 6): Promise<ByCategoryResponse> {
+  async getByCategory(options?: { months?: number; month?: string }): Promise<ByCategoryResponse> {
+    const params: Record<string, any> = {};
+    if (options?.month) {
+      params.month = options.month;
+    } else if (options?.months) {
+      params.months = options.months;
+    }
+    
     const response = await api.get<ApiSuccessResponse<ByCategoryResponse>>(
       '/analytics/by-category',
-      { params: { months } }
+      { params }
     );
     return response.data.data;
   },
 
   /**
- * Obtener comparativa de precios para un producto específico
- * Ajustado para enviar productId como Query Parameter (?productId=...)
- */
-async comparePrices(productId: string): Promise<PriceComparisonResponse> {
-  const response = await api.get<ApiSuccessResponse<PriceComparisonResponse>>(
-    '/analytics/compare-prices', // Quitamos el /${productId} de aquí
-    { 
-      params: { productId } // Esto genera automáticamente el ?productId=...
-    }
-  );
-  return response.data.data;
-},
+   * Comparar precios de un producto en diferentes tiendas
+   * @param productId - ID del producto
+   */
+  async comparePrices(productId: string): Promise<PriceComparisonResponse> {
+    const response = await api.get<ApiSuccessResponse<PriceComparisonResponse>>(
+      '/analytics/compare-prices',
+      { params: { productId } }
+    );
+    return response.data.data;
+  },
 };
