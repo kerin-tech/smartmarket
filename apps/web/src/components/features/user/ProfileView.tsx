@@ -83,12 +83,12 @@ export function ProfileView() {
                 <h2 className="text-lg font-semibold text-foreground leading-tight">
                   {user.name}
                 </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[13px] px-2 py-0.5 bg-muted text-muted-foreground rounded-full">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <span className="text-sm px-4 py-1 bg-muted text-muted-foreground rounded-full">
                     {user.email}
                   </span>
-                  <span className="text-[13px] text-muted-foreground/80">
-                    · {formatMemberSince(user.createdAt)}
+                  <span className="text-sm text-muted-foreground/80">
+                    {formatMemberSince(user.createdAt)}
                   </span>
                 </div>
               </div>

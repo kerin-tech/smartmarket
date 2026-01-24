@@ -56,10 +56,10 @@ export function TrendChart({ data, currentMonth, isLoading, onMonthClick }: Tren
   return (
     <div className="bg-card rounded-xl border border-border p-6 shadow-sm transition-colors">
       <div className="flex justify-between items-center mb-10">
-        <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
-          Tendencia de Gasto
+         <h3 className="text-base font-semibold text-foreground">
+          Tendencia de gasto
         </h3>
-        <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+        <span className="text-sm font-medium text-primary-600 bg-primary-100 px-4 py-1 rounded-full">
           Últimos 6 meses
         </span>
       </div>
