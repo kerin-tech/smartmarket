@@ -34,16 +34,16 @@ export function ConfirmModal({
       <div className="flex gap-4">
         <div
           className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-            variant === 'danger' ? 'bg-error-100' : 'bg-warning-100'
+            variant === 'danger' ? 'bg-red-600/50' : 'bg-warning-100'
           }`}
         >
           <AlertTriangle
             className={`h-5 w-5 ${
-              variant === 'danger' ? 'text-error-600' : 'text-warning-600'
+              variant === 'danger' ? 'text-red-100' : 'text-warning-600'
             }`}
           />
         </div>
-        <div>
+        <div className="flex items-center">
           <p className="text-sm text-muted-foreground">{message}</p>
         </div>
       </div>

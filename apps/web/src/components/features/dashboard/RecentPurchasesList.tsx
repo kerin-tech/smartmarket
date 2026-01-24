@@ -35,7 +35,7 @@ export function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
         </h3>
         <Link
           href="/purchases"
-          className="text-sm font-medium text-primary hover:opacity-80 flex items-center gap-1 transition-all"
+          className="text-sm font-medium text-primary-600 hover:opacity-80 flex items-center gap-1 transition-all"
         >
           Ver todas
           <ChevronRight className="h-4 w-4" />

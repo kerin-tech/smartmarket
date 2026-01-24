@@ -3,6 +3,7 @@
 import { TrendingDown, TrendingUp, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type { PriceComparisonGlobalStats } from '@/types/analytics.types';
+import { ShoppingCart, Package } from 'lucide-react';
 
 interface PriceStatsCardProps {
   // Cambiamos a opcional para que no rompa el renderizado si el API falla o cambia
@@ -25,7 +26,7 @@ export function PriceStatsCard({ stats }: PriceStatsCardProps) {
         Estadísticas de precio
       </h3>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid mb-8 grid-cols-3 gap-4">
         {/* Mínimo */}
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-success-100 mb-2">
@@ -60,16 +61,27 @@ export function PriceStatsCard({ stats }: PriceStatsCardProps) {
         </div>
       </div>
 
-      <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-color text-sm text-muted-foreground">
-        <span>
-          <strong className="text-foreground">{stats.totalPurchases || 0}</strong>{' '}
-          {stats.totalPurchases === 1 ? 'compra' : 'compras'}
-        </span>
-        <span>
-          <strong className="text-foreground">{stats.storesCount || 0}</strong>{' '}
-          {stats.storesCount === 1 ? 'local' : 'locales'}
-        </span>
-      </div>
+
+      {/* Estadísticas Sutiles */}
+<div className="flex flex-wrap items-center justify-center gap-2 pt-4 border-t border-border">
+  <span className="text-xs text-muted-foreground">Métricas basadas en:</span>
+  
+  {/* Badge de Compras */}
+  <div className="flex items-center gap-1.5">
+    <span className="text-xs font-medium text-primary-700 bg-primary-100 px-3 py-1 rounded-full">
+      {stats.totalPurchases || 0} {stats.totalPurchases === 1 ? 'compra' : 'compras'}
+    </span>
+  </div>
+
+  {/* Badge de Locales */}
+  <div className="flex items-center gap-1.5">
+    <span className="text-xs font-medium text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">
+      {stats.storesCount || 0} {stats.storesCount === 1 ? 'local' : 'locales'}
+    </span>
+  </div>
+</div>
+
+
     </div>
   );
 }
