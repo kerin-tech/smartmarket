@@ -1,17 +1,13 @@
-// src/components/layout/Header.tsx
-
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { 
   User, 
   LogOut, 
-  ChevronDown,
-  Menu, // Nuevo import
-  X     // Nuevo import
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
@@ -19,19 +15,13 @@ import { useAuthStore } from '@/stores/auth.store';
 import { authService } from '@/services/auth.service';
 import { routes } from '@/config/app.config';
 
-// Definimos la interfaz para recibir las props desde DashboardLayout
-interface HeaderProps {
-  onMenuClick: () => void;
-  isSidebarOpen: boolean;
-}
-
-export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
+// Eliminamos onMenuClick e isSidebarOpen de las props si ya no se usarán aquí
+export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Lógica para el nombre de la página en Mobile
   const getPageTitle = () => {
     if (pathname === '/') return 'Dashboard';
     const segment = pathname.split('/')[1];
@@ -50,22 +40,14 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
         
         {/* --- SECCIÓN IZQUIERDA --- */}
         <div className="flex items-center gap-4">
-          
-          {/* Botón Toggle Sidebar (Solo Mobile) */}
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 -ml-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none"
-            aria-label="Toggle Menu"
-          >
-            {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Se eliminó el botón de hamburguesa (Menu/X) */}
 
           {/* Mobile: Logo SMK */}
           <div className="lg:hidden">
             <Logo size="sm" showText={false} />
           </div>
 
-          {/* Web: Breadcrumb (Simple) */}
+          {/* Web: Breadcrumb */}
           <nav className="hidden lg:flex items-center text-sm font-medium">
             <span className="text-muted-foreground">App</span>
             <span className="mx-2 text-muted-foreground">/</span>
