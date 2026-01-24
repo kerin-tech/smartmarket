@@ -69,10 +69,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content wrapper - offset by sidebar width on desktop */}
       <div className="lg:ml-64 min-h-screen flex flex-col">
         {/* Header */}
-        <Header
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          isSidebarOpen={isSidebarOpen}
-        />
+<Header />
 
         {/* Page content */}
         <main className="flex-1 pb-20 lg:pb-0">
