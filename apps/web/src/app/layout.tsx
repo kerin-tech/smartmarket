@@ -1,52 +1,37 @@
-import type { Metadata } from 'next';
-// 1. Importamos la fuente desde el módulo de Google de Next.js
+// src/app/layout.tsx
+
+import type { Metadata, Viewport } from 'next';
 import { DM_Sans } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { ThemeScript } from '@/components/ThemeScript';
 
-// 2. Configuramos la fuente
 const dmSans = DM_Sans({
   subsets: ['latin'],
+  variable: '--font-dm-sans',
   display: 'swap',
-  // Definimos la variable CSS que usará Tailwind
-  variable: '--font-dm-sans', 
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: 'SmartMarket - Compara precios y ahorra',
-    template: '%s | SmartMarket',
+  title: 'SmartMarket - Tu asistente de compras inteligente',
+  description: 'Rastrea tus gastos de mercado, compara precios y ahorra dinero con SmartMarket.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'SmartMarket',
   },
-  description:
-    'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes con SmartMarket.',
-  keywords: [
-    'comparar precios',
-    'supermercado',
-    'ahorro',
-    'compras',
-    'mercado',
-    'Colombia',
-    'canasta familiar',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f9fafb' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
   ],
-  authors: [{ name: 'SmartMarket' }],
-  creator: 'SmartMarket',
-  openGraph: {
-    type: 'website',
-    locale: 'es_CO',
-    siteName: 'SmartMarket',
-    title: 'SmartMarket - Compara precios y ahorra',
-    description:
-      'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'SmartMarket - Compara precios y ahorra',
-    description:
-      'Gestiona tus compras del hogar, compara precios entre supermercados y ahorra dinero cada mes.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
 };
 
 export default function RootLayout({
@@ -55,12 +40,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // 3. Agregamos la variable de la fuente al tag html
-    <html lang="es" className={`${dmSans.variable}`}>
-      {/* 4. Aplicamos 'font-sans' al body para que Tailwind use DM Sans */}
-      <body className="min-h-screen bg-secondary-50 font-sans antialiased">
-        {children}  
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className={`${dmSans.variable} font-sans`}>
+        <ThemeProvider defaultTheme="system">
+          {children}
+        </ThemeProvider>
       </body>
     </html>
-  );  
+  );
 }

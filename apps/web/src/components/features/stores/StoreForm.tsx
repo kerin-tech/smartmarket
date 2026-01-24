@@ -105,7 +105,7 @@ export function StoreForm({
           {/* Sugerencias */}
           {!isEditing && filteredSuggestions.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs text-secondary-500 mb-2">Sugerencias:</p>
+              <p className="text-xs text-muted-foreground mb-2">Sugerencias:</p>
               <div className="flex flex-wrap gap-2">
                 {filteredSuggestions.slice(0, 6).map((suggestion) => (
                   <button
@@ -113,7 +113,7 @@ export function StoreForm({
                     type="button"
                     onClick={() => handleSuggestionClick(suggestion.name)}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full bg-secondary-100 text-secondary-700 hover:bg-secondary-200 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full bg-muted text-foreground hover:bg-secondary-200 transition-colors disabled:opacity-50"
                   >
                     <span>{suggestion.icon}</span>
                     <span>{suggestion.name}</span>

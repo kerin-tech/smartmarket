@@ -31,7 +31,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             htmlFor={selectId}
             className={cn(
               'block text-sm font-medium mb-1.5',
-              disabled ? 'text-secondary-400' : 'text-secondary-700'
+              disabled ? 'text-muted-foreground' : 'text-foreground'
             )}
           >
             {label}
@@ -43,13 +43,13 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             disabled={disabled}
             className={cn(
-              'flex h-11 w-full appearance-none rounded-lg border bg-white px-3 py-2 pr-10 text-sm transition-colors',
+              'flex h-11 w-full appearance-none rounded-lg border bg-card px-3 py-2 pr-10 text-sm transition-colors',
               'focus:outline-none focus:ring-2 focus:ring-offset-0',
               error
                 ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
                 : 'border-secondary-300 focus:border-primary-500 focus:ring-primary-500/20',
-              disabled && 'cursor-not-allowed bg-secondary-50 text-secondary-500',
-              !props.value && 'text-secondary-400',
+              disabled && 'cursor-not-allowed bg-muted text-muted-foreground',
+              !props.value && 'text-muted-foreground',
               className
             )}
             aria-invalid={!!error}
@@ -72,7 +72,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <ChevronDown
             className={cn(
               'absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 pointer-events-none',
-              disabled ? 'text-secondary-300' : 'text-secondary-400'
+              disabled ? 'text-secondary-300' : 'text-muted-foreground'
             )}
           />
         </div>
@@ -82,7 +82,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </p>
         )}
         {helperText && !error && (
-          <p id={`${selectId}-helper`} className="mt-1.5 text-sm text-secondary-500">
+          <p id={`${selectId}-helper`} className="mt-1.5 text-sm text-muted-foreground">
             {helperText}
           </p>
         )}

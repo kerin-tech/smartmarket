@@ -23,7 +23,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             type="checkbox"
             disabled={disabled}
             className={cn(
-              'peer h-5 w-5 appearance-none rounded border bg-white transition-colors cursor-pointer',
+              'peer h-5 w-5 appearance-none rounded border bg-card transition-colors cursor-pointer',
               'focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-primary-500/20',
               'checked:bg-primary-600 checked:border-primary-600',
               error
@@ -49,7 +49,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             htmlFor={inputId}
             className={cn(
               'ml-2.5 text-sm cursor-pointer select-none',
-              disabled ? 'text-secondary-400 cursor-not-allowed' : 'text-secondary-700'
+              disabled ? 'text-muted-foreground cursor-not-allowed' : 'text-foreground'
             )}
           >
             {label}

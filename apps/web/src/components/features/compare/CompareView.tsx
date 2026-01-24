@@ -63,7 +63,7 @@ export function CompareView() {
   return (
     <div className="space-y-6">
       {/* Título */}
-      <h1 className="text-2xl font-bold text-secondary-900">Comparar Precios</h1>
+      <h1 className="text-2xl font-bold text-foreground">Comparar Precios</h1>
 
       {/* Selector de producto */}
       <ProductSelector
@@ -133,14 +133,14 @@ function ProductCard({ product }: ProductCardProps) {
   const config = getCategoryConfig(product.category);
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-4">
+    <div className="bg-card rounded-xl border border-color p-4">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-lg bg-secondary-100 flex items-center justify-center text-2xl">
+        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-2xl">
           {config.emoji}
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-secondary-900">{product.name}</h2>
-          <p className="text-sm text-secondary-500">
+          <h2 className="text-lg font-semibold text-foreground">{product.name}</h2>
+          <p className="text-sm text-muted-foreground">
             {config.label} · {product.brand}
           </p>
         </div>

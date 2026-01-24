@@ -39,7 +39,7 @@ export function StoreCard({ store, onEdit, onDelete, searchQuery }: StoreCardPro
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-white hover:bg-secondary-50 transition-colors">
+    <div className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors">
       {/* Icon */}
       <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
         <span className="text-xl">🏪</span>
@@ -47,16 +47,16 @@ export function StoreCard({ store, onEdit, onDelete, searchQuery }: StoreCardPro
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-secondary-900 truncate">
+        <h3 className="text-sm font-medium text-foreground truncate">
           {highlightText(store.name, searchQuery || '')}
         </h3>
         {store.location ? (
-          <p className="text-xs text-secondary-500 flex items-center gap-1 truncate">
+          <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
             <MapPin className="h-3 w-3 flex-shrink-0" />
             {highlightText(store.location, searchQuery || '')}
           </p>
         ) : (
-          <p className="text-xs text-secondary-400 italic">Sin ubicación</p>
+          <p className="text-xs text-muted-foreground italic">Sin ubicación</p>
         )}
       </div>
 
@@ -68,7 +68,7 @@ export function StoreCard({ store, onEdit, onDelete, searchQuery }: StoreCardPro
             e.stopPropagation();
             isMenuOpen ? closeMenu() : openMenu(store.id);
           }}
-          className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+          className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
           aria-label={`Opciones para ${store.name}`}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}

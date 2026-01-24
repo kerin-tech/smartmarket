@@ -29,7 +29,7 @@ export function MetricCard({
         'rounded-xl p-4 transition-all',
         variant === 'primary'
           ? 'bg-primary-500 text-white'
-          : 'bg-white border border-secondary-200',
+          : 'bg-card border border-color',
         href && 'hover:shadow-md cursor-pointer'
       )}
     >
@@ -39,13 +39,13 @@ export function MetricCard({
             'p-2 rounded-lg',
             variant === 'primary'
               ? 'bg-primary-400/30'
-              : 'bg-secondary-100'
+              : 'bg-muted'
           )}
         >
           <Icon
             className={cn(
               'h-5 w-5',
-              variant === 'primary' ? 'text-white' : 'text-secondary-600'
+              variant === 'primary' ? 'text-white' : 'text-muted-foreground'
             )}
           />
         </div>
@@ -53,7 +53,7 @@ export function MetricCard({
       <p
         className={cn(
           'text-2xl font-bold mb-1',
-          variant === 'primary' ? 'text-white' : 'text-secondary-900'
+          variant === 'primary' ? 'text-white' : 'text-foreground'
         )}
       >
         {value}
@@ -61,7 +61,7 @@ export function MetricCard({
       <p
         className={cn(
           'text-sm',
-          variant === 'primary' ? 'text-primary-100' : 'text-secondary-500'
+          variant === 'primary' ? 'text-primary-100' : 'text-muted-foreground'
         )}
       >
         {title}
@@ -70,7 +70,7 @@ export function MetricCard({
         <p
           className={cn(
             'text-xs mt-1',
-            variant === 'primary' ? 'text-primary-200' : 'text-secondary-400'
+            variant === 'primary' ? 'text-primary-200' : 'text-muted-foreground'
           )}
         >
           {subtitle}

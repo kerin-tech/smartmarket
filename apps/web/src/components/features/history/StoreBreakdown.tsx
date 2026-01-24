@@ -19,11 +19,11 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
   if (stores.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 p-6">
-        <h3 className="text-base font-semibold text-secondary-900 mb-4">
+      <div className="bg-card rounded-xl border border-color p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Gastos por local
         </h3>
-        <p className="text-sm text-secondary-500 text-center py-8">
+        <p className="text-sm text-muted-foreground text-center py-8">
           No hay datos de locales para este mes
         </p>
       </div>
@@ -31,8 +31,8 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
   }
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
-      <h3 className="text-base font-semibold text-secondary-900 mb-4">
+    <div className="bg-card rounded-xl border border-color p-6">
+      <h3 className="text-base font-semibold text-foreground mb-4">
         Gastos por local
       </h3>
 
@@ -45,7 +45,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
           return (
             <div
               key={store.id}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary-50 transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
             >
               {/* Icon */}
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
@@ -56,18 +56,18 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-semibold text-secondary-900 truncate">
+                    <h4 className="text-sm font-semibold text-foreground truncate">
                       {store.name}
                     </h4>
-                    <p className="text-xs text-secondary-500">
+                    <p className="text-xs text-muted-foreground">
                       {store.totalPurchases} {store.totalPurchases === 1 ? 'compra' : 'compras'}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-secondary-900">
+                    <p className="text-sm font-semibold text-foreground">
                       {formatCurrency(store.totalSpent)}
                     </p>
-                    <p className="text-xs text-secondary-500">{percentage}%</p>
+                    <p className="text-xs text-muted-foreground">{percentage}%</p>
                   </div>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
 function StoreBreakdownSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
+    <div className="bg-card rounded-xl border border-color p-6">
       <div className="h-5 w-32 bg-secondary-200 rounded animate-pulse mb-4" />
       <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (

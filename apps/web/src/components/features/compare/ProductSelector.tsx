@@ -76,15 +76,15 @@ export function ProductSelector({
     const config = getCategoryConfig(selectedProduct.category);
     return (
       <div className="relative">
-        <div className="flex items-center gap-2 px-4 py-3 bg-white border border-secondary-200 rounded-xl">
-          <Search className="h-5 w-5 text-secondary-400" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-card border border-color rounded-xl">
+          <Search className="h-5 w-5 text-muted-foreground" />
           <div className="flex items-center gap-2 flex-1">
             <span className="text-lg">{config.emoji}</span>
-            <span className="font-medium text-secondary-900">{selectedProduct.name}</span>
+            <span className="font-medium text-foreground">{selectedProduct.name}</span>
           </div>
           <button
             onClick={handleClear}
-            className="p-1 rounded-full hover:bg-secondary-100 text-secondary-500 hover:text-secondary-700 transition-colors"
+            className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -97,7 +97,7 @@ export function ProductSelector({
     <div className="relative">
       {/* Input de búsqueda */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <input
           type="text"
           value={searchQuery}
@@ -107,12 +107,12 @@ export function ProductSelector({
           }}
           onFocus={() => setShowResults(true)}
           placeholder="Buscar producto..."
-          className="w-full pl-11 pr-4 py-3 bg-white border border-secondary-200 rounded-xl text-secondary-900 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full pl-11 pr-4 py-3 bg-card border border-color rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary-100 text-secondary-500"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted text-muted-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -121,18 +121,18 @@ export function ProductSelector({
 
       {/* Dropdown de resultados */}
       {showResults && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white border border-secondary-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-card border border-color rounded-xl shadow-lg max-h-80 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-secondary-500">
+            <div className="p-4 text-center text-muted-foreground">
               Buscando...
             </div>
           ) : products.length === 0 ? (
-            <div className="p-4 text-center text-secondary-500">
+            <div className="p-4 text-center text-muted-foreground">
               {searchQuery ? 'No se encontraron productos' : 'No hay productos'}
             </div>
           ) : (
             <>
-              <div className="px-4 py-2 text-xs font-medium text-secondary-500 uppercase tracking-wide border-b border-secondary-100">
+              <div className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b border-color">
                 {searchQuery ? 'Resultados' : 'Productos recientes'}
               </div>
               {products.map((product) => {
@@ -141,14 +141,14 @@ export function ProductSelector({
                   <button
                     key={product.id}
                     onClick={() => handleSelect(product)}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors text-left"
                   >
                     <span className="text-2xl">{config.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-secondary-900 truncate">
+                      <p className="font-medium text-foreground truncate">
                         {product.name}
                       </p>
-                      <p className="text-sm text-secondary-500">
+                      <p className="text-sm text-muted-foreground">
                         {config.label} · {product.brand}
                       </p>
                     </div>

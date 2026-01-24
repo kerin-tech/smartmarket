@@ -30,11 +30,11 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 p-5">
-        <h3 className="text-base font-semibold text-secondary-900 mb-4">
+      <div className="bg-card rounded-xl border border-color p-5">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Últimos 6 meses
         </h3>
-        <p className="text-sm text-secondary-500 text-center py-8">
+        <p className="text-sm text-muted-foreground text-center py-8">
           No hay datos suficientes para mostrar el gráfico
         </p>
       </div>
@@ -42,8 +42,8 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-5">
-      <h3 className="text-base font-semibold text-secondary-900 mb-4">
+    <div className="bg-card rounded-xl border border-color p-5">
+      <h3 className="text-base font-semibold text-foreground mb-4">
         Últimos 6 meses
       </h3>
 
@@ -65,7 +65,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
                   'text-xs font-medium transition-opacity',
                   isCurrentMonth
                     ? 'text-primary-600 opacity-100'
-                    : 'text-secondary-500 opacity-0 group-hover:opacity-100'
+                    : 'text-muted-foreground opacity-0 group-hover:opacity-100'
                 )}
               >
                 {item.totalSpent > 0
@@ -97,7 +97,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
       </div>
 
       {/* Labels de meses */}
-      <div className="flex justify-between gap-2 pt-2 border-t border-secondary-100">
+      <div className="flex justify-between gap-2 pt-2 border-t border-color">
         {chartData.map((item) => {
           const isCurrentMonth = item.month === currentMonth;
           return (
@@ -105,7 +105,7 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
               key={item.month}
               className={cn(
                 'flex-1 text-center text-xs font-medium capitalize',
-                isCurrentMonth ? 'text-primary-600' : 'text-secondary-500'
+                isCurrentMonth ? 'text-primary-600' : 'text-muted-foreground'
               )}
             >
               {getShortMonth(item.month)}

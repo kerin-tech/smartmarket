@@ -26,12 +26,9 @@ export function SummaryCard({
   const getComparisonIcon = () => {
     if (!comparison) return null;
     switch (comparison.direction) {
-      case 'up':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'down':
-        return <TrendingDown className="h-4 w-4" />;
-      default:
-        return <Minus className="h-4 w-4" />;
+      case 'up': return <TrendingUp className="h-4 w-4" />;
+      case 'down': return <TrendingDown className="h-4 w-4" />;
+      default: return <Minus className="h-4 w-4" />;
     }
   };
 
@@ -39,11 +36,13 @@ export function SummaryCard({
     if (!comparison) return '';
     switch (comparison.direction) {
       case 'up':
-        return 'text-danger-600 bg-danger-50';
+        // Semántica: Danger para subida de gastos
+        return 'text-danger-700 bg-danger-100 dark:bg-danger-50/10 dark:text-danger-500';
       case 'down':
-        return 'text-success-600 bg-success-50';
+        // Semántica: Success para ahorro
+        return 'text-success-700 bg-success-100 dark:bg-success-50/10 dark:text-success-500';
       default:
-        return 'text-secondary-600 bg-secondary-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -57,19 +56,25 @@ export function SummaryCard({
   };
 
   return (
-    <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white shadow-lg">
+    // CAMBIO: bg-card y border-border en lugar de gradiente
+    <div className="bg-card border border-border rounded-2xl p-6 text-foreground shadow-soft">
+      
       {/* Total */}
-      <div className="text-center mb-4">
-        <p className="text-primary-100 text-sm font-medium mb-1">Total del mes</p>
-        <p className="text-4xl font-bold tracking-tight">{formatCurrency(total)}</p>
+      <div className="text-center mb-6">
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">
+          Total del mes
+        </p>
+        <p className="text-4xl font-extrabold tracking-tight text-foreground">
+          {formatCurrency(total)}
+        </p>
       </div>
 
       {/* Comparación */}
       {comparison && (
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-6">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all',
               getComparisonColor()
             )}
           >
@@ -79,30 +84,35 @@ export function SummaryCard({
         </div>
       )}
 
-      {/* Estadísticas */}
-      <div className="flex justify-center gap-6 pt-4 border-t border-primary-400/30">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary-400/30 rounded-lg">
-            <ShoppingCart className="h-4 w-4" />
+      {/* Estadísticas - CAMBIO: border-border y bg-muted/bg-primary-500/10 */}
+      <div className="flex justify-center gap-8 pt-6 border-t border-border">
+        
+        {/* Compras */}
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary-500/10 text-primary-500 rounded-xl">
+            <ShoppingCart className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-bold">{purchaseCount}</p>
-            <p className="text-xs text-primary-100">
+            <p className="text-xl font-bold leading-none">{purchaseCount}</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">
               {purchaseCount === 1 ? 'compra' : 'compras'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary-400/30 rounded-lg">
-            <Package className="h-4 w-4" />
+
+        {/* Productos */}
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary-500/10 text-primary-500 rounded-xl">
+            <Package className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-2xl font-bold">{productCount}</p>
-            <p className="text-xs text-primary-100">
+            <p className="text-xl font-bold leading-none">{productCount}</p>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">
               {productCount === 1 ? 'producto' : 'productos'}
             </p>
           </div>
         </div>
+
       </div>
     </div>
   );

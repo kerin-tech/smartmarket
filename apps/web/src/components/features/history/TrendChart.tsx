@@ -24,11 +24,11 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
 
   if (chartData.length < 2) {
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 p-6">
-        <h3 className="text-base font-semibold text-secondary-900 mb-4">
+      <div className="bg-card rounded-xl border border-color p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Tendencia (últimos 6 meses)
         </h3>
-        <p className="text-sm text-secondary-500 text-center py-8">
+        <p className="text-sm text-muted-foreground text-center py-8">
           Se necesitan al menos 2 meses de datos para mostrar la tendencia
         </p>
       </div>
@@ -46,8 +46,8 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
-      <h3 className="text-base font-semibold text-secondary-900 mb-6">
+    <div className="bg-card rounded-xl border border-color p-6">
+      <h3 className="text-base font-semibold text-foreground mb-6">
         Tendencia (últimos 6 meses)
       </h3>
 
@@ -65,7 +65,7 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
               {/* Valor */}
               <span className={cn(
                 'text-xs font-medium transition-colors',
-                isSelected ? 'text-primary-600' : 'text-secondary-500'
+                isSelected ? 'text-primary-600' : 'text-muted-foreground'
               )}>
                 {item.totalSpent > 0 ? formatCurrency(item.totalSpent) : '-'}
               </span>
@@ -88,7 +88,7 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
       </div>
 
       {/* Labels de meses */}
-      <div className="flex justify-between gap-2 pt-2 border-t border-secondary-100">
+      <div className="flex justify-between gap-2 pt-2 border-t border-color">
         {chartData.map((item) => {
           const isSelected = item.month === currentMonth;
           return (
@@ -96,7 +96,7 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
               key={item.month}
               className={cn(
                 'flex-1 text-center text-xs font-medium capitalize transition-colors',
-                isSelected ? 'text-primary-600' : 'text-secondary-500'
+                isSelected ? 'text-primary-600' : 'text-muted-foreground'
               )}
             >
               {getShortMonth(item.month)}
@@ -110,7 +110,7 @@ export function TrendChart({ data, currentMonth, isLoading }: TrendChartProps) {
 
 function TrendChartSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
+    <div className="bg-card rounded-xl border border-color p-6">
       <div className="h-5 w-48 bg-secondary-200 rounded animate-pulse mb-6" />
       <div className="flex items-end justify-between gap-2 h-40 mb-4">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -123,7 +123,7 @@ function TrendChartSkeleton() {
           </div>
         ))}
       </div>
-      <div className="flex justify-between gap-2 pt-2 border-t border-secondary-100">
+      <div className="flex justify-between gap-2 pt-2 border-t border-color">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex-1 flex justify-center">
             <div className="w-8 h-3 bg-secondary-200 rounded animate-pulse" />

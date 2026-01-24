@@ -18,19 +18,19 @@ export function DashboardEmptyState({ userName }: DashboardEmptyStateProps) {
     <div className="space-y-6">
       {/* Saludo - con animación */}
       <h1 
-        className="text-2xl lg:text-4xl font-bold text-secondary-900 animate-[fadeInUp_400ms_ease-out]"
+        className="text-2xl lg:text-4xl font-bold text-foreground animate-[fadeInUp_400ms_ease-out]"
       >
         ¡Hola, {firstName}! 👋
       </h1>
 
       {/* Card Empty State - con delay */}
       <div 
-        className="bg-white border border-secondary-200 rounded-xl p-8 lg:p-12 text-center max-w-lg mx-auto lg:mx-0 animate-[fadeInUp_400ms_ease-out_100ms_backwards]"
+        className="bg-card border border-color rounded-xl p-8 lg:p-12 text-center max-w-lg mx-auto lg:mx-0 animate-[fadeInUp_400ms_ease-out_100ms_backwards]"
       >
         {/* Ilustración */}
         <div className="w-40 h-40 lg:w-52 lg:h-52 mx-auto mb-6 flex items-center justify-center">
           <div className="relative">
-            <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl bg-secondary-100 flex items-center justify-center">
+            <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl bg-muted flex items-center justify-center">
               <BarChart3 className="h-16 w-16 lg:h-20 lg:w-20 text-secondary-300" />
             </div>
             <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
@@ -40,12 +40,12 @@ export function DashboardEmptyState({ userName }: DashboardEmptyStateProps) {
         </div>
 
         {/* Título */}
-        <h2 className="text-xl font-semibold text-secondary-900 mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2">
           Aún no tienes compras
         </h2>
 
         {/* Descripción */}
-        <p className="text-secondary-500 mb-6 max-w-xs mx-auto">
+        <p className="text-muted-foreground mb-6 max-w-xs mx-auto">
           Registra tu primera compra para comenzar a ver tus estadísticas de gastos.
         </p>
 

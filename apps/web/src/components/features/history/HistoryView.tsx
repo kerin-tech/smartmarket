@@ -140,7 +140,7 @@ export function HistoryView() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+        <h1 className="text-2xl font-bold text-foreground">Historial</h1>
         <HistorySkeleton />
         <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
@@ -151,7 +151,7 @@ export function HistoryView() {
   if (!hasAnyHistory) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+        <h1 className="text-2xl font-bold text-foreground">Historial</h1>
         <HistoryEmptyState hasAnyHistory={false} />
         <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
@@ -162,7 +162,7 @@ export function HistoryView() {
   if (!currentMonthData || currentMonthData.totalPurchases === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+        <h1 className="text-2xl font-bold text-foreground">Historial</h1>
         <MonthSelector
           currentMonth={selectedMonth}
           monthLabel={formatMonthLabel(selectedMonth)}
@@ -182,7 +182,7 @@ export function HistoryView() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+      <h1 className="text-2xl font-bold text-foreground">Historial</h1>
 
       {/* Selector de mes */}
       <MonthSelector

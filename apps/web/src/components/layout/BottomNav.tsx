@@ -57,7 +57,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-secondary-200 lg:hidden safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-color lg:hidden safe-bottom">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -71,7 +71,7 @@ export function BottomNav() {
                 'flex flex-col items-center justify-center flex-1 h-full px-2 transition-colors',
                 active
                   ? 'text-primary-600'
-                  : 'text-secondary-400 hover:text-secondary-600'
+                  : 'text-muted-foreground hover:text-muted-foreground'
               )}
             >
               <Icon className={cn('h-5 w-5', active && 'text-primary-600')} />

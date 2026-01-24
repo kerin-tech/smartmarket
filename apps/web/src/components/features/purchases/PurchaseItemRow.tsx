@@ -21,17 +21,17 @@ export function PurchaseItemRow({ item, onEdit, onDelete }: PurchaseItemRowProps
   const emoji = item.product ? getCategoryConfig(item.product.category).emoji : '🛒';
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-secondary-200 hover:border-primary-200 transition-colors">
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center text-lg">
+    <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-color hover:border-primary-200 transition-colors">
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
         {emoji}
       </div>
 
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit(item)}>
-        <h4 className="text-sm font-medium text-secondary-900 truncate">
+        <h4 className="text-sm font-medium text-foreground truncate">
           {item.product?.name || 'Producto'}
         </h4>
         <div className="flex items-center gap-2">
-          <p className="text-xs text-secondary-500">
+          <p className="text-xs text-muted-foreground">
             {item.quantity} × {formatCurrency(item.unitPrice)}
           </p>
           {item.discountPercentage && item.discountPercentage > 0 ? (
@@ -44,11 +44,11 @@ export function PurchaseItemRow({ item, onEdit, onDelete }: PurchaseItemRowProps
       </div>
 
       <div className="text-right flex-shrink-0">
-        <p className="text-sm font-bold text-secondary-900">
+        <p className="text-sm font-bold text-foreground">
           {formatCurrency(finalSubtotal)}
         </p>
         {item.discountPercentage && item.discountPercentage > 0 ? (
-          <p className="text-[10px] text-secondary-400 line-through">
+          <p className="text-[10px] text-muted-foreground line-through">
             {formatCurrency(baseSubtotal)}
           </p>
         ) : null}
@@ -57,7 +57,7 @@ export function PurchaseItemRow({ item, onEdit, onDelete }: PurchaseItemRowProps
       <button
         type="button"
         onClick={() => item.tempId && onDelete(item.tempId)}
-        className="p-2 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
+        className="p-2 text-muted-foreground hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
       >
         <Trash2 className="h-4 w-4" />
       </button>

@@ -16,9 +16,9 @@ export interface ModalProps {
 }
 
 const sizes = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-lg',
 };
 
 export function Modal({
@@ -31,7 +31,6 @@ export function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar con Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -48,7 +47,6 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  // Focus trap
   useEffect(() => {
     if (isOpen && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
@@ -65,33 +63,36 @@ export function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Container para centrar */}
-      <div className="min-h-full flex items-center justify-center p-4">
-        {/* Modal */}
+      {/* Container para centrar el modal en pantalla */}
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
+        
+        {/* Modal Card */}
         <div
           ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
           className={cn(
-            'relative w-full bg-white rounded-xl shadow-2xl animate-scale-in',
+            'relative w-full bg-card text-foreground rounded-xl shadow-2xl transform transition-all',
+            'animate-scale-in my-8 border border-border', // Cambié border-color por border-border
+            'text-left', // <--- FIX: Resetea el alineado para que los inputs no se centren
             sizes[size]
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-secondary-200">
-            <h2 id="modal-title" className="text-lg font-semibold text-secondary-900">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 id="modal-title" className="text-lg font-semibold">
               {title}
             </h2>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
                 aria-label="Cerrar"
               >
                 <X className="h-5 w-5" />
@@ -100,14 +101,15 @@ export function Modal({
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4">{children}</div>
+          <div className="px-6 py-4">
+            {children}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Componente para el footer del modal
 export function ModalFooter({
   children,
   className,
@@ -118,7 +120,7 @@ export function ModalFooter({
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-3 pt-4 mt-4 border-t border-secondary-200',
+        'flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 mt-4 border-t border-border',
         className
       )}
     >

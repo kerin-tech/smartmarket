@@ -155,7 +155,7 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-secondary-600">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}
         <Link href={routes.login} className="link font-medium">
           Inicia sesión

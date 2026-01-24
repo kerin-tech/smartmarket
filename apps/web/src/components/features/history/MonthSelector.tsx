@@ -23,14 +23,14 @@ export function MonthSelector({
   hasNext,
 }: MonthSelectorProps) {
   return (
-    <div className="flex items-center justify-between bg-white rounded-xl border border-secondary-200 p-3">
+    <div className="flex items-center justify-between bg-card rounded-xl border border-color p-3">
       <button
         onClick={onPrevious}
         disabled={!hasPrevious}
         className={cn(
           'p-2 rounded-lg transition-colors',
           hasPrevious
-            ? 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900'
+            ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
             : 'text-secondary-300 cursor-not-allowed'
         )}
         aria-label="Mes anterior"
@@ -38,7 +38,7 @@ export function MonthSelector({
         <ChevronLeft className="h-5 w-5" />
       </button>
 
-      <span className="text-lg font-semibold text-secondary-900 capitalize">
+      <span className="text-lg font-semibold text-foreground capitalize">
         {monthLabel}
       </span>
 
@@ -48,7 +48,7 @@ export function MonthSelector({
         className={cn(
           'p-2 rounded-lg transition-colors',
           hasNext
-            ? 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900'
+            ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
             : 'text-secondary-300 cursor-not-allowed'
         )}
         aria-label="Mes siguiente"

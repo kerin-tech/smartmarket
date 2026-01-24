@@ -112,7 +112,7 @@ export function DropdownMenu({
         zIndex: 9999,
       }}
       className={cn(
-        'min-w-[160px] bg-white rounded-lg border border-secondary-200 shadow-lg py-1 animate-scale-in',
+        'min-w-[160px] bg-card rounded-lg border border-color shadow-lg py-1 animate-scale-in',
         className
       )}
       onClick={(e) => e.stopPropagation()}
@@ -154,7 +154,7 @@ export function DropdownItem({
       disabled={disabled}
       className={cn(
         'flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors',
-        variant === 'default' && 'text-secondary-700 hover:bg-secondary-50',
+        variant === 'default' && 'text-foreground hover:bg-muted',
         variant === 'danger' && 'text-error-600 hover:bg-error-50',
         disabled && 'opacity-50 cursor-not-allowed'
       )}

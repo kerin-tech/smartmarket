@@ -190,15 +190,15 @@ export function ProductList() {
               {/* Category header */}
               <h2 
                 id={`category-${categoryKey}`}
-                className="flex items-center gap-2 text-sm font-semibold text-secondary-500 uppercase tracking-wide mb-2 px-1"
+                className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1"
               >
                 <span>{config.emoji}</span>
                 <span>{config.label}</span>
-                <span className="text-secondary-400">({products.length})</span>
+                <span className="text-muted-foreground">({products.length})</span>
               </h2>
 
               {/* Products list */}
-              <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden divide-y divide-secondary-100">
+              <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -221,7 +221,7 @@ export function ProductList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Mis Productos</h1>
+          <h1 className="text-2xl font-bold text-foreground">Mis Productos</h1>
         </div>
         <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />}>
           Nuevo producto
@@ -249,7 +249,7 @@ export function ProductList() {
 
       {/* Results count */}
       {!isLoading && categoryCounts.all > 0 && (
-        <p className="text-sm text-secondary-500" aria-live="polite">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
           {selectedCategory !== 'all' && ` en ${getCategoryConfig(selectedCategory).label}`}
           {searchQuery && ` para "${searchQuery}"`}

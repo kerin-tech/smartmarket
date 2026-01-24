@@ -41,18 +41,18 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-white hover:bg-secondary-50 transition-colors">
+    <div className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors">
       {/* Emoji/Icon */}
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center text-xl">
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-xl">
         {config.emoji}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-secondary-900 truncate">
+        <h3 className="text-sm font-medium text-foreground truncate">
           {highlightText(product.name, searchQuery || '')}
         </h3>
-        <p className="text-xs text-secondary-500">
+        <p className="text-xs text-muted-foreground">
           {config.label}
           {product.brand && ` · ${product.brand}`}
         </p>
@@ -66,7 +66,7 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
             e.stopPropagation();
             isMenuOpen ? closeMenu() : openMenu(product.id);
           }}
-          className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+          className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
           aria-label={`Opciones para ${product.name}`}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}

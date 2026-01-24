@@ -30,11 +30,11 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
 
   if (categories.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 p-6">
-        <h3 className="text-base font-semibold text-secondary-900 mb-4">
+      <div className="bg-card rounded-xl border border-color p-6">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Gastos por categoría
         </h3>
-        <p className="text-sm text-secondary-500 text-center py-8">
+        <p className="text-sm text-muted-foreground text-center py-8">
           No hay datos de categorías para este mes
         </p>
       </div>
@@ -42,8 +42,8 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
   }
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
-      <h3 className="text-base font-semibold text-secondary-900 mb-4">
+    <div className="bg-card rounded-xl border border-color p-6">
+      <h3 className="text-base font-semibold text-foreground mb-4">
         Gastos por categoría
       </h3>
 
@@ -57,18 +57,18 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{config.emoji}</span>
-                  <span className="text-sm font-medium text-secondary-700">
+                  <span className="text-sm font-medium text-foreground">
                     {config.label}
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-secondary-900">
+                <span className="text-sm font-semibold text-foreground">
                   {formatCurrency(category.totalSpent)}
                 </span>
               </div>
               
               <div className="flex items-center gap-3">
                 {/* Barra de progreso */}
-                <div className="flex-1 h-2.5 bg-secondary-100 rounded-full overflow-hidden">
+                <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                     style={{ width: `${category.percentage}%` }}
@@ -79,7 +79,7 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
                   />
                 </div>
                 {/* Porcentaje */}
-                <span className="text-xs font-medium text-secondary-500 w-10 text-right">
+                <span className="text-xs font-medium text-muted-foreground w-10 text-right">
                   {category.percentage}%
                 </span>
               </div>
@@ -93,7 +93,7 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
 
 function CategoryBreakdownSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
+    <div className="bg-card rounded-xl border border-color p-6">
       <div className="h-5 w-40 bg-secondary-200 rounded animate-pulse mb-4" />
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -106,7 +106,7 @@ function CategoryBreakdownSkeleton() {
               <div className="w-24 h-4 bg-secondary-200 rounded animate-pulse" />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-2.5 bg-secondary-100 rounded-full" />
+              <div className="flex-1 h-2.5 bg-muted rounded-full" />
               <div className="w-10 h-3 bg-secondary-200 rounded animate-pulse" />
             </div>
           </div>

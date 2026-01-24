@@ -56,7 +56,7 @@ export function FilterSelect({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary-300 bg-white',
+          'flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary-300 bg-card',
           'text-sm font-medium transition-colors',
           'hover:border-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
           isOpen && 'border-primary-500 ring-2 ring-primary-500/20'
@@ -65,12 +65,12 @@ export function FilterSelect({
         aria-haspopup="listbox"
       >
         {selectedOption?.emoji && <span>{selectedOption.emoji}</span>}
-        <span className="text-secondary-700">
+        <span className="text-foreground">
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDown 
           className={cn(
-            'h-4 w-4 text-secondary-400 transition-transform',
+            'h-4 w-4 text-muted-foreground transition-transform',
             isOpen && 'rotate-180'
           )} 
         />
@@ -79,7 +79,7 @@ export function FilterSelect({
       {/* Dropdown */}
       {isOpen && (
         <div 
-          className="absolute z-50 mt-1 w-full min-w-[200px] bg-white rounded-lg border border-secondary-200 shadow-lg py-1 animate-scale-in"
+          className="absolute z-50 mt-1 w-full min-w-[200px] bg-card rounded-lg border border-color shadow-lg py-1 animate-scale-in"
           role="listbox"
         >
           {options.map((option) => (
@@ -92,7 +92,7 @@ export function FilterSelect({
                 'flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors',
                 option.value === value 
                   ? 'bg-primary-50 text-primary-700' 
-                  : 'text-secondary-700 hover:bg-secondary-50'
+                  : 'text-foreground hover:bg-muted'
               )}
             >
               <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function FilterSelect({
               </div>
               <div className="flex items-center gap-2">
                 {option.count !== undefined && (
-                  <span className="text-secondary-400">({option.count})</span>
+                  <span className="text-muted-foreground">({option.count})</span>
                 )}
                 {option.value === value && (
                   <Check className="h-4 w-4 text-primary-600" />
