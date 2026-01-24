@@ -1,10 +1,10 @@
-// src/components/features/purchases/PurchaseItemRow.tsx
 'use client';
 
-import { Trash2, Tag } from 'lucide-react'; // Añadimos Tag para resaltar el descuento
+import { Trash2, Tag, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { getCategoryConfig } from '@/types/product.types';
 import type { PurchaseItemFormData } from '@/types/purchase.types';
+import { cn } from '@/lib/utils';
 
 interface PurchaseItemRowProps {
   item: PurchaseItemFormData;
@@ -13,17 +13,19 @@ interface PurchaseItemRowProps {
 }
 
 export function PurchaseItemRow({ item, onEdit, onDelete }: PurchaseItemRowProps) {
-  // CÁLCULO: Precio Base vs Precio con Descuento
   const baseSubtotal = item.quantity * item.unitPrice;
   const discountAmount = baseSubtotal * ((item.discountPercentage || 0) / 100);
   const finalSubtotal = baseSubtotal - discountAmount;
   
-  const emoji = item.product ? getCategoryConfig(item.product.category).emoji : '🛒';
+  // CORRECCIÓN: Obtener configuración y extraer el componente de Icono
+  const config = item.product ? getCategoryConfig(item.product.category) : null;
+  const CategoryIcon = config?.icon || ShoppingCart;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-color hover:border-primary-200 transition-colors">
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
-        {emoji}
+    <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border hover:border-primary-200 transition-colors">
+      {/* CORRECCIÓN: Renderizado de Icono dinámico */}
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+        <CategoryIcon className="h-5 w-5 text-primary-600" />
       </div>
 
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit(item)}>
@@ -57,7 +59,7 @@ export function PurchaseItemRow({ item, onEdit, onDelete }: PurchaseItemRowProps
       <button
         type="button"
         onClick={() => item.tempId && onDelete(item.tempId)}
-        className="p-2 text-muted-foreground hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
+        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
       >
         <Trash2 className="h-4 w-4" />
       </button>

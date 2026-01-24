@@ -1,16 +1,14 @@
-// src/components/ui/FilterSelect.tsx
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FilterOption {
   value: string;
   label: string;
   count?: number;
-  emoji?: string;
+  icon?: LucideIcon; // Cambiado de emoji a icon para consistencia
 }
 
 interface FilterSelectProps {
@@ -49,6 +47,8 @@ export function FilterSelect({
     setIsOpen(false);
   };
 
+  const Icon = selectedOption?.icon;
+
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       {/* Trigger */}
@@ -56,59 +56,71 @@ export function FilterSelect({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary-300 bg-card',
-          'text-sm font-medium transition-colors',
-          'hover:border-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
-          isOpen && 'border-primary-500 ring-2 ring-primary-500/20'
+          'flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-border bg-card',
+          'text-sm font-medium transition-all w-full sm:w-auto min-w-[140px]',
+          'hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20',
+          isOpen && 'border-primary ring-2 ring-primary/20'
         )}
         aria-expanded={isOpen}
-        aria-haspopup="listbox"
       >
-        {selectedOption?.emoji && <span>{selectedOption.emoji}</span>}
-        <span className="text-foreground">
-          {selectedOption?.label || placeholder}
-        </span>
+        <div className="flex items-center gap-2 truncate">
+          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+          <span className="text-foreground truncate">
+            {selectedOption?.label || placeholder}
+          </span>
+        </div>
         <ChevronDown 
           className={cn(
-            'h-4 w-4 text-muted-foreground transition-transform',
+            'h-4 w-4 text-muted-foreground transition-transform shrink-0',
             isOpen && 'rotate-180'
           )} 
         />
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown - CORRECCIÓN DE POSICIONAMIENTO */}
       {isOpen && (
         <div 
-          className="absolute z-50 mt-1 w-full min-w-[200px] bg-card rounded-lg border border-color shadow-lg py-1 animate-scale-in"
+          className={cn(
+            "absolute z-50 mt-2 w-full min-w-[200px] bg-card rounded-xl border border-border shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-200",
+            "right-0 origin-top-right" // Se ancla a la derecha y crece hacia la izquierda
+          )}
           role="listbox"
         >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              role="option"
-              aria-selected={option.value === value}
-              onClick={() => handleSelect(option.value)}
-              className={cn(
-                'flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors',
-                option.value === value 
-                  ? 'bg-primary-50 text-primary-700' 
-                  : 'text-foreground hover:bg-muted'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                {option.emoji && <span>{option.emoji}</span>}
-                <span>{option.label}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {option.count !== undefined && (
-                  <span className="text-muted-foreground">({option.count})</span>
-                )}
-                {option.value === value && (
-                  <Check className="h-4 w-4 text-primary-600" />
-                )}
-              </div>
-            </button>
-          ))}
+          <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+            {options.map((option) => {
+              const OptionIcon = option.icon;
+              return (
+                <button
+                  key={option.value}
+                  role="option"
+                  aria-selected={option.value === value}
+                  onClick={() => handleSelect(option.value)}
+                  className={cn(
+                    'flex items-center justify-between w-full px-4 py-2.5 text-sm text-left transition-colors',
+                    option.value === value 
+                      ? 'bg-primary/10 text-primary font-semibold' 
+                      : 'text-foreground hover:bg-muted'
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {OptionIcon && <OptionIcon className={cn("h-4 w-4", option.value === value ? "text-primary" : "text-muted-foreground")} />}
+                    <span>{option.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {option.count !== undefined && (
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full",
+                        option.value === value ? "bg-primary-100 text-primary-600" : "bg-muted text-muted-foreground"
+                      )}>
+                        {option.count}
+                      </span>
+                    )}
+                    
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

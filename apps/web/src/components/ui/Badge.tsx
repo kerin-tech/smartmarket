@@ -1,7 +1,8 @@
 // src/components/ui/Badge.tsx
 
 import { cn } from '@/lib/utils';
-import type { CategoryKey } from '@/config/app.config';
+import { getCategoryConfig, type CategoryKey } from '@/types/product.types';
+import { ShoppingCart } from 'lucide-react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
@@ -9,63 +10,30 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export interface CategoryBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  category: CategoryKey;
-  showEmoji?: boolean;
+  category: string; // Permitimos string para que no rompa con datos del backend
+  showIcon?: boolean;
   size?: 'sm' | 'md';
 }
 
 const variantStyles = {
   primary: 'bg-primary-100 text-primary-700',
   secondary: 'bg-muted text-foreground',
-  success: 'bg-success-100 text-success-700',
-  warning: 'bg-warning-100 text-warning-700',
-  error: 'bg-error-100 text-error-700',
-  info: 'bg-info-100 text-info-700',
-};
-
-const categoryStyles: Record<CategoryKey, string> = {
-  fruits: 'bg-category-fruits-light text-category-fruits-dark',
-  vegetables: 'bg-category-vegetables-light text-category-vegetables-dark',
-  grains: 'bg-category-grains-light text-category-grains-dark',
-  dairy: 'bg-category-dairy-light text-category-dairy-dark',
-  meats: 'bg-category-meats-light text-category-meats-dark',
-  beverages: 'bg-category-beverages-light text-category-beverages-dark',
-  cleaning: 'bg-category-cleaning-light text-category-cleaning-dark',
-  other: 'bg-category-other-light text-category-other-dark',
-};
-
-const categoryEmojis: Record<CategoryKey, string> = {
-  fruits: '🍎',
-  vegetables: '🥬',
-  grains: '🍚',
-  dairy: '🥛',
-  meats: '🥩',
-  beverages: '🥤',
-  cleaning: '🧹',
-  other: '📦',
-};
-
-const categoryLabels: Record<CategoryKey, string> = {
-  fruits: 'Frutas',
-  vegetables: 'Verduras',
-  grains: 'Granos',
-  dairy: 'Lácteos',
-  meats: 'Carnes',
-  beverages: 'Bebidas',
-  cleaning: 'Limpieza',
-  other: 'Otros',
+  success: 'bg-green-100 text-green-700',
+  warning: 'bg-yellow-100 text-yellow-700',
+  error: 'bg-red-100 text-red-700',
+  info: 'bg-blue-100 text-blue-700',
 };
 
 const sizeStyles = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2.5 py-0.5 text-sm',
+  sm: 'px-2 py-0.5 text-[10px]',
+  md: 'px-2.5 py-0.5 text-xs',
 };
 
 export function Badge({ className, variant = 'primary', size = 'md', children, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full font-medium',
+        'inline-flex items-center rounded-full font-bold uppercase tracking-wider',
         variantStyles[variant],
         sizeStyles[size],
         className
@@ -80,22 +48,24 @@ export function Badge({ className, variant = 'primary', size = 'md', children, .
 export function CategoryBadge({
   className,
   category,
-  showEmoji = true,
+  showIcon = true,
   size = 'md',
   ...props
 }: CategoryBadgeProps) {
+  const config = getCategoryConfig(category);
+  const Icon = config.icon || ShoppingCart;
+
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full font-medium',
-        categoryStyles[category],
+        'inline-flex items-center gap-1.5 rounded-full font-bold bg-primary-50 text-primary-700 border border-primary-100/50',
         sizeStyles[size],
         className
       )}
       {...props}
     >
-      {showEmoji && <span>{categoryEmojis[category]}</span>}
-      <span>{categoryLabels[category]}</span>
+      {showIcon && <Icon className={cn(size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5')} />}
+      <span>{config.label}</span>
     </span>
   );
 }

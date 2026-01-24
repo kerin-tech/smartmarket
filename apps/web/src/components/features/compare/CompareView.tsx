@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { ShoppingCart } from 'lucide-react'; // Importamos fallback
 
 import { ProductSelector } from './ProductSelector';
 import { BestPriceCard } from './BestPriceCard';
@@ -44,51 +45,40 @@ export function CompareView() {
     }
   }, [selectedProduct, loadComparison]);
 
-  // --- LÓGICA DE CÁLCULO DE ESTADÍSTICAS ---
   const derivedStats = useMemo(() => {
-    // 1. Verificamos si comparisonData existe y tiene la lista interna
-    if (!comparisonData || !comparisonData.comparison) {
-      return null;
-    }
+    if (!comparisonData || !comparisonData.comparison || comparisonData.comparison.length === 0) return null;
 
     const list = comparisonData.comparison;
+    const globalMin = Math.min(...list.map(item => Number(item.minPrice)));
+    const globalMax = Math.max(...list.map(item => Number(item.maxPrice)));
+    const globalAvg = list.reduce((acc, item) => acc + Number(item.avgPrice), 0) / list.length;
 
-    // 2. Extraer precios asegurando que sean números. 
-    // Si item.lastPrice no existe, usamos item.avgPrice como respaldo.
-    const allPrices = list.map(item => {
-      const p = Number(item.lastPrice || item.avgPrice || 0);
-      return isNaN(p) ? 0 : p;
-    });
+    const bestStore = [...list].sort((a, b) =>
+      Number(a.minPrice) - Number(b.minPrice)
+    )[0] as any;
+    const bestPrice = Number(bestStore.minPrice);
 
-    if (allPrices.length === 0) return null;
-
-    const globalMin = Math.min(...allPrices);
-    const globalMax = Math.max(...allPrices);
-    const globalAvg = allPrices.reduce((a, b) => a + b, 0) / allPrices.length;
-
-    // 3. Encontrar la mejor tienda
-    const bestStore = [...list].sort((a, b) => {
-      const priceA = Number(a.avgPrice || a.lastPrice || 0);
-      const priceB = Number(b.avgPrice || b.lastPrice || 0);
-      return priceA - priceB;
-    })[0];
+    const savings = globalAvg > bestPrice ? globalAvg - bestPrice : 0;
+    const savingsPercentage = globalAvg > 0 ? Math.round((savings / globalAvg) * 100) : 0;
 
     return {
       globalStats: {
         minPrice: globalMin,
         maxPrice: globalMax,
         avgPrice: Math.round(globalAvg * 100) / 100,
-        totalPurchases: list.length,
+        totalPurchases: list.reduce((acc, item) => acc + (item.purchaseCount || 0), 0),
         storesCount: list.length
       },
-      // En CompareView.tsx, dentro del useMemo
       bestOption: {
         storeId: bestStore.store.id,
         storeName: bestStore.store.name,
-        // ASEGÚRATE DE QUE SE LLAME 'price'
-        price: Number(bestStore.lastPrice || bestStore.avgPrice || 0),
-        avgPrice: Number(bestStore.avgPrice || 0),
-        lastDate: bestStore.lastDate
+        price: Number(bestStore.minPrice),
+        lastPrice: Number(bestStore.lastPrice),
+        savings: savings,
+        savingsPercentage: savingsPercentage,
+        trend: bestStore.trend,
+        lastDate: String(bestStore.minPriceDate),
+        purchaseCount: bestStore.purchaseCount
       }
     };
   }, [comparisonData]);
@@ -127,17 +117,15 @@ export function CompareView() {
             />
           ) : (
             <>
-              {/* Usamos derivedStats para la mejor opción */}
               {derivedStats && (
-  <BestPriceCard bestOption={derivedStats.bestOption as any} />
-)}
+                <BestPriceCard bestOption={derivedStats.bestOption as any} />
+              )}
 
               <StoreComparisonList
                 stores={comparisonData.comparison}
                 bestStoreId={derivedStats?.bestOption.storeId}
               />
 
-              {/* Pasamos las estadísticas calculadas al card */}
               <PriceStatsCard stats={derivedStats?.globalStats as any} />
             </>
           )}
@@ -151,20 +139,22 @@ export function CompareView() {
   );
 }
 
-// --- PRODUCT CARD COMPONENT ---
+// --- PRODUCT CARD COMPONENT (CORREGIDO) ---
 function ProductCard({ product }: ProductCardProps) {
   const config = getCategoryConfig(product.category);
+  const CategoryIcon = config.icon || ShoppingCart;
 
   return (
-    <div className="bg-card rounded-xl border border-color p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-2xl">
-          {config.emoji}
+    <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+      <div className="flex items-center gap-4">
+        {/* Reemplazado Emoji por Icono de Lucide con tus colores */}
+        <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
+          <CategoryIcon className="h-6 w-6 text-primary-600" />
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{product.name}</h2>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold text-foreground truncate">{product.name}</h2>
           <p className="text-sm text-muted-foreground">
-            {config.label} · {product.brand}
+            {config.label} {product.brand && `· ${product.brand}`}
           </p>
         </div>
       </div>

@@ -1,111 +1,134 @@
-// src/components/features/history/TrendChart.tsx
-
 'use client';
 
+import { useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
+} from 'recharts';
 import { formatCurrency } from '@/utils/formatters';
 import type { MonthlyData } from '@/types/analytics.types';
-import { cn } from '@/lib/utils';
 
 interface TrendChartProps {
   data: MonthlyData[];
   currentMonth: string;
   isLoading?: boolean;
-  onMonthClick?: (month: string) => void; // Prop añadida para interactividad
+  onMonthClick?: (month: string) => void;
 }
 
 export function TrendChart({ data, currentMonth, isLoading, onMonthClick }: TrendChartProps) {
-  if (isLoading) {
-    return <TrendChartSkeleton />;
-  }
 
-  // Ordenar de más antiguo a más reciente y tomar últimos 6
-  const chartData = [...data]
-    .sort((a, b) => a.month.localeCompare(b.month))
-    .slice(-6);
+  const chartData = useMemo(() => {
+    return [...data]
+      .sort((a, b) => new Date(a.month + '-01').getTime() - new Date(b.month + '-01').getTime())
+      .slice(-6)
+      .map(item => ({
+        ...item,
+        label: new Date(item.month + '-02').toLocaleDateString('es-CO', { month: 'short' }).toUpperCase(),
+        totalSpent: Number(item.totalSpent)
+      }));
+  }, [data]);
 
-  if (chartData.length < 2) {
-    return (
-      <div className="bg-card rounded-xl border border-color p-6">
-        <h3 className="text-base font-semibold text-foreground mb-4">
-          Tendencia (últimos 6 meses)
-        </h3>
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Se necesitan al menos 2 meses de datos para mostrar la tendencia
-        </p>
-      </div>
-    );
-  }
+  const formatYAxis = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+    return `$${value}`;
+  };
 
-  const maxValue = Math.max(...chartData.map((d) => d.totalSpent), 1);
+  if (isLoading) return <TrendChartSkeleton />;
 
-  const getShortMonth = (monthKey: string) => {
-    const [year, month] = monthKey.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    const label = date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
-    return label.charAt(0).toUpperCase() + label.slice(1);
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-foreground text-background text-[11px] font-bold px-3 py-1.5 rounded-md shadow-xl border-none">
+          {formatCurrency(payload[0].value)}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <h3 className="text-base font-semibold text-foreground mb-6">
-        Tendencia (últimos 6 meses)
-      </h3>
-
-      {/* Gráfico de barras */}
-      <div className="flex items-end justify-between gap-2 h-40 mb-4">
-        {chartData.map((item) => {
-          const height = maxValue > 0 ? (item.totalSpent / maxValue) * 100 : 0;
-          const isSelected = item.month === currentMonth;
-
-          return (
-            <button // Cambiado de div a button para accesibilidad y clics
-              key={item.month}
-              onClick={() => onMonthClick?.(item.month)}
-              className="flex-1 flex flex-col items-center gap-2 group outline-none"
-              type="button"
-            >
-              {/* Valor superior */}
-              <span className={cn(
-                'text-[10px] sm:text-xs font-medium transition-colors duration-300',
-                isSelected ? 'text-primary-600' : 'text-muted-foreground group-hover:text-foreground'
-              )}>
-                {item.totalSpent > 0 ? formatCurrency(item.totalSpent) : '-'}
-              </span>
-              
-              {/* Contenedor de Barra */}
-              <div className="w-full flex justify-center items-end h-full">
-                <div
-                  className={cn(
-                    'w-full max-w-12 rounded-t-md transition-all duration-500 ease-out',
-                    isSelected 
-                      ? 'bg-primary-500 shadow-[0_-4px_12px_rgba(var(--primary-500),0.2)]' 
-                      : 'bg-secondary-200 group-hover:bg-secondary-300'
-                  )}
-                  style={{ height: `${Math.max(height, 6)}%` }}
-                />
-              </div>
-            </button>
-          );
-        })}
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm transition-colors">
+      <div className="flex justify-between items-center mb-10">
+        <h3 className="text-[13px] font-bold text-muted-foreground uppercase tracking-wider">
+          Tendencia de Gasto
+        </h3>
+        <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          Últimos 6 meses
+        </span>
       </div>
 
-      {/* Labels de meses */}
-      <div className="flex justify-between gap-2 pt-2 border-t border-color">
-        {chartData.map((item) => {
-          const isSelected = item.month === currentMonth;
-          return (
-            <button
-              key={item.month}
-              onClick={() => onMonthClick?.(item.month)}
-              className={cn(
-                'flex-1 text-center text-xs font-medium capitalize transition-colors outline-none',
-                isSelected ? 'text-primary-600' : 'text-muted-foreground hover:text-foreground'
-              )}
+      <div className="h-64 w-full">
+
+
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            margin={{ top: 10, right: 10, left: 20, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              vertical={false}
+              stroke="var(--color-border)"
+              opacity={0.5}
+            />
+
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11, fontWeight: 600 }}
+              dy={10}
+              // También hacemos que los labels del eje X sean clicables
+              className="cursor-pointer"
+              onClick={(data) => onMonthClick?.(chartData[data.index].month)}
+            />
+
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              width={45}
+              tickFormatter={formatYAxis}
+              tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }}
+            />
+
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }}
+            />
+
+            <Bar
+              dataKey="totalSpent"
+              radius={[4, 4, 0, 0]}
+              barSize={32}
+              animationDuration={1200}
+              // MOVEMOS EL ONCLICK AQUÍ PARA MÁXIMA PRECISIÓN
+              onClick={(data) => {
+                if (data && data.month) {
+                  onMonthClick?.(data.month);
+                }
+              }}
             >
-              {getShortMonth(item.month)}
-            </button>
-          );
-        })}
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  className="cursor-pointer transition-all duration-300 hover:opacity-80"
+                  fill={entry.month === currentMonth
+                    ? 'var(--primary)'
+                    : 'var(--color-muted-foreground)'
+                  }
+                  fillOpacity={entry.month === currentMonth ? 1 : 0.3}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -113,24 +136,11 @@ export function TrendChart({ data, currentMonth, isLoading, onMonthClick }: Tren
 
 function TrendChartSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <div className="h-5 w-48 bg-secondary-200 rounded animate-pulse mb-6" />
-      <div className="flex items-end justify-between gap-2 h-40 mb-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-2">
-            <div className="w-12 h-3 bg-secondary-200 rounded animate-pulse" />
-            <div
-              className="w-full max-w-12 bg-secondary-200 rounded-t-md animate-pulse"
-              style={{ height: `${20 + Math.random() * 60}%` }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-between gap-2 pt-2 border-t border-color">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex-1 flex justify-center">
-            <div className="w-8 h-3 bg-secondary-200 rounded animate-pulse" />
-          </div>
+    <div className="bg-card rounded-xl border border-border p-6 h-[340px]">
+      <div className="h-4 w-32 bg-muted/40 animate-pulse rounded mb-10" />
+      <div className="flex items-end justify-between gap-4 h-48 mt-12 px-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex-1 bg-muted/20 animate-pulse rounded-t-sm" style={{ height: `${15 * i}%` }} />
         ))}
       </div>
     </div>

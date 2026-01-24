@@ -1,9 +1,7 @@
-// src/components/features/history/HistoryView.tsx
-
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-
+import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation'; // Agregamos useRouter
 import { MonthSelector } from './MonthSelector';
 import { SummaryCard } from './SummaryCard';
 import { CategoryBreakdown } from './CategoryBreakdown';
@@ -12,14 +10,9 @@ import { TrendChart } from './TrendChart';
 import { HistoryEmptyState } from './HistoryEmptyState';
 import { HistorySkeleton } from './HistorySkeleton';
 import { ToastContainer } from '@/components/ui/Toast';
-
 import { useToast } from '@/hooks/useToast';
 import { analyticsService } from '@/services/analytics.service';
-import type {
-  MonthlyData,
-  CategoryBreakdown as CategoryBreakdownType,
-  StoreBreakdown as StoreBreakdownType,
-} from '@/types/analytics.types';
+import type { MonthlyData, CategoryBreakdown as CategoryBreakdownType, StoreBreakdown as StoreBreakdownType } from '@/types/analytics.types';
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -33,7 +26,10 @@ const formatMonthLabel = (monthKey: string) => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-export function HistoryView() {
+function HistoryContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter(); // Para actualizar la URL al hacer clic
+  const monthParam = searchParams.get('month');
   const { toasts, removeToast, error: showError } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -41,18 +37,17 @@ export function HistoryView() {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [byCategory, setByCategory] = useState<CategoryBreakdownType[]>([]);
   const [byStore, setByStore] = useState<StoreBreakdownType[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  
+  // Iniciamos el estado con lo que venga en la URL o el mes actual
+  const [selectedMonth, setSelectedMonth] = useState(monthParam || getCurrentMonth());
 
-  // Cargar datos de un mes específico (Memoized)
   const loadMonthData = useCallback(async (month: string) => {
     setIsLoadingMonth(true);
     try {
-      // Importante: Asegurarse de que el servicio reciba el mes como string
       const [categoryRes, storeRes] = await Promise.all([
         analyticsService.getByCategory({ month }),
         analyticsService.getByStore({ month }),
       ]);
-
       setByCategory(categoryRes.byCategory);
       setByStore(storeRes.byStore);
     } catch (err: any) {
@@ -62,41 +57,41 @@ export function HistoryView() {
     }
   }, [showError]);
 
-  // Cargar datos iniciales
-  const loadInitialData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const monthlyRes = await analyticsService.getMonthly(12);
-      setMonthlyData(monthlyRes.monthly);
-
-      // Lógica de selección de mes con datos
-      const hasDataInSelected = monthlyRes.monthly.some(
-        (m) => m.month === selectedMonth && m.totalPurchases > 0
-      );
-      
-      let monthToLoad = selectedMonth;
-      if (!hasDataInSelected) {
-        const monthWithData = monthlyRes.monthly.find((m) => m.totalPurchases > 0);
-        if (monthWithData) {
-          monthToLoad = monthWithData.month;
-          setSelectedMonth(monthWithData.month);
-        }
-      }
-
-      await loadMonthData(monthToLoad);
-    } catch (err: any) {
-      showError(err.message || 'Error al cargar el historial');
-    } finally {
-      setIsLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadMonthData, showError]); // Eliminamos selectedMonth de aquí para evitar loops
-
+  // Carga inicial de la lista de meses
   useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const monthlyRes = await analyticsService.getMonthly(12);
+        setMonthlyData(monthlyRes.monthly);
+        
+        // Cargar datos del mes seleccionado inicialmente
+        await loadMonthData(selectedMonth);
+      } catch (err: any) {
+        showError(err.message || 'Error al cargar el historial');
+      } finally {
+        setIsLoading(false);
+      }
+    };
     loadInitialData();
-  }, [loadInitialData]);
+  }, [loadMonthData, showError]); // Se ejecuta solo al montar
 
+  // CLAVE: Sincronizar estado LOCAL cuando la URL cambie (ej: desde el Dashboard)
+  useEffect(() => {
+    if (monthParam && monthParam !== selectedMonth) {
+      setSelectedMonth(monthParam);
+      loadMonthData(monthParam);
+    }
+  }, [monthParam, loadMonthData]); // Escuchamos cambios en la URL
+
+  // Manejador central que actualiza AMBOS: Estado y URL
   const handleMonthChange = async (newMonth: string) => {
+    if (newMonth === selectedMonth) return;
+    
+    // 1. Actualizamos URL (opcional, pero recomendado para consistencia)
+    router.push(`/history?month=${newMonth}`, { scroll: false });
+    
+    // 2. Actualizamos estado local y cargamos datos
     setSelectedMonth(newMonth);
     await loadMonthData(newMonth);
   };
@@ -105,104 +100,47 @@ export function HistoryView() {
     monthlyData.find((m) => m.month === selectedMonth),
     [monthlyData, selectedMonth]
   );
-  
-  const getComparison = () => {
-    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
-    if (currentIndex === -1 || currentIndex === monthlyData.length - 1) return null;
-
-    const current = monthlyData[currentIndex];
-    const previous = monthlyData[currentIndex + 1];
-
-    if (!previous || previous.totalSpent === 0) return null;
-
-    const diff = current.totalSpent - previous.totalSpent;
-    const percentage = Math.round((diff / previous.totalSpent) * 100);
-
-    return {
-      previousMonth: formatMonthLabel(previous.month).split(' ')[0],
-      percentage: Math.abs(percentage),
-      direction: (percentage > 0 ? 'up' : percentage < 0 ? 'down' : 'equal') as 'up' | 'down' | 'equal',
-    };
-  };
 
   const handlePreviousMonth = () => {
     const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
-    if (currentIndex < monthlyData.length - 1) {
-      handleMonthChange(monthlyData[currentIndex + 1].month);
-    }
+    if (currentIndex < monthlyData.length - 1) handleMonthChange(monthlyData[currentIndex + 1].month);
   };
 
   const handleNextMonth = () => {
     const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
-    if (currentIndex > 0) {
-      handleMonthChange(monthlyData[currentIndex - 1].month);
-    }
+    if (currentIndex > 0) handleMonthChange(monthlyData[currentIndex - 1].month);
   };
 
-  const hasPreviousMonth = () => {
-    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
-    return currentIndex < monthlyData.length - 1;
-  };
-
-  const hasNextMonth = () => {
-    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
-    return currentIndex > 0;
-  };
-
-  const hasAnyHistory = monthlyData.some((m) => m.totalPurchases > 0);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
-        <HistorySkeleton />
-        <ToastContainer toasts={toasts} onClose={removeToast} />
-      </div>
-    );
-  }
-
-  if (!hasAnyHistory) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
-        <HistoryEmptyState hasAnyHistory={false} />
-        <ToastContainer toasts={toasts} onClose={removeToast} />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="space-y-6"><h1 className="text-2xl font-bold">Historial</h1><HistorySkeleton /></div>;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
-
-      <MonthSelector
-        currentMonth={selectedMonth}
-        monthLabel={formatMonthLabel(selectedMonth)}
-        onPrevious={handlePreviousMonth}
-        onNext={handleNextMonth}
-        hasPrevious={hasPreviousMonth()}
-        hasNext={hasNextMonth()}
+      <h1 className="text-2xl font-bold text-foreground">Historial</h1>
+      
+      <MonthSelector 
+        currentMonth={selectedMonth} 
+        monthLabel={formatMonthLabel(selectedMonth)} 
+        onPrevious={handlePreviousMonth} 
+        onNext={handleNextMonth} 
+        hasPrevious={monthlyData.findIndex((m) => m.month === selectedMonth) < monthlyData.length - 1} 
+        hasNext={monthlyData.findIndex((m) => m.month === selectedMonth) > 0} 
       />
 
       {(!currentMonthData || currentMonthData.totalPurchases === 0) ? (
-        <HistoryEmptyState
-          monthLabel={formatMonthLabel(selectedMonth)}
-          hasAnyHistory={hasAnyHistory}
-        />
+        <HistoryEmptyState monthLabel={formatMonthLabel(selectedMonth)} hasAnyHistory={true} />
       ) : (
         <>
-          <SummaryCard
-            total={currentMonthData.totalSpent}
-            purchaseCount={currentMonthData.totalPurchases}
-            productCount={currentMonthData.totalItems}
-            comparison={getComparison()}
+          <SummaryCard 
+            total={currentMonthData.totalSpent} 
+            purchaseCount={currentMonthData.totalPurchases} 
+            productCount={currentMonthData.totalItems} 
+            comparison={null} 
           />
-
           <div className="grid gap-6 lg:grid-cols-2">
             {isLoadingMonth ? (
               <>
-                <div className="bg-card rounded-xl border border-color p-6 h-[300px] animate-pulse" />
-                <div className="bg-card rounded-xl border border-color p-6 h-[300px] animate-pulse" />
+                <div className="bg-card rounded-xl border border-border p-6 h-[300px] animate-pulse" />
+                <div className="bg-card rounded-xl border border-border p-6 h-[300px] animate-pulse" />
               </>
             ) : (
               <>
@@ -214,8 +152,22 @@ export function HistoryView() {
         </>
       )}
 
-      <TrendChart data={monthlyData} currentMonth={selectedMonth} />
+      {/* El TrendChart ahora usa el handleMonthChange corregido */}
+      <TrendChart 
+        data={monthlyData} 
+        currentMonth={selectedMonth} 
+        onMonthClick={handleMonthChange} 
+      />
+      
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
+  );
+}
+
+export function HistoryView() {
+  return (
+    <Suspense fallback={<HistorySkeleton />}>
+      <HistoryContent />
+    </Suspense>
   );
 }

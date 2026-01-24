@@ -1,25 +1,41 @@
-import { type NextFunction, type Request } from 'express';
-// Prisma genera 'User' en singular
-import { type User } from '@prisma/client'; 
-import { HttpStatusCode } from 'axios';
-import UserService from '@/services/user.service';
-import { type CustomResponse } from '@/types/common.type';
-import Api from '@/utils/api';
+import { Request, Response, NextFunction } from "express";
+import prisma from "@/config/database";
+import { successResponse, errorResponse } from "../utils/response.handle";
+import { ERROR_CODES } from "../utils/error.codes";
 
-export default class UserController extends Api {
-  private readonly userService = new UserService();
+/**
+ * GET /users/me
+ * Obtener perfil del usuario autenticado
+ */
+export const getMyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user!.id; // Extraído de checkJwt
 
-  public createUser = async (
-    req: Request,
-    // CORRECCIÓN: Cambiado de <users> a <User>
-    res: CustomResponse<User>, 
-    next: NextFunction
-  ) => {
-    try {
-      const user = await this.userService.createUser(req.body);
-      this.send(res, user, HttpStatusCode.Created, 'createUser');
-    } catch (e) {
-      next(e);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return errorResponse(
+        res,
+        "Usuario no encontrado",
+        ERROR_CODES.NOT_FOUND.code
+      );
     }
-  };
-}
+
+    return successResponse(res, user, "Perfil obtenido exitosamente");
+  } catch (error) {
+    next(error);
+  }
+};

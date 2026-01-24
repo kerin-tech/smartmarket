@@ -37,10 +37,10 @@ export function SummaryCard({
     switch (comparison.direction) {
       case 'up':
         // Semántica: Danger para subida de gastos
-        return 'text-danger-700 bg-danger-100 dark:bg-danger-50/10 dark:text-danger-500';
+        return 'bg-danger-100 text-danger-700 ';
       case 'down':
         // Semántica: Success para ahorro
-        return 'text-success-700 bg-success-100 dark:bg-success-50/10 dark:text-success-500';
+        return 'bg-success-100 text-success-600 ';
       default:
         return 'text-muted-foreground bg-muted';
     }
@@ -74,7 +74,7 @@ export function SummaryCard({
         <div className="flex justify-center mb-6">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all',
+              'inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm font-medium transition-all',
               getComparisonColor()
             )}
           >
