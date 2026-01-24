@@ -46,7 +46,7 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
         <ShoppingCart className={cn('text-white', sizeConfig.icon)} />
       </div>
       {showText && (
-        <span className={cn('font-bold text-secondary-900', sizeConfig.text)}>
+        <span className={cn('font-bold text-foreground', sizeConfig.text)}>
           SmartMarket
         </span>
       )}

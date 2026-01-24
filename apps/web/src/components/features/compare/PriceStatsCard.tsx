@@ -12,8 +12,8 @@ interface PriceStatsCardProps {
 
 export function PriceStatsCard({ stats }: PriceStatsCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-5">
-      <h3 className="text-base font-semibold text-secondary-900 mb-4">
+    <div className="bg-card rounded-xl border border-color p-5">
+      <h3 className="text-base font-semibold text-foreground mb-4">
         Estadísticas de precio
       </h3>
 
@@ -26,7 +26,7 @@ export function PriceStatsCard({ stats }: PriceStatsCardProps) {
           <p className="text-lg font-bold text-success-600">
             {formatCurrency(stats.minPrice)}
           </p>
-          <p className="text-xs text-secondary-500">Mínimo</p>
+          <p className="text-xs text-muted-foreground">Mínimo</p>
         </div>
 
         {/* Promedio */}
@@ -37,7 +37,7 @@ export function PriceStatsCard({ stats }: PriceStatsCardProps) {
           <p className="text-lg font-bold text-primary-600">
             {formatCurrency(stats.avgPrice)}
           </p>
-          <p className="text-xs text-secondary-500">Promedio</p>
+          <p className="text-xs text-muted-foreground">Promedio</p>
         </div>
 
         {/* Máximo */}
@@ -48,18 +48,18 @@ export function PriceStatsCard({ stats }: PriceStatsCardProps) {
           <p className="text-lg font-bold text-danger-600">
             {formatCurrency(stats.maxPrice)}
           </p>
-          <p className="text-xs text-secondary-500">Máximo</p>
+          <p className="text-xs text-muted-foreground">Máximo</p>
         </div>
       </div>
 
       {/* Resumen adicional */}
-      <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-secondary-100 text-sm text-secondary-600">
+      <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-color text-sm text-muted-foreground">
         <span>
-          <strong className="text-secondary-900">{stats.totalPurchases}</strong>{' '}
+          <strong className="text-foreground">{stats.totalPurchases}</strong>{' '}
           {stats.totalPurchases === 1 ? 'compra' : 'compras'}
         </span>
         <span>
-          <strong className="text-secondary-900">{stats.storesCount}</strong>{' '}
+          <strong className="text-foreground">{stats.storesCount}</strong>{' '}
           {stats.storesCount === 1 ? 'local' : 'locales'}
         </span>
       </div>

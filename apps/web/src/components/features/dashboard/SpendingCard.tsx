@@ -18,7 +18,6 @@ export function SpendingCard({
   previousMonthSpent,
   monthLabel,
 }: SpendingCardProps) {
-  // Calcular variación porcentual
   const calculateVariation = () => {
     if (previousMonthSpent === 0) {
       return { percentage: 0, direction: 'equal' as const };
@@ -35,47 +34,49 @@ export function SpendingCard({
 
   const getVariationIcon = () => {
     switch (variation.direction) {
-      case 'up':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'down':
-        return <TrendingDown className="h-4 w-4" />;
-      default:
-        return <Minus className="h-4 w-4" />;
+      case 'up': return <TrendingUp className="h-4 w-4" />;
+      case 'down': return <TrendingDown className="h-4 w-4" />;
+      default: return <Minus className="h-4 w-4" />;
     }
   };
 
   const getVariationColor = () => {
     switch (variation.direction) {
       case 'up':
-        return 'text-danger-600 bg-danger-50'; // Gastó más = rojo
+        // Uso de variables semánticas: Danger para gasto excesivo
+        return 'text-danger-700 bg-danger-100 dark:bg-danger-50/10 dark:text-danger-600';
       case 'down':
-        return 'text-success-600 bg-success-50'; // Gastó menos = verde
+        // Uso de variables semánticas: Success para ahorro
+        return 'text-success-700 bg-success-100 dark:bg-success-50/10 dark:text-success-600';
       default:
-        return 'text-secondary-600 bg-secondary-100';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
   const getVariationText = () => {
-    if (variation.direction === 'equal') {
-      return 'Igual que el mes anterior';
-    }
+    if (variation.direction === 'equal') return 'Igual que el mes anterior';
     const symbol = variation.direction === 'up' ? '▲' : '▼';
     return `${symbol} ${variation.percentage}% vs mes anterior`;
   };
 
   return (
     <Link href="/history">
-      <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-        {/* Etiqueta */}
-        <p className="text-primary-100 text-sm font-medium uppercase tracking-wider mb-2">
+      {/* CAMBIO CLAVE: Usamos bg-card, border-border y text-foreground */}
+      <div className="group relative overflow-hidden bg-card border border-border rounded-2xl p-6 shadow-soft hover:shadow-md transition-all cursor-pointer">
+        
+        {/* Decoración sutil: un gradiente muy suave en la esquina solo para dar identidad */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary-500/10 transition-colors" />
+
+        {/* Etiqueta con variable secundaria */}
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">
           Gasto este mes
         </p>
 
         {/* Mes actual */}
-        <p className="text-primary-200 text-sm mb-3 capitalize">{monthLabel}</p>
+        <p className="text-secondary-500 text-sm mb-4 capitalize">{monthLabel}</p>
 
-        {/* Total */}
-        <p className="text-4xl font-bold tracking-tight mb-4">
+        {/* Total con color principal del tema */}
+        <p className="text-4xl font-bold tracking-tight text-foreground mb-6">
           {formatCurrency(totalSpent)}
         </p>
 
@@ -83,7 +84,7 @@ export function SpendingCard({
         {previousMonthSpent > 0 && (
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors',
               getVariationColor()
             )}
           >

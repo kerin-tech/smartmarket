@@ -97,10 +97,10 @@ export function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Saludo */}
         <div className="flex flex-col justify-center">
-          <h1 className="text-2xl lg:text-3xl font-bold text-secondary-900">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
             Hola, {firstName} 👋
           </h1>
-          <p className="text-secondary-500 capitalize">{getCurrentMonthLabel()}</p>
+          <p className="text-muted-foreground capitalize">{getCurrentMonthLabel()}</p>
         </div>
 
         {/* Card de gasto principal */}

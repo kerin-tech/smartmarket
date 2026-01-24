@@ -191,14 +191,14 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
                 <button
                   key={product.id}
                   onClick={() => handleSelectProduct(product)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary-50 text-left transition-colors"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted text-left transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center text-lg">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
                     {getCategoryConfig(product.category).emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-secondary-900 truncate">{product.name}</p>
-                    <p className="text-xs text-secondary-500">{getCategoryConfig(product.category).label}</p>
+                    <p className="font-medium text-foreground truncate">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">{getCategoryConfig(product.category).label}</p>
                   </div>
                 </button>
               ))
@@ -211,13 +211,13 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
       ) : (
         <div className="space-y-5">
           {selectedProduct && (
-            <div className="flex items-center gap-3 p-3 bg-secondary-50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
               <div className="w-10 h-10 rounded-lg bg-secondary-200 flex items-center justify-center text-lg">
                 {getCategoryConfig(selectedProduct.category).emoji}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-secondary-900 truncate">{selectedProduct.name}</p>
-                <p className="text-xs text-secondary-500">{getCategoryConfig(selectedProduct.category).label}</p>
+                <p className="font-medium text-foreground truncate">{selectedProduct.name}</p>
+                <p className="text-xs text-muted-foreground">{getCategoryConfig(selectedProduct.category).label}</p>
               </div>
               {!editingItem && (
                 <Button variant="ghost" size="sm" onClick={handleBack}>Cambiar</Button>
@@ -243,7 +243,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
             />
           </div>
 
-          <div className="p-3 border border-secondary-200 rounded-lg space-y-3">
+          <div className="p-3 border border-color rounded-lg space-y-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="checkbox" 
@@ -251,11 +251,11 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
                 onChange={(e) => setHasDiscount(e.target.checked)}
                 className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm font-medium text-secondary-700">¿Tiene descuento?</span>
+              <span className="text-sm font-medium text-foreground">¿Tiene descuento?</span>
             </label>
 
             {hasDiscount && (
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-secondary-100">
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-color">
                 <Input
                   label="% Descuento"
                   type="text"
@@ -274,24 +274,24 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
             )}
           </div>
 
-          <div className="bg-secondary-50 rounded-xl p-4 space-y-2">
+          <div className="bg-muted rounded-xl p-4 space-y-2">
             {hasDiscount && (
-              <div className="flex justify-between items-center pb-2 border-b border-secondary-200/50">
-                <span className="text-sm font-medium text-secondary-700">Ahorro en este producto</span>
+              <div className="flex justify-between items-center pb-2 border-b border-color/50">
+                <span className="text-sm font-medium text-foreground">Ahorro en este producto</span>
                 <span className="font-medium text-green-600">-{formatCurrency(totalListPrice - toNumber(totalPaidWithDiscount))}</span>
               </div>
             )}
             
             <div className="flex justify-between items-center pt-1">
               <div className="flex flex-col">
-                <span className="text-md font-medium text-secondary-700">Subtotal</span>
+                <span className="text-md font-medium text-foreground">Subtotal</span>
                 {hasDiscount && (
-                   <span className="text-[10px] text-secondary-500 line-through">
+                   <span className="text-[10px] text-muted-foreground line-through">
                    Base: {formatCurrency(totalListPrice)}
                    </span>
                 )}
               </div>
-              <span className="text-xl font-bold text-secondary-900">
+              <span className="text-xl font-bold text-foreground">
                 {formatCurrency(toNumber(totalPaidWithDiscount))}
               </span>
             </div>

@@ -224,13 +224,13 @@ export function PurchaseList() {
         {purchasesByMonth.map((group) => (
           <section key={group.monthKey}>
             {/* Month header */}
-            <h2 className="flex items-center justify-between text-sm font-semibold text-secondary-500 uppercase tracking-wide mb-2 px-1">
+            <h2 className="flex items-center justify-between text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">
               <span>{group.monthLabel}</span>
-              <span className="text-secondary-400">{formatCurrency(group.total)}</span>
+              <span className="text-muted-foreground">{formatCurrency(group.total)}</span>
             </h2>
 
             {/* Purchases list */}
-            <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden divide-y divide-secondary-100">
+            <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
               {group.purchases.map((purchase) => (
                 <PurchaseCard
                   key={purchase.id}
@@ -252,9 +252,9 @@ export function PurchaseList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Mis Compras</h1>
+          <h1 className="text-2xl font-bold text-foreground">Mis Compras</h1>
           {!isLoading && pagination.total > 0 && (
-            <p className="text-sm text-secondary-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Total: <span className="font-semibold text-primary-600">{formatCurrency(totalAmount)}</span>
             </p>
           )}
@@ -290,7 +290,7 @@ export function PurchaseList() {
 
       {/* Results count */}
       {!isLoading && pagination.total > 0 && (
-        <p className="text-sm text-secondary-500" aria-live="polite">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           {pagination.total} {pagination.total === 1 ? 'compra' : 'compras'}
           {filters.search && ` para "${filters.search}"`}
         </p>
@@ -310,7 +310,7 @@ export function PurchaseList() {
           >
             Anterior
           </Button>
-          <span className="flex items-center px-4 text-sm text-secondary-600">
+          <span className="flex items-center px-4 text-sm text-muted-foreground">
             Página {pagination.page} de {pagination.totalPages}
           </span>
           <Button

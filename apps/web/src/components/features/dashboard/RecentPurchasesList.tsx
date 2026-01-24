@@ -15,11 +15,11 @@ interface RecentPurchasesListProps {
 export function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
   if (purchases.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 p-5">
-        <h3 className="text-base font-semibold text-secondary-900 mb-4">
+      <div className="bg-card rounded-xl border border-color p-5">
+        <h3 className="text-base font-semibold text-foreground mb-4">
           Compras recientes
         </h3>
-        <p className="text-sm text-secondary-500 text-center py-4">
+        <p className="text-sm text-muted-foreground text-center py-4">
           No hay compras recientes
         </p>
       </div>
@@ -27,10 +27,10 @@ export function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden">
+    <div className="bg-card rounded-xl border border-color overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-secondary-100">
-        <h3 className="text-base font-semibold text-secondary-900">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-color">
+        <h3 className="text-base font-semibold text-foreground">
           Compras recientes
         </h3>
         <Link
@@ -43,7 +43,7 @@ export function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
       </div>
 
       {/* Lista */}
-      <div className="divide-y divide-secondary-100">
+      <div className="divide-y divide-border">
         {purchases.slice(0, 5).map((purchase) => {
           // Obtener el primer item para mostrar
           const firstItem = purchase.items[0];
@@ -60,34 +60,34 @@ export function RecentPurchasesList({ purchases }: RecentPurchasesListProps) {
             <Link
               key={purchase.id}
               href="/purchases"
-              className="flex items-center gap-3 px-5 py-3 hover:bg-secondary-50 transition-colors"
+              className="flex items-center gap-3 px-5 py-3 hover:bg-muted transition-colors"
             >
               {/* Emoji de categoría */}
-              <div className="w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center text-xl">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-xl">
                 {config?.emoji || '🛒'}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-secondary-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {firstItem?.product.name || 'Compra'}
                   {itemCount > 1 && (
-                    <span className="text-secondary-500 font-normal">
+                    <span className="text-muted-foreground font-normal">
                       {' '}+{itemCount - 1} más
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-secondary-500">
+                <p className="text-xs text-muted-foreground">
                   {purchase.store.name} • {formatDateRelative(purchase.date)}
                 </p>
               </div>
 
               {/* Total */}
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-secondary-900">
+                <p className="text-sm font-semibold text-foreground">
                   {formatCurrency(total)}
                 </p>
-                <ChevronRight className="h-4 w-4 text-secondary-400" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </Link>
           );

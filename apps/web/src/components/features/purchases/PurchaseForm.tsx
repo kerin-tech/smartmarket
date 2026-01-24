@@ -156,7 +156,7 @@ export function PurchaseForm({
       >
         <div className="space-y-6">
           {loadingStores ? (
-            <div className="py-8 text-center text-secondary-500">Cargando...</div>
+            <div className="py-8 text-center text-muted-foreground">Cargando...</div>
           ) : (
             <>
               {/* Selector de Local y Fecha */}
@@ -189,12 +189,12 @@ export function PurchaseForm({
   </div>
 </div>
 
-              <hr className="border-secondary-200" />
+              <hr className="border-color" />
 
               {/* Lista de Productos */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-secondary-700">
+                  <h3 className="text-sm font-medium text-foreground">
                     Productos ({items.length})
                   </h3>
                   <Button
@@ -210,9 +210,9 @@ export function PurchaseForm({
                 </div>
 
                 {items.length === 0 ? (
-                  <div className="py-8 text-center border-2 border-dashed border-secondary-200 rounded-xl">
+                  <div className="py-8 text-center border-2 border-dashed border-color rounded-xl">
                     <Package className="h-12 w-12 text-secondary-300 mx-auto mb-3" />
-                    <p className="text-secondary-500 mb-3">Agrega productos a tu compra</p>
+                    <p className="text-muted-foreground mb-3">Agrega productos a tu compra</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -238,14 +238,14 @@ export function PurchaseForm({
               </div>
 
               {/* Caja de Total con Ahorro Efectivo */}
-              <div className="bg-secondary-50 rounded-xl p-4 space-y-2">
+              <div className="bg-muted rounded-xl p-4 space-y-2">
                 {summary.totalSavings > 0 && (
-                  <div className="flex justify-between items-center pb-2 border-b border-secondary-200/50">
+                  <div className="flex justify-between items-center pb-2 border-b border-color/50">
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-secondary-700">
+                      <span className="text-sm font-medium text-foreground">
                         Ahorro ({summary.discountedItemsCount} {summary.discountedItemsCount === 1 ? 'prod.' : 'prods.'})
                       </span>
-                      <span className="text-[10px] text-secondary-500 uppercase tracking-wider font-semibold">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                         Ahorro efectivo
                       </span>
                     </div>
@@ -261,8 +261,8 @@ export function PurchaseForm({
                 )}
                 
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-md font-medium text-secondary-700">Total a pagar</span>
-                  <span className="text-xl font-bold text-secondary-900">
+                  <span className="text-md font-medium text-foreground">Total a pagar</span>
+                  <span className="text-xl font-bold text-foreground">
                     {formatCurrency(summary.totalFinal)}
                   </span>
                 </div>

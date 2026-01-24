@@ -16,7 +16,7 @@ export interface CategoryBadgeProps extends React.HTMLAttributes<HTMLSpanElement
 
 const variantStyles = {
   primary: 'bg-primary-100 text-primary-700',
-  secondary: 'bg-secondary-100 text-secondary-700',
+  secondary: 'bg-muted text-foreground',
   success: 'bg-success-100 text-success-700',
   warning: 'bg-warning-100 text-warning-700',
   error: 'bg-error-100 text-error-700',

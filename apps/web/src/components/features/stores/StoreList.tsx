@@ -136,7 +136,7 @@ export function StoreList() {
 
     // Mostrar lista de tiendas
     return (
-      <div className="bg-white rounded-xl border border-secondary-200 overflow-hidden divide-y divide-secondary-100">
+      <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
         {filteredStores.map((store) => (
           <StoreCard
             key={store.id}
@@ -155,7 +155,7 @@ export function StoreList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Mis Locales</h1>
+          <h1 className="text-2xl font-bold text-foreground">Mis Locales</h1>
         </div>
         <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />}>
           Nuevo local
@@ -176,7 +176,7 @@ export function StoreList() {
 
       {/* Results count */}
       {!isLoading && stores.length > 0 && (
-        <p className="text-sm text-secondary-500" aria-live="polite">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
           {filteredStores.length} {filteredStores.length === 1 ? 'local' : 'locales'}
           {searchQuery && ` para "${searchQuery}"`}
         </p>

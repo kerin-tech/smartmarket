@@ -48,7 +48,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
   // -----------------------------------------------
 
   return (
-    <div className="flex items-center gap-3 p-4 hover:bg-secondary-50 transition-colors border-b border-secondary-100 last:border-0">
+    <div className="flex items-center gap-3 p-4 hover:bg-muted transition-colors border-b border-color last:border-0">
       {/* Icon */}
       <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
         <MapPin className="h-5 w-5 text-primary-600" />
@@ -60,7 +60,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
         onClick={() => onEdit(purchase)}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-secondary-900 truncate">
+          <h3 className="text-base font-semibold text-foreground truncate">
             {purchase.store.name}
           </h3>
           {hasDiscount && (
@@ -70,7 +70,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
             </span>
           )}
         </div>
-        <p className="text-sm text-secondary-500 capitalize">
+        <p className="text-sm text-muted-foreground capitalize">
           {formatDateLong(purchase.date)}
         </p>
         {searchQuery && (
@@ -83,7 +83,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
       {/* Right side */}
       <div className="flex items-center gap-3">
         <div className="text-right min-w-[100px]">
-          <p className="text-base font-semibold text-secondary-900">
+          <p className="text-base font-semibold text-foreground">
             {formatCurrency(purchase.total)}
           </p>
           {hasDiscount ? (
@@ -91,7 +91,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
               Ahorraste {formatCurrency(totalSavings)}
             </p>
           ) : (
-            <p className="text-sm text-secondary-500">
+            <p className="text-sm text-muted-foreground">
               {purchase.itemCount} {purchase.itemCount === 1 ? 'producto' : 'productos'}
             </p>
           )}
@@ -105,7 +105,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
               e.stopPropagation();
               isMenuOpen ? closeMenu() : setOpenMenuId(purchase.id);
             }}
-            className="p-2 rounded-lg text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
           >
             <MoreVertical className="h-5 w-5" />
           </button>

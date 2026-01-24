@@ -27,7 +27,7 @@ export const ChipGroup = forwardRef<HTMLDivElement, ChipGroupProps>(
         {label && (
           <label className={cn(
             'block text-sm font-medium mb-2',
-            disabled ? 'text-secondary-400' : 'text-secondary-700'
+            disabled ? 'text-muted-foreground' : 'text-foreground'
           )}>
             {label}
           </label>
@@ -47,7 +47,7 @@ export const ChipGroup = forwardRef<HTMLDivElement, ChipGroupProps>(
                 'focus:outline-none focus:ring-2 focus:ring-offset-1',
                 value === option.value
                   ? 'bg-primary-600 text-white focus:ring-primary-500'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200 focus:ring-secondary-400',
+                  : 'bg-muted text-foreground hover:bg-secondary-200 focus:ring-secondary-400',
                 disabled && 'opacity-50 cursor-not-allowed',
                 error && value !== option.value && 'border border-error-300'
               )}

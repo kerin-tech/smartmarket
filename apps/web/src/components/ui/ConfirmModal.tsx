@@ -44,7 +44,7 @@ export function ConfirmModal({
           />
         </div>
         <div>
-          <p className="text-sm text-secondary-600">{message}</p>
+          <p className="text-sm text-muted-foreground">{message}</p>
         </div>
       </div>
 

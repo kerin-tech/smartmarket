@@ -34,7 +34,7 @@ export function PageLoader() {
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="lg" />
-        <p className="text-sm text-secondary-500">Cargando...</p>
+        <p className="text-sm text-muted-foreground">Cargando...</p>
       </div>
     </div>
   );
@@ -42,10 +42,10 @@ export function PageLoader() {
 
 export function FullPageLoader() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-card/80 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="lg" />
-        <p className="text-sm text-secondary-500">Cargando...</p>
+        <p className="text-sm text-muted-foreground">Cargando...</p>
       </div>
     </div>
   );

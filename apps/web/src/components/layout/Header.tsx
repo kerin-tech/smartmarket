@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { 
   Menu, 
   Bell, 
@@ -38,14 +39,14 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-secondary-200">
+    <header className="sticky top-0 z-40 bg-card border-b border-color">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         {/* Left side */}
         <div className="flex items-center gap-3">
           {/* Mobile menu button */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 transition-colors"
+            className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {isSidebarOpen ? (
@@ -64,8 +65,9 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
         {/* Right side */}
         <div className="flex items-center gap-2">
           {/* Notifications */}
+          <ThemeToggle />
           <button
-            className="relative p-2 rounded-lg text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 transition-colors"
+            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Notificaciones"
           >
             <Bell className="h-5 w-5" />
@@ -77,18 +79,18 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 p-1.5 pr-3 rounded-lg hover:bg-secondary-100 transition-colors"
+              className="flex items-center gap-2 p-1.5 pr-3 rounded-lg hover:bg-muted transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
                 <span className="text-sm font-medium text-primary-700">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
-              <span className="hidden sm:block text-sm font-medium text-secondary-700 max-w-[120px] truncate">
+              <span className="hidden sm:block text-sm font-medium text-foreground max-w-[120px] truncate">
                 {user?.name || 'Usuario'}
               </span>
               <ChevronDown className={cn(
-                "h-4 w-4 text-secondary-400 transition-transform",
+                "h-4 w-4 text-muted-foreground transition-transform",
                 isProfileOpen && "rotate-180"
               )} />
             </button>
@@ -103,13 +105,13 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
                 />
                 
                 {/* Menu */}
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-secondary-200 shadow-lg z-20 py-1 animate-scale-in">
+                <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl border border-color shadow-lg z-20 py-1 animate-scale-in">
                   {/* User info */}
-                  <div className="px-4 py-3 border-b border-secondary-100">
-                    <p className="text-sm font-medium text-secondary-900 truncate">
+                  <div className="px-4 py-3 border-b border-color">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {user?.name}
                     </p>
-                    <p className="text-xs text-secondary-500 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {user?.email}
                     </p>
                   </div>
@@ -119,7 +121,7 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
                     <Link
                       href={routes.profile}
                       onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                     >
                       <User className="h-4 w-4" />
                       Mi perfil
@@ -129,7 +131,7 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
                         setIsProfileOpen(false);
                         // TODO: Abrir configuración
                       }}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors"
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                     >
                       <Settings className="h-4 w-4" />
                       Configuración
@@ -137,7 +139,7 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
                   </div>
 
                   {/* Logout */}
-                  <div className="border-t border-secondary-100 py-1">
+                  <div className="border-t border-color py-1">
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error-600 hover:bg-error-50 transition-colors"

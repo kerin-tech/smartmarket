@@ -16,13 +16,13 @@ export function HistoryEmptyState({ monthLabel, hasAnyHistory }: HistoryEmptySta
     // Usuario sin ninguna compra registrada
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <div className="w-20 h-20 rounded-full bg-secondary-100 flex items-center justify-center mb-6">
-          <CalendarX2 className="h-10 w-10 text-secondary-400" />
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+          <CalendarX2 className="h-10 w-10 text-muted-foreground" />
         </div>
-        <h2 className="text-xl font-semibold text-secondary-900 mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2">
           Sin historial de compras
         </h2>
-        <p className="text-secondary-500 mb-6 max-w-sm">
+        <p className="text-muted-foreground mb-6 max-w-sm">
           Registra tu primera compra para comenzar a ver tu historial de gastos
           y análisis detallados.
         </p>
@@ -38,13 +38,13 @@ export function HistoryEmptyState({ monthLabel, hasAnyHistory }: HistoryEmptySta
   // Mes específico sin datos
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-20 h-20 rounded-full bg-secondary-100 flex items-center justify-center mb-6">
-        <CalendarX2 className="h-10 w-10 text-secondary-400" />
+      <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+        <CalendarX2 className="h-10 w-10 text-muted-foreground" />
       </div>
-      <h2 className="text-xl font-semibold text-secondary-900 mb-2">
+      <h2 className="text-xl font-semibold text-foreground mb-2">
         Sin compras en {monthLabel}
       </h2>
-      <p className="text-secondary-500 mb-6 max-w-sm">
+      <p className="text-muted-foreground mb-6 max-w-sm">
         No hay compras registradas para este mes. Navega a otro mes o registra
         una nueva compra.
       </p>

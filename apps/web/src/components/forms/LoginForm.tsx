@@ -147,7 +147,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-secondary-600">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         ¿No tienes cuenta?{' '}
         <Link href={routes.register} className="link font-medium">
           Regístrate

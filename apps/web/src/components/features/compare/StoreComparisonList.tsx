@@ -21,8 +21,8 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
   const lowestPrice = stores[0]?.avgPrice || 0;
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-5">
-      <h3 className="text-base font-semibold text-secondary-900 mb-4">
+    <div className="bg-card rounded-xl border border-color p-5">
+      <h3 className="text-base font-semibold text-foreground mb-4">
         Comparativa por local
       </h3>
 
@@ -38,14 +38,14 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
               key={item.store.id}
               className={cn(
                 'flex items-center gap-3 p-3 rounded-lg transition-colors',
-                isBest ? 'bg-success-50 border border-success-200' : 'bg-secondary-50'
+                isBest ? 'bg-success-50 border border-success-200' : 'bg-muted'
               )}
             >
               {/* Icon */}
               <div
                 className={cn(
                   'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
-                  isBest ? 'bg-success-500 text-white' : 'bg-secondary-200 text-secondary-600'
+                  isBest ? 'bg-success-500 text-white' : 'bg-secondary-200 text-muted-foreground'
                 )}
               >
                 {isBest ? (
@@ -60,7 +60,7 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
                 <div className="flex items-center gap-2">
                   <h4 className={cn(
                     'text-sm font-semibold truncate',
-                    isBest ? 'text-success-900' : 'text-secondary-900'
+                    isBest ? 'text-success-900' : 'text-foreground'
                   )}>
                     {item.store.name}
                   </h4>
@@ -70,7 +70,7 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-secondary-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDateRelative(item.lastDate)} · {item.purchaseCount} {item.purchaseCount === 1 ? 'compra' : 'compras'}
                 </p>
               </div>
@@ -79,7 +79,7 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
               <div className="text-right flex-shrink-0">
                 <p className={cn(
                   'text-base font-bold',
-                  isBest ? 'text-success-700' : 'text-secondary-900'
+                  isBest ? 'text-success-700' : 'text-foreground'
                 )}>
                   {formatCurrency(item.lastPrice)}
                 </p>

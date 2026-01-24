@@ -26,7 +26,7 @@ const colors: Record<EmptyStateType, string> = {
   products: 'bg-primary-100 text-primary-600',
   stores: 'bg-warning-100 text-warning-600',
   purchases: 'bg-success-100 text-success-600',
-  default: 'bg-secondary-100 text-secondary-600',
+  default: 'bg-muted text-muted-foreground',
 };
 
 export function EmptyState({
@@ -45,8 +45,8 @@ export function EmptyState({
       <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mb-4', colorClass)}>
         <Icon className="h-8 w-8" />
       </div>
-      <h3 className="text-lg font-semibold text-secondary-900 mb-2 text-center">{title}</h3>
-      <p className="text-sm text-secondary-500 text-center max-w-sm mb-6">{description}</p>
+      <h3 className="text-lg font-semibold text-foreground mb-2 text-center">{title}</h3>
+      <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{description}</p>
       {actionLabel && onAction && (
         <Button onClick={onAction}>
           {actionLabel}

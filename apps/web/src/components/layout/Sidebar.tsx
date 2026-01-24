@@ -99,14 +99,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-secondary-200 flex flex-col',
+          'fixed top-0 left-0 z-50 h-full w-64 bg-card border-r border-color flex flex-col',
           'transform transition-transform duration-300 ease-in-out',
           'lg:translate-x-0 lg:z-40',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-secondary-200">
+        <div className="flex items-center h-16 px-4 border-b border-color">
           <Logo size="md" />
         </div>
 
@@ -127,13 +127,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     active
                       ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <Icon
                     className={cn(
                       'h-5 w-5 flex-shrink-0',
-                      active ? 'text-primary-600' : 'text-secondary-400'
+                      active ? 'text-primary-600' : 'text-muted-foreground'
                     )}
                   />
                   <span className="flex-1">{item.label}</span>
@@ -148,7 +148,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Divider */}
-          <div className="my-4 border-t border-secondary-200" />
+          <div className="my-4 border-t border-color" />
 
           {/* Secondary navigation */}
           <div className="space-y-1">
@@ -165,13 +165,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     active
                       ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <Icon
                     className={cn(
                       'h-5 w-5 flex-shrink-0',
-                      active ? 'text-primary-600' : 'text-secondary-400'
+                      active ? 'text-primary-600' : 'text-muted-foreground'
                     )}
                   />
                   <span>{item.label}</span>
@@ -182,15 +182,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-secondary-200">
-          <div className="rounded-lg bg-primary-50 p-4">
-            <p className="text-sm font-medium text-primary-900">
+        <div className="p-4 border-t border-border"> {/* Corregido border-color a border-border */}
+          <div className="rounded-xl bg-primary-50/50 p-4 border border-primary-100/20 dark:bg-primary-900/10">
+            <p className="text-sm font-bold text-foreground">
               SmartMarket Pro
             </p>
-            <p className="text-xs text-primary-700 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Desbloquea funciones premium
             </p>
-            <button className="mt-3 w-full px-3 py-2 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors">
+
+            {/* Botón usando las nuevas variables semánticas */}
+            <button className="mt-3 w-full px-3 py-2 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover rounded-lg transition-all active:scale-[0.98] shadow-sm">
               Actualizar ahora
             </button>
           </div>

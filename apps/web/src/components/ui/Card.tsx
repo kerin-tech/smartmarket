@@ -12,9 +12,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', padding = 'md', hoverable = false, children, ...props }, ref) => {
     const variants = {
-      default: 'bg-white border border-secondary-200 shadow-soft-sm',
-      bordered: 'bg-white border-2 border-secondary-200',
-      elevated: 'bg-white shadow-soft-lg',
+      default: 'bg-card border border-color shadow-soft-sm',
+      bordered: 'bg-card border-2 border-color',
+      elevated: 'bg-card shadow-soft-lg',
     };
 
     const paddings = {
@@ -55,7 +55,7 @@ const CardTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadin
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-lg font-semibold text-secondary-900', className)}
+      className={cn('text-lg font-semibold text-foreground', className)}
       {...props}
     />
   )
@@ -64,7 +64,7 @@ CardTitle.displayName = 'CardTitle';
 
 const CardDescription = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-sm text-secondary-500', className)} {...props} />
+    <p ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
   )
 );
 CardDescription.displayName = 'CardDescription';
