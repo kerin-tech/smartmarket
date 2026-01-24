@@ -1,3 +1,5 @@
+// src/components/ui/Toast.tsx
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,17 +26,17 @@ const icons = {
   info: Info,
 };
 
-// Mapeo corregido basado en paletas semánticas estándar
+// Colores ajustados siguiendo tu estilo de success/error
 const styles = {
-  success: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-900 dark:text-green-300',
-  error: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300',
-  warning: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-300',
-  info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-300',
+  success: 'bg-green-50 border-green-200 text-green-300 dark:bg-green-900 dark:border-green-900 dark:text-green-300',
+  error: 'bg-red-50 border-red-200 text-red-300 dark:bg-red-900 dark:border-red-900 dark:text-red-300',
+  warning: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/40 dark:border-amber-900 dark:text-amber-300',
+  info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/40 dark:border-blue-900 dark:text-blue-300',
 };
 
 const iconStyles = {
-  success: 'text-green-500 dark:text-green-400',
-  error: 'text-red-500 dark:text-red-400',
+  success: 'text-green-300 dark:text-green-300',
+  error: 'text-red-500 dark:text-red-300',
   warning: 'text-amber-500 dark:text-amber-400',
   info: 'text-blue-500 dark:text-blue-400',
 };
@@ -50,7 +52,7 @@ export function Toast({ id, type, message, duration = 5000, onClose }: ToastProp
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, id]); // Añadido id a dependencias por buena práctica
+  }, [duration, id]);
 
   const handleClose = () => {
     setIsLeaving(true);
@@ -65,10 +67,13 @@ export function Toast({ id, type, message, duration = 5000, onClose }: ToastProp
   return (
     <div
       className={cn(
-        'flex items-center gap-3 w-full max-w-sm p-4 rounded-lg border shadow-lg',
+        'flex items-center gap-3 w-full p-4 rounded-xl border shadow-lg',
         'transition-all duration-300 ease-in-out',
         styles[type],
-        isLeaving ? 'opacity-0 translate-x-4 scale-95' : 'opacity-100 translate-x-0 animate-in slide-in-from-right-5'
+        // Animación: Centrado subiendo en móvil, desde la derecha en desktop
+        isLeaving 
+          ? 'opacity-0 scale-95 translate-y-2 sm:translate-y-0 sm:translate-x-4' 
+          : 'opacity-100 translate-y-0 animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-right-5'
       )}
       role="alert"
     >
@@ -76,7 +81,7 @@ export function Toast({ id, type, message, duration = 5000, onClose }: ToastProp
       <p className="flex-1 text-sm font-medium leading-tight">{message}</p>
       <button
         onClick={handleClose}
-        className="flex-shrink-0 p-1 rounded-md text-current opacity-50 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-focus"
+        className="flex-shrink-0 p-1 rounded-md text-current opacity-50 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-1"
         aria-label="Cerrar notificación"
       >
         <X className="h-4 w-4" />
@@ -93,7 +98,15 @@ export function ToastContainer({
   onClose: (id: string) => void;
 }) {
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none w-full max-w-[calc(100vw-2rem)] sm:max-w-sm">
+    <div 
+      className={cn(
+        "fixed z-[100] flex flex-col gap-2 pointer-events-none px-4",
+        // Mobile: Centrado abajo, un poco más arriba para evitar el Nav
+        "bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[440px]", 
+        // Desktop: Esquina inferior derecha clásica
+        "sm:bottom-4 sm:right-4 sm:left-auto sm:translate-x-0 sm:w-auto sm:max-w-sm"
+      )}
+    >
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto w-full">
           <Toast {...toast} onClose={onClose} />

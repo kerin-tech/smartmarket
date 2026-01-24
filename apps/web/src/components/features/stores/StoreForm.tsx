@@ -1,5 +1,3 @@
-// src/components/features/stores/StoreForm.tsx
-
 'use client';
 
 import { useEffect } from 'react';
@@ -12,6 +10,7 @@ import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { storeSchema, type StoreFormValues } from '@/lib/validations/store.schema';
 import { storeSuggestions } from '@/types/store.types';
 import type { Store } from '@/types/store.types';
+import { cn } from '@/lib/utils';
 
 interface StoreFormProps {
   isOpen: boolean;
@@ -48,14 +47,13 @@ export function StoreForm({
 
   const nameValue = watch('name');
 
-  // Cargar datos cuando se edita
   useEffect(() => {
-    if (store) {
+    if (store && isOpen) {
       reset({
         name: store.name,
         location: store.location || '',
       });
-    } else {
+    } else if (!store && isOpen) {
       reset({
         name: '',
         location: '',
@@ -76,7 +74,6 @@ export function StoreForm({
     setValue('name', suggestion, { shouldValidate: true });
   };
 
-  // Filtrar sugerencias que coincidan con lo escrito
   const filteredSuggestions = storeSuggestions.filter(
     (s) => 
       !nameValue || 
@@ -91,7 +88,6 @@ export function StoreForm({
       size="md"
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Nombre */}
         <div>
           <Input
             label="Nombre del local"
@@ -102,29 +98,37 @@ export function StoreForm({
             {...register('name')}
           />
           
-          {/* Sugerencias */}
+          {/* Sugerencias con Iconos de Lucide corregidos */}
           {!isEditing && filteredSuggestions.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-muted-foreground mb-2">Sugerencias:</p>
+            <div className="mt-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Sugerencias comunes:</p>
               <div className="flex flex-wrap gap-2">
-                {filteredSuggestions.slice(0, 6).map((suggestion) => (
-                  <button
-                    key={suggestion.name}
-                    type="button"
-                    onClick={() => handleSuggestionClick(suggestion.name)}
-                    disabled={isLoading}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full bg-muted text-foreground hover:bg-secondary-200 transition-colors disabled:opacity-50"
-                  >
-                    <span>{suggestion.icon}</span>
-                    <span>{suggestion.name}</span>
-                  </button>
-                ))}
+                {filteredSuggestions.slice(0, 10).map((suggestion) => {
+                  // CLAVE: Asignar el componente a una variable con Mayúscula
+                  const Icon = suggestion.icon;
+                  
+                  return (
+                    <button
+                      key={suggestion.name}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion.name)}
+                      disabled={isLoading}
+                      className={cn(
+                        "inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-border transition-all",
+                        "bg-card hover:bg-muted hover:border-primary/30 text-foreground",
+                        "disabled:opacity-50 disabled:cursor-not-allowed group"
+                      )}
+                    >
+                      <Icon className={cn("h-3.5 w-3.5", suggestion.color)} />
+                      <span>{suggestion.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
-        {/* Ubicación */}
         <Input
           label="Ubicación (opcional)"
           placeholder="Ej: Calle 10 #43-12, Medellín"

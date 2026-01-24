@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ShoppingCart } from 'lucide-react';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Input } from '@/components/ui/Input';
@@ -34,13 +35,11 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
   const [discountPercentage, setDiscountPercentage] = useState<string>('0');
   const [totalPaidWithDiscount, setTotalPaidWithDiscount] = useState<string>('0');
 
-  // Helper para convertir strings de input a números reales
   const toNumber = (val: string | number) => {
     const stringVal = String(val).replace(/,/g, '.');
     return parseFloat(stringVal) || 0;
   };
 
-  // Cargar productos
   useEffect(() => {
     if (!isOpen) return;
     const loadProducts = async () => {
@@ -58,7 +57,6 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     loadProducts();
   }, [isOpen]);
 
-  // Recuperar valores en edición
   useEffect(() => {
     if (isOpen && editingItem && products.length > 0) {
       const product = products.find((p) => p.id === editingItem.productId);
@@ -83,7 +81,6 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     }
   }, [isOpen, editingItem, products]);
 
-  // Filtro de búsqueda
   useEffect(() => {
     const query = search.toLowerCase();
     setFilteredProducts(
@@ -97,7 +94,6 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
   const numPrice = toNumber(unitPrice);
   const totalListPrice = numQty * numPrice;
 
-  // Sincronización de totales
   useEffect(() => {
     if (!hasDiscount) {
       setTotalPaidWithDiscount(totalListPrice.toFixed(2));
@@ -107,7 +103,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
       const newTotal = totalListPrice * (1 - (disc / 100));
       setTotalPaidWithDiscount(newTotal.toFixed(2));
     }
-  }, [hasDiscount, totalListPrice]);
+  }, [hasDiscount, totalListPrice, discountPercentage]);
 
   const handleDiscountPercentChange = (val: string) => {
     setDiscountPercentage(val);
@@ -183,25 +179,29 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
             onClear={() => setSearch('')}
             autoFocus
           />
-          <div className="max-h-64 overflow-y-auto space-y-1">
+          <div className="max-h-64 overflow-y-auto space-y-1 custom-scrollbar">
             {loading ? (
               <div className="py-8 flex justify-center"><Spinner size="md" /></div>
             ) : (
-              filteredProducts.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={() => handleSelectProduct(product)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted text-left transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
-                    {getCategoryConfig(product.category).emoji}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">{getCategoryConfig(product.category).label}</p>
-                  </div>
-                </button>
-              ))
+              filteredProducts.map((product) => {
+                const config = getCategoryConfig(product.category);
+                const Icon = config.icon || ShoppingCart;
+                return (
+                  <button
+                    key={product.id}
+                    onClick={() => handleSelectProduct(product)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted text-left transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
+                      <Icon className="h-5 w-5 text-primary-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">{config.label}</p>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
           <ModalFooter>
@@ -210,20 +210,24 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
         </div>
       ) : (
         <div className="space-y-5">
-          {selectedProduct && (
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-              <div className="w-10 h-10 rounded-lg bg-secondary-200 flex items-center justify-center text-lg">
-                {getCategoryConfig(selectedProduct.category).emoji}
+          {selectedProduct && (() => {
+            const config = getCategoryConfig(selectedProduct.category);
+            const Icon = config.icon || ShoppingCart;
+            return (
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
+                  <Icon className="h-5 w-5 text-primary-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{selectedProduct.name}</p>
+                  <p className="text-xs text-muted-foreground">{config.label}</p>
+                </div>
+                {!editingItem && (
+                  <Button variant="ghost" size="sm" onClick={handleBack}>Cambiar</Button>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">{selectedProduct.name}</p>
-                <p className="text-xs text-muted-foreground">{getCategoryConfig(selectedProduct.category).label}</p>
-              </div>
-              {!editingItem && (
-                <Button variant="ghost" size="sm" onClick={handleBack}>Cambiar</Button>
-              )}
-            </div>
-          )}
+            );
+          })()}
 
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -243,19 +247,19 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
             />
           </div>
 
-          <div className="p-3 border border-color rounded-lg space-y-3">
+          <div className="p-3 border border-border rounded-lg space-y-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="checkbox" 
                 checked={hasDiscount}
                 onChange={(e) => setHasDiscount(e.target.checked)}
-                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-border text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm font-medium text-foreground">¿Tiene descuento?</span>
             </label>
 
             {hasDiscount && (
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-color">
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                 <Input
                   label="% Descuento"
                   type="text"
@@ -276,7 +280,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
 
           <div className="bg-muted rounded-xl p-4 space-y-2">
             {hasDiscount && (
-              <div className="flex justify-between items-center pb-2 border-b border-color/50">
+              <div className="flex justify-between items-center pb-2 border-b border-border/50">
                 <span className="text-sm font-medium text-foreground">Ahorro en este producto</span>
                 <span className="font-medium text-green-600">-{formatCurrency(totalListPrice - toNumber(totalPaidWithDiscount))}</span>
               </div>

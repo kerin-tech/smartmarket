@@ -1,5 +1,3 @@
-// src/components/features/products/ProductForm.tsx
-
 'use client';
 
 import { useEffect } from 'react';
@@ -10,11 +8,8 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
-import { 
-  productSchema, 
-  categoryOptions, 
-  type ProductFormValues 
-} from '@/lib/validations/product.schema';
+import { productSchema, type ProductFormValues } from '@/lib/validations/product.schema';
+import { categoryConfig } from '@/types/product.types';
 import type { Product } from '@/types/product.types';
 
 interface ProductFormProps {
@@ -49,15 +44,15 @@ export function ProductForm({
     },
   });
 
-  // Cargar datos cuando se edita
+  // Sincronizar datos al editar o abrir
   useEffect(() => {
-    if (product) {
+    if (product && isOpen) {
       reset({
         name: product.name,
         category: product.category,
         brand: product.brand || '',
       });
-    } else {
+    } else if (!product && isOpen) {
       reset({
         name: '',
         category: '',
@@ -83,24 +78,24 @@ export function ProductForm({
       size="md"
     >
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Nombre */}
+        {/* Nombre del Producto */}
         <Input
           label="Nombre del producto"
           placeholder="Ej: Arroz Diana 1kg"
           autoFocus
           disabled={isLoading}
           error={errors.name?.message}
-          helperText={!errors.name ? 'Usa un nombre descriptivo que te ayude a identificar el producto.' : undefined}
+          helperText={!errors.name ? 'Usa un nombre descriptivo.' : undefined}
           {...register('name')}
         />
 
-        {/* Categoría */}
+        {/* Categoría (Único método de selección) */}
         <Select
           label="Categoría"
           placeholder="Selecciona categoría"
-          options={categoryOptions.map((c) => ({
-            value: c.value,
-            label: c.label,
+          options={Object.keys(categoryConfig).map((key) => ({
+            value: key,
+            label: key,
           }))}
           disabled={isLoading}
           error={errors.category?.message}

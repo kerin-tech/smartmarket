@@ -1,17 +1,14 @@
-// src/types/product.types.ts
+// src/types/product.types.tsx
 
-// Tipo para las categorías
-export type CategoryKey = 
-  | 'Frutas' 
-  | 'Verduras' 
-  | 'Granos' 
-  | 'Lácteos' 
-  | 'Carnes' 
-  | 'Bebidas' 
-  | 'Limpieza' 
-  | 'Otros';
+import { 
+  Apple, Leaf, Wheat, Milk, Beef, CupSoda, Sparkles, Package,
+  Refrigerator, Croissant, Fish, Egg, Wine, Bath, Dog, Baby,
+  LucideIcon 
+} from 'lucide-react';
 
-export interface Product {
+// --- INTERFACES DE MODELO ---
+
+export interface Product { 
   id: string;
   name: string;
   category: string;
@@ -20,11 +17,7 @@ export interface Product {
   updatedAt?: string;
 }
 
-export interface ProductFormData {
-  name: string;
-  category: string;
-  brand?: string;
-}
+// --- INTERFACES DE API (Requests/Responses) ---
 
 export interface CreateProductRequest {
   name: string;
@@ -38,6 +31,7 @@ export interface UpdateProductRequest {
   brand?: string;
 }
 
+// Esta es la interfaz que estaba causando el error
 export interface ProductsResponse {
   products: Product[];
   pagination: {
@@ -50,31 +44,36 @@ export interface ProductsResponse {
   };
 }
 
-// Categorías predefinidas para el select
-export const categoryOptions = [
-  { value: 'Frutas', label: 'Frutas', emoji: '🍎' },
-  { value: 'Verduras', label: 'Verduras', emoji: '🥬' },
-  { value: 'Granos', label: 'Granos', emoji: '🍚' },
-  { value: 'Lácteos', label: 'Lácteos', emoji: '🥛' },
-  { value: 'Carnes', label: 'Carnes', emoji: '🥩' },
-  { value: 'Bebidas', label: 'Bebidas', emoji: '🥤' },
-  { value: 'Limpieza', label: 'Limpieza', emoji: '🧹' },
-  { value: 'Otros', label: 'Otros', emoji: '📦' },
-] as const;
+// --- CONFIGURACIÓN DE CATEGORÍAS (UI) ---
 
-// Configuración de categorías para UI
-export const categoryConfig: Record<string, { label: string; emoji: string; color: string }> = {
-  'Frutas': { label: 'Frutas', emoji: '🍎', color: 'orange' },
-  'Verduras': { label: 'Verduras', emoji: '🥬', color: 'green' },
-  'Granos': { label: 'Granos', emoji: '🍚', color: 'yellow' },
-  'Lácteos': { label: 'Lácteos', emoji: '🥛', color: 'sky' },
-  'Carnes': { label: 'Carnes', emoji: '🥩', color: 'red' },
-  'Bebidas': { label: 'Bebidas', emoji: '🥤', color: 'violet' },
-  'Limpieza': { label: 'Limpieza', emoji: '🧹', color: 'cyan' },
-  'Otros': { label: 'Otros', emoji: '📦', color: 'gray' },
+export interface CategoryConfig {
+  label: string;
+  icon: LucideIcon;
+  color: string;
+}
+
+export const categoryConfig: Record<string, CategoryConfig> = {
+  'Frutas': { label: 'Frutas', icon: Apple, color: 'text-primary-600' },
+  'Verduras': { label: 'Verduras', icon: Leaf, color: 'text-primary-600' },
+  'Granos': { label: 'Granos', icon: Wheat, color: 'text-primary-600' },
+  'Lácteos': { label: 'Lácteos', icon: Milk, color: 'text-primary-600' },
+  'Carnes': { label: 'Carnes', icon: Beef, color: 'text-primary-600' },
+  'Bebidas': { label: 'Bebidas', icon: CupSoda, color: 'text-primary-600' },
+  'Limpieza': { label: 'Limpieza', icon: Sparkles, color: 'text-primary-600' },
+  'Otros': { label: 'Otros', icon: Package, color: 'text-primary-600' },
+  'Despensa': { label: 'Despensa', icon: Refrigerator, color: 'text-primary-600' },
+  'Panadería': { label: 'Panadería', icon: Croissant, color: 'text-primary-600' },
+  'Pescados': { label: 'Pescados', icon: Fish, color: 'text-primary-600' },
+  'Huevos': { label: 'Huevos', icon: Egg, color: 'text-primary-600' },
+  'Licores': { label: 'Licores', icon: Wine, color: 'text-primary-600' },
+  'Cuidado Personal': { label: 'Cuidado Personal', icon: Bath, color: 'text-primary-600' },
+  'Mascotas': { label: 'Mascotas', icon: Dog, color: 'text-primary-600' },
+  'Bebés': { label: 'Bebés', icon: Baby, color: 'text-primary-600' },
+  'Congelados': { label: 'Congelados', icon: Package, color: 'text-primary-600' },
 };
 
-// Helper para obtener config de categoría (con fallback)
 export const getCategoryConfig = (category: string) => {
-  return categoryConfig[category] || { label: category, emoji: '📦', color: 'gray' };
+  return categoryConfig[category] || { label: category, icon: Package, color: 'text-slate-500' };
 };
+
+export type CategoryKey = keyof typeof categoryConfig;

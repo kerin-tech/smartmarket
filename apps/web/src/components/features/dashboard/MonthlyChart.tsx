@@ -1,39 +1,55 @@
-// src/components/features/dashboard/MonthlyChart.tsx
-
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ChevronRight } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell 
+} from 'recharts';
 import { formatCurrency } from '@/utils/formatters';
 import type { MonthlyChartData } from '@/types/dashboard.types';
-import { cn } from '@/lib/utils';
 
 interface MonthlyChartProps {
   data: MonthlyChartData[];
 }
 
 export function MonthlyChart({ data }: MonthlyChartProps) {
-  // Ordenar de más antiguo a más reciente
-  const chartData = [...data].sort((a, b) => a.month.localeCompare(b.month));
+  const router = useRouter();
 
-  // Encontrar el máximo para calcular alturas
-  const maxValue = Math.max(...chartData.map((d) => d.totalSpent), 1);
+  const chartData = useMemo(() => {
+    return [...data]
+      .sort((a, b) => new Date(a.month + '-01').getTime() - new Date(b.month + '-01').getTime())
+      .slice(-6)
+      .map(item => ({
+        ...item,
+        shortLabel: new Date(item.month + '-02')
+          .toLocaleDateString('es-CO', { month: 'short' })
+          .replace('.', '')
+          .toUpperCase(),
+        totalSpent: Number(item.totalSpent)
+      }));
+  }, [data]);
 
-  // Mes actual para destacar
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Formatear etiqueta de mes corta (ej: "Ago")
-  const getShortMonth = (monthKey: string) => {
-    const [year, month] = monthKey.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+  const formatYAxis = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+    return `$${value}`;
   };
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-color p-5">
-        <h3 className="text-base font-semibold text-foreground mb-4">
-          Últimos 6 meses
-        </h3>
+      <div className="bg-card rounded-xl border border-border p-5">
+        <h3 className="text-base font-semibold text-foreground mb-4">Últimos 6 meses</h3>
         <p className="text-sm text-muted-foreground text-center py-8">
           No hay datos suficientes para mostrar el gráfico
         </p>
@@ -42,76 +58,74 @@ export function MonthlyChart({ data }: MonthlyChartProps) {
   }
 
   return (
-    <div className="bg-card rounded-xl border border-color p-5">
-      <h3 className="text-base font-semibold text-foreground mb-4">
-        Últimos 6 meses
-      </h3>
-
-      {/* Gráfico de barras */}
-      <div className="flex items-end justify-between gap-2 h-44 mb-4">
-        {chartData.map((item) => {
-          const height = maxValue > 0 ? (item.totalSpent / maxValue) * 100 : 0;
-          const isCurrentMonth = item.month === currentMonth;
-
-          return (
-            <Link
-              key={item.month}
-              href={`/history?month=${item.month}`}
-              className="flex-1 flex flex-col items-center gap-2 group"
-            >
-              {/* Valor (visible en hover o si es mes actual) */}
-              <span
-                className={cn(
-                  'text-xs font-medium transition-opacity',
-                  isCurrentMonth
-                    ? 'text-primary-600 opacity-100'
-                    : 'text-muted-foreground opacity-0 group-hover:opacity-100'
-                )}
-              >
-                {item.totalSpent > 0
-                  ? item.totalSpent >= 1000000
-                    ? `$${(item.totalSpent / 1000000).toFixed(1)}M`
-                    : item.totalSpent >= 1000
-                    ? `$${Math.round(item.totalSpent / 1000)}k`
-                    : formatCurrency(item.totalSpent)
-                  : '-'}
-              </span>
-
-              {/* Barra */}
-              <div className="w-full flex justify-center">
-                <div
-                  className={cn(
-                    'w-full max-w-12 rounded-t-md transition-all duration-300',
-                    isCurrentMonth
-                      ? 'bg-primary-500 group-hover:bg-primary-600'
-                      : 'bg-secondary-200 group-hover:bg-secondary-300'
-                  )}
-                  style={{ height: `${Math.max(height, 4)}%` }}
-                  role="img"
-                  aria-label={`${item.monthLabel}: ${formatCurrency(item.totalSpent)}`}
-                />
-              </div>
-            </Link>
-          );
-        })}
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <h3 className="text-base font-semibold text-foreground">
+          Últimos 6 meses
+        </h3>
+        <Link
+          href="/history"
+          className="text-sm font-medium text-primary-600 hover:opacity-80 flex items-center gap-1 transition-all"
+        >
+          Ver histórico
+          <ChevronRight className="h-4 w-4" />
+        </Link>
       </div>
 
-      {/* Labels de meses */}
-      <div className="flex justify-between gap-2 pt-2 border-t border-color">
-        {chartData.map((item) => {
-          const isCurrentMonth = item.month === currentMonth;
-          return (
-            <span
-              key={item.month}
-              className={cn(
-                'flex-1 text-center text-xs font-medium capitalize',
-                isCurrentMonth ? 'text-primary-600' : 'text-muted-foreground'
-              )}
-            >
-              {getShortMonth(item.month)}
-            </span>
-          );
-        })}
+      <div className="p-5 pt-8">
+        <div className="h-56 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 0, right: 10, left: 15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.4} />
+              <XAxis 
+                dataKey="shortLabel" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: 'var(--color-muted-foreground)', fontSize: 11, fontWeight: 500 }}
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                width={40}
+                tickFormatter={formatYAxis}
+                tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} 
+              />
+              <Tooltip 
+                cursor={{ fill: 'var(--color-muted)', opacity: 0.3 }}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-foreground text-background text-[11px] font-bold px-3 py-1.5 rounded-md shadow-lg border-none">
+                        {formatCurrency(payload[0].value as number)}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar 
+                dataKey="totalSpent" 
+                radius={[4, 4, 0, 0]} 
+                barSize={32}
+                onClick={(data) => {
+                  if (data && data.month) {
+                    router.push(`/history?month=${data.month}`);
+                  }
+                }}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    className="cursor-pointer transition-opacity duration-300 hover:opacity-80"
+                    fill={entry.month === currentMonth ? 'var(--primary)' : 'var(--color-muted-foreground)'}
+                    fillOpacity={entry.month === currentMonth ? 1 : 0.25}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

@@ -1,31 +1,20 @@
 'use client';
 
+import { ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { getCategoryConfig } from '@/types/product.types';
 
 // Definimos la interfaz aquí mismo para asegurar que coincida con el backend
 interface CategoryData {
-  name: string;      // Lo que envía el backend ahora
-  amount: number;    // Lo que envía el backend ahora
+  name: string;
+  amount: number;
   percentage: number;
 }
 
 interface CategoryBreakdownProps {
-  categories: CategoryData[]; // Usamos nuestra interfaz corregida
+  categories: CategoryData[];
   isLoading?: boolean;
 }
-
-// Colores para las barras de progreso
-const categoryColors: Record<string, string> = {
-  'Frutas': 'bg-orange-500',
-  'Verduras': 'bg-green-500',
-  'Granos': 'bg-yellow-500',
-  'Lácteos': 'bg-sky-500',
-  'Carnes': 'bg-red-500',
-  'Bebidas': 'bg-violet-500',
-  'Limpieza': 'bg-cyan-500',
-  'Otros': 'bg-gray-500',
-};
 
 export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownProps) {
   if (isLoading) {
@@ -34,7 +23,7 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
 
   if (categories.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-color p-6">
+      <div className="bg-card rounded-xl border border-border p-6">
         <h3 className="text-base font-semibold text-foreground mb-4">
           Gastos por categoría
         </h3>
@@ -46,36 +35,38 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
   }
 
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <h3 className="text-base font-semibold text-foreground mb-4">
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <h3 className="text-base font-semibold text-foreground mb-6">
         Gastos por categoría
       </h3>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {categories.map((category) => {
-          // Ahora 'name' es seguro porque definimos CategoryData
           const categoryName = category.name;
           const config = getCategoryConfig(categoryName);
-          const barColor = categoryColors[categoryName] || 'bg-gray-500';
+          const CategoryIcon = config.icon || ShoppingCart;
 
           return (
             <div key={categoryName} className="group">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{config.emoji}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  {/* Icono corregido con estilo consistente */}
+                  <div className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
+                    <CategoryIcon className="h-4.5 w-4.5 text-primary-600" />
+                  </div>
                   <span className="text-sm font-medium text-foreground">
                     {config.label}
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   {formatCurrency(category.amount)}
                 </span>
               </div>
               
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                    className="h-full rounded-full transition-all duration-700 ease-out bg-primary-600"
                     style={{ width: `${category.percentage}%` }}
                     role="progressbar"
                     aria-valuenow={category.percentage}
@@ -83,8 +74,8 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
                     aria-valuemax={100}
                   />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground w-10 text-right">
-                  {category.percentage}%
+                <span className="text-xs font-semibold text-muted-foreground w-10 text-right">
+                  {Math.round(category.percentage)}%
                 </span>
               </div>
             </div>
@@ -97,20 +88,20 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
 
 function CategoryBreakdownSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <div className="h-5 w-40 bg-secondary-200 rounded animate-pulse mb-4" />
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
+    <div className="bg-card rounded-xl border border-border p-6">
+      <div className="h-5 w-40 bg-secondary-200 rounded animate-pulse mb-6" />
+      <div className="space-y-6">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={`skeleton-${i}`}>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-secondary-200 rounded animate-pulse" />
-                <div className="w-20 h-4 bg-secondary-200 rounded animate-pulse" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-secondary-200 rounded-lg animate-pulse" />
+                <div className="w-24 h-4 bg-secondary-200 rounded animate-pulse" />
               </div>
-              <div className="w-24 h-4 bg-secondary-200 rounded animate-pulse" />
+              <div className="w-20 h-4 bg-secondary-200 rounded animate-pulse" />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-2.5 bg-muted rounded-full" />
+              <div className="flex-1 h-2 bg-muted rounded-full" />
               <div className="w-10 h-3 bg-secondary-200 rounded animate-pulse" />
             </div>
           </div>
