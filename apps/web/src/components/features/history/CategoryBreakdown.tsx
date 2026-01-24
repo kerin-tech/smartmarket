@@ -1,13 +1,17 @@
-// src/components/features/history/CategoryBreakdown.tsx
-
 'use client';
 
 import { formatCurrency } from '@/utils/formatters';
 import { getCategoryConfig } from '@/types/product.types';
-import type { CategoryBreakdown as CategoryBreakdownType } from '@/types/analytics.types';
+
+// Definimos la interfaz aquí mismo para asegurar que coincida con el backend
+interface CategoryData {
+  name: string;      // Lo que envía el backend ahora
+  amount: number;    // Lo que envía el backend ahora
+  percentage: number;
+}
 
 interface CategoryBreakdownProps {
-  categories: CategoryBreakdownType[];
+  categories: CategoryData[]; // Usamos nuestra interfaz corregida
   isLoading?: boolean;
 }
 
@@ -49,11 +53,13 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
 
       <div className="space-y-4">
         {categories.map((category) => {
-          const config = getCategoryConfig(category.category);
-          const barColor = categoryColors[category.category] || 'bg-gray-500';
+          // Ahora 'name' es seguro porque definimos CategoryData
+          const categoryName = category.name;
+          const config = getCategoryConfig(categoryName);
+          const barColor = categoryColors[categoryName] || 'bg-gray-500';
 
           return (
-            <div key={category.category}>
+            <div key={categoryName} className="group">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{config.emoji}</span>
@@ -62,12 +68,11 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
                   </span>
                 </div>
                 <span className="text-sm font-semibold text-foreground">
-                  {formatCurrency(category.totalSpent)}
+                  {formatCurrency(category.amount)}
                 </span>
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Barra de progreso */}
                 <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${barColor}`}
@@ -78,7 +83,6 @@ export function CategoryBreakdown({ categories, isLoading }: CategoryBreakdownPr
                     aria-valuemax={100}
                   />
                 </div>
-                {/* Porcentaje */}
                 <span className="text-xs font-medium text-muted-foreground w-10 text-right">
                   {category.percentage}%
                 </span>
@@ -97,7 +101,7 @@ function CategoryBreakdownSkeleton() {
       <div className="h-5 w-40 bg-secondary-200 rounded animate-pulse mb-4" />
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i}>
+          <div key={`skeleton-${i}`}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-secondary-200 rounded animate-pulse" />

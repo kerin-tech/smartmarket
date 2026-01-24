@@ -1,6 +1,9 @@
+// src/components/features/history/HistoryView.tsx
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+
 import { MonthSelector } from './MonthSelector';
 import { SummaryCard } from './SummaryCard';
 import { CategoryBreakdown } from './CategoryBreakdown';
@@ -9,6 +12,7 @@ import { TrendChart } from './TrendChart';
 import { HistoryEmptyState } from './HistoryEmptyState';
 import { HistorySkeleton } from './HistorySkeleton';
 import { ToastContainer } from '@/components/ui/Toast';
+
 import { useToast } from '@/hooks/useToast';
 import { analyticsService } from '@/services/analytics.service';
 import type {
@@ -17,8 +21,12 @@ import type {
   StoreBreakdown as StoreBreakdownType,
 } from '@/types/analytics.types';
 
+const getCurrentMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
 const formatMonthLabel = (monthKey: string) => {
-  if (!monthKey) return '';
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1, 1);
   const label = date.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
@@ -33,16 +41,13 @@ export function HistoryView() {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [byCategory, setByCategory] = useState<CategoryBreakdownType[]>([]);
   const [byStore, setByStore] = useState<StoreBreakdownType[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
-  // 1. Cargar datos detallados del mes
+  // Cargar datos de un mes específico (Memoized)
   const loadMonthData = useCallback(async (month: string) => {
     setIsLoadingMonth(true);
     try {
-      // Limpiamos datos anteriores para evitar "flashes" de info vieja
-      setByCategory([]);
-      setByStore([]);
-
+      // Importante: Asegurarse de que el servicio reciba el mes como string
       const [categoryRes, storeRes] = await Promise.all([
         analyticsService.getByCategory({ month }),
         analyticsService.getByStore({ month }),
@@ -51,40 +56,47 @@ export function HistoryView() {
       setByCategory(categoryRes.byCategory);
       setByStore(storeRes.byStore);
     } catch (err: any) {
-      showError('Error al actualizar el desglose del mes');
+      showError(err.message || 'Error al cargar datos del mes');
     } finally {
       setIsLoadingMonth(false);
     }
   }, [showError]);
 
-  // 2. Carga inicial del timeline
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setIsLoading(true);
-      try {
-        const monthlyRes = await analyticsService.getMonthly(12);
-        const history = monthlyRes.monthly;
-        setMonthlyData(history);
+  // Cargar datos iniciales
+  const loadInitialData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const monthlyRes = await analyticsService.getMonthly(12);
+      setMonthlyData(monthlyRes.monthly);
 
-        if (history.length > 0) {
-          // Buscamos el mes más reciente que tenga compras
-          const latestWithData = history.find(m => m.totalPurchases > 0) || history[0];
-          setSelectedMonth(latestWithData.month);
-          await loadMonthData(latestWithData.month);
+      // Lógica de selección de mes con datos
+      const hasDataInSelected = monthlyRes.monthly.some(
+        (m) => m.month === selectedMonth && m.totalPurchases > 0
+      );
+      
+      let monthToLoad = selectedMonth;
+      if (!hasDataInSelected) {
+        const monthWithData = monthlyRes.monthly.find((m) => m.totalPurchases > 0);
+        if (monthWithData) {
+          monthToLoad = monthWithData.month;
+          setSelectedMonth(monthWithData.month);
         }
-      } catch (err: any) {
-        showError('Error al cargar historial');
-      } finally {
-        setIsLoading(false);
       }
-    };
 
+      await loadMonthData(monthToLoad);
+    } catch (err: any) {
+      showError(err.message || 'Error al cargar el historial');
+    } finally {
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadMonthData, showError]); // Eliminamos selectedMonth de aquí para evitar loops
+
+  useEffect(() => {
     loadInitialData();
-  }, [loadMonthData, showError]);
+  }, [loadInitialData]);
 
-  // 3. Manejador de cambio de mes (Invocado por el selector y el gráfico)
   const handleMonthChange = async (newMonth: string) => {
-    if (newMonth === selectedMonth) return;
     setSelectedMonth(newMonth);
     await loadMonthData(newMonth);
   };
@@ -113,10 +125,51 @@ export function HistoryView() {
     };
   };
 
-  if (isLoading) return <HistorySkeleton />;
+  const handlePreviousMonth = () => {
+    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
+    if (currentIndex < monthlyData.length - 1) {
+      handleMonthChange(monthlyData[currentIndex + 1].month);
+    }
+  };
+
+  const handleNextMonth = () => {
+    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
+    if (currentIndex > 0) {
+      handleMonthChange(monthlyData[currentIndex - 1].month);
+    }
+  };
+
+  const hasPreviousMonth = () => {
+    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
+    return currentIndex < monthlyData.length - 1;
+  };
+
+  const hasNextMonth = () => {
+    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
+    return currentIndex > 0;
+  };
 
   const hasAnyHistory = monthlyData.some((m) => m.totalPurchases > 0);
-  if (!hasAnyHistory) return <HistoryEmptyState hasAnyHistory={false} />;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+        <HistorySkeleton />
+        <ToastContainer toasts={toasts} onClose={removeToast} />
+      </div>
+    );
+  }
+
+  if (!hasAnyHistory) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-secondary-900">Historial</h1>
+        <HistoryEmptyState hasAnyHistory={false} />
+        <ToastContainer toasts={toasts} onClose={removeToast} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -125,22 +178,16 @@ export function HistoryView() {
       <MonthSelector
         currentMonth={selectedMonth}
         monthLabel={formatMonthLabel(selectedMonth)}
-        onPrevious={() => {
-          const idx = monthlyData.findIndex(m => m.month === selectedMonth);
-          if (idx < monthlyData.length - 1) handleMonthChange(monthlyData[idx + 1].month);
-        }}
-        onNext={() => {
-          const idx = monthlyData.findIndex(m => m.month === selectedMonth);
-          if (idx > 0) handleMonthChange(monthlyData[idx - 1].month);
-        }}
-        hasPrevious={monthlyData.findIndex(m => m.month === selectedMonth) < monthlyData.length - 1}
-        hasNext={monthlyData.findIndex(m => m.month === selectedMonth) > 0}
+        onPrevious={handlePreviousMonth}
+        onNext={handleNextMonth}
+        hasPrevious={hasPreviousMonth()}
+        hasNext={hasNextMonth()}
       />
 
       {(!currentMonthData || currentMonthData.totalPurchases === 0) ? (
         <HistoryEmptyState
           monthLabel={formatMonthLabel(selectedMonth)}
-          hasAnyHistory={true}
+          hasAnyHistory={hasAnyHistory}
         />
       ) : (
         <>
@@ -154,27 +201,20 @@ export function HistoryView() {
           <div className="grid gap-6 lg:grid-cols-2">
             {isLoadingMonth ? (
               <>
-                <div className="bg-card rounded-xl border border-color p-6 h-[350px] animate-pulse" />
-                <div className="bg-card rounded-xl border border-color p-6 h-[350px] animate-pulse" />
+                <div className="bg-card rounded-xl border border-color p-6 h-[300px] animate-pulse" />
+                <div className="bg-card rounded-xl border border-color p-6 h-[300px] animate-pulse" />
               </>
             ) : (
               <>
-                <CategoryBreakdown categories={byCategory} />
-                <StoreBreakdown 
-                  stores={byStore} 
-                  totalSpent={currentMonthData.totalSpent} 
-                />
+                <CategoryBreakdown categories={byCategory as any} />
+                <StoreBreakdown stores={byStore} totalSpent={currentMonthData.totalSpent} />
               </>
             )}
           </div>
         </>
       )}
 
-      <TrendChart 
-        data={monthlyData} 
-        currentMonth={selectedMonth} 
-        onMonthClick={handleMonthChange} // Asegúrate de que el TrendChart use esta prop
-      />
+      <TrendChart data={monthlyData} currentMonth={selectedMonth} />
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
