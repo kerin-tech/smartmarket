@@ -16,10 +16,10 @@ interface ThemeToggleProps {
 export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme, toggleTheme, mounted } = useThemeContext();
 
-  // Prevenir hydration mismatch
+  // Prevenir hydration mismatch con un skeleton semántico
   if (!mounted) {
     return (
-      <div className={cn('w-10 h-10 rounded-lg bg-muted animate-pulse', className)} />
+      <div className={cn('w-10 h-10 rounded-lg bg-muted/50 animate-pulse', className)} />
     );
   }
 
@@ -29,19 +29,18 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
       <button
         onClick={toggleTheme}
         className={cn(
-          'p-2.5 rounded-lg transition-colors',
-          'bg-muted hover:bg-secondary-200',
-          'dark:bg-secondary-200 dark:hover:bg-secondary-300',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-          'dark:focus:ring-offset-secondary-50',
+          'p-2.5 rounded-lg transition-all active:scale-95',
+          'bg-muted hover:bg-accent text-muted-foreground hover:text-foreground',
+          'border border-border/40',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background',
           className
         )}
         aria-label={resolvedTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       >
         {resolvedTheme === 'dark' ? (
-          <Sun className="h-5 w-5 text-muted-foreground" />
+          <Sun className="h-5 w-5 transition-transform duration-300 rotate-0 scale-100" />
         ) : (
-          <Moon className="h-5 w-5 text-muted-foreground" />
+          <Moon className="h-5 w-5 transition-transform duration-300 rotate-0 scale-100" />
         )}
       </button>
     );
@@ -56,7 +55,7 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
     ];
 
     return (
-      <div className={cn('flex gap-1 p-1 bg-muted dark:bg-secondary-200 rounded-lg', className)}>
+      <div className={cn('flex gap-1 p-1 bg-muted rounded-xl border border-border', className)}>
         {options.map((option) => {
           const Icon = option.icon;
           const isActive = theme === option.value;
@@ -66,10 +65,10 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
               key={option.value}
               onClick={() => setTheme(option.value)}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all',
+                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all',
                 isActive
-                  ? 'bg-card dark:bg-muted text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground'
+                  ? 'bg-card text-foreground shadow-sm border border-border/50'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
               )}
               aria-label={option.label}
             >
@@ -82,28 +81,26 @@ export function ThemeToggle({ variant = 'icon', className }: ThemeToggleProps) {
     );
   }
 
-  // Variante dropdown
+  // Variante dropdown / label
   return (
     <div className={cn('relative', className)}>
       <button
         onClick={toggleTheme}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
-          'bg-muted hover:bg-secondary-200',
-          'dark:bg-secondary-200 dark:hover:bg-secondary-300',
-          'text-foreground dark:text-muted-foreground',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500'
+          'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border border-border',
+          'bg-muted hover:bg-accent text-foreground',
+          'focus:outline-none focus:ring-2 focus:ring-primary'
         )}
       >
         {resolvedTheme === 'dark' ? (
           <>
-            <Moon className="h-4 w-4" />
-            <span className="text-sm">Oscuro</span>
+            <Moon className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Oscuro</span>
           </>
         ) : (
           <>
-            <Sun className="h-4 w-4" />
-            <span className="text-sm">Claro</span>
+            <Sun className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Claro</span>
           </>
         )}
       </button>

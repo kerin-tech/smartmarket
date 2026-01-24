@@ -261,7 +261,7 @@ export function PurchaseForm({
                 )}
                 
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-md font-medium text-foreground">Total a pagar</span>
+                  <span className="text-md font-medium text-foreground">Total pagado</span>
                   <span className="text-xl font-bold text-foreground">
                     {formatCurrency(summary.totalFinal)}
                   </span>

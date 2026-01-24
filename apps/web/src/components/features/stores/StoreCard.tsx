@@ -39,15 +39,18 @@ export function StoreCard({ store, onEdit, onDelete, searchQuery }: StoreCardPro
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors">
+    <div 
+      onClick={() => onEdit(store)} // <-- Abre el modal al hacer clic en cualquier parte de la card
+      className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors cursor-pointer group"
+    >
       {/* Icon */}
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center group-hover:bg-primary-200 transition-colors">
         <span className="text-xl">🏪</span>
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-foreground truncate">
+        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary-700 transition-colors">
           {highlightText(store.name, searchQuery || '')}
         </h3>
         {store.location ? (
@@ -61,14 +64,17 @@ export function StoreCard({ store, onEdit, onDelete, searchQuery }: StoreCardPro
       </div>
 
       {/* Menu button */}
-      <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="relative" 
+        onClick={(e) => e.stopPropagation()} // <-- Evita que al abrir el menú se dispare el onEdit de la card
+      >
         <button
           ref={triggerRef}
           onClick={(e) => {
             e.stopPropagation();
             isMenuOpen ? closeMenu() : openMenu(store.id);
           }}
-          className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 transition-colors"
           aria-label={`Opciones para ${store.name}`}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}

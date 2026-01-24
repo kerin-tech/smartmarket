@@ -24,9 +24,8 @@ import {
 } from '@/stores/product.store';
 import { productService } from '@/services/product.service';
 import type { ProductFormValues } from '@/lib/validations/product.schema';
-import { categoryOptions, getCategoryConfig } from '@/types/product.types';
+import { getCategoryConfig } from '@/types/product.types';
 
-// Orden de categorías para mostrar
 const categoryOrder = [
   'Frutas', 'Verduras', 'Granos', 'Lácteos', 'Carnes', 'Bebidas', 'Limpieza', 'Otros'
 ];
@@ -52,7 +51,6 @@ export function ProductList() {
     addProduct,
     updateProduct,
     removeProduct,
-    closeMenu,
   } = useProductStore();
 
   const filteredProducts = useFilteredProducts();
@@ -63,7 +61,6 @@ export function ProductList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Cargar productos al montar
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
@@ -76,11 +73,9 @@ export function ProductList() {
         setLoading(false);
       }
     };
-
     loadProducts();
-  }, []);
+  }, [setLoading, setProducts, showError]);
 
-  // Opciones para el filtro
   const filterOptions = [
     { value: 'all', label: 'Todos', count: categoryCounts.all },
     ...categoryOrder
@@ -96,7 +91,6 @@ export function ProductList() {
       }),
   ];
 
-  // Crear o editar producto
   const handleSubmit = async (data: ProductFormValues) => {
     setIsSubmitting(true);
     try {
@@ -117,10 +111,8 @@ export function ProductList() {
     }
   };
 
-  // Eliminar producto
   const handleDelete = async () => {
     if (!deletingProduct) return;
-
     setIsDeleting(true);
     try {
       await productService.delete(deletingProduct.id);
@@ -134,71 +126,48 @@ export function ProductList() {
     }
   };
 
-  // Renderizar contenido
   const renderContent = () => {
-    if (isLoading) {
-      return <ProductListSkeleton count={6} />;
-    }
+    if (isLoading) return <ProductListSkeleton count={6} />;
 
-    // Empty state: sin productos
     if (categoryCounts.all === 0) {
       return (
         <EmptyState
           type="products"
           title="No tienes productos"
-          description="Comienza agregando los productos que compras frecuentemente para poder comparar precios."
+          description="Comienza agregando los productos que compras frecuentemente."
           actionLabel="Agregar primer producto"
           onAction={openCreateModal}
         />
       );
     }
 
-    // Empty state: sin resultados de búsqueda/filtro
     if (filteredProducts.length === 0) {
       return (
         <EmptyState
           type="products"
           title="Sin resultados"
-          description={
-            searchQuery 
-              ? `No encontramos productos que coincidan con "${searchQuery}"` 
-              : 'No hay productos en esta categoría'
-          }
+          description={searchQuery ? `No coinciden con "${searchQuery}"` : 'No hay productos aquí'}
           actionLabel={searchQuery ? `Agregar "${searchQuery}"` : 'Limpiar filtro'}
-          onAction={() => {
-            if (searchQuery) {
-              openCreateModal();
-            } else {
-              setSelectedCategory('all');
-            }
-          }}
+          onAction={() => searchQuery ? openCreateModal() : setSelectedCategory('all')}
         />
       );
     }
 
-    // Mostrar productos agrupados por categoría
     return (
       <div className="space-y-6">
         {categoryOrder.map((categoryKey) => {
           const products = groupedProducts.get(categoryKey);
           if (!products || products.length === 0) return null;
-
           const config = getCategoryConfig(categoryKey);
 
           return (
-            <section key={categoryKey} aria-labelledby={`category-${categoryKey}`}>
-              {/* Category header */}
-              <h2 
-                id={`category-${categoryKey}`}
-                className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1"
-              >
+            <section key={categoryKey} className="animate-in fade-in duration-500">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 px-1">
                 <span>{config.emoji}</span>
                 <span>{config.label}</span>
-                <span className="text-muted-foreground">({products.length})</span>
+                <span className="opacity-50">({products.length})</span>
               </h2>
-
-              {/* Products list */}
-              <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
+              <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border shadow-sm">
                 {products.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -217,18 +186,22 @@ export function ProductList() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Mis Productos</h1>
-        </div>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />}>
+    <div className="space-y-6 pb-28"> {/* Espacio inferior para el Nav + FAB */}
+      
+      {/* HEADER DINÁMICO */}
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Mis Productos</h1>
+        {/* Visible solo en Desktop */}
+        <Button 
+          onClick={openCreateModal} 
+          leftIcon={<Plus className="h-5 w-5" />}
+          className="hidden sm:flex"
+        >
           Nuevo producto
         </Button>
       </div>
 
-      {/* Search and Filter */}
+      {/* FILTROS */}
       {!isLoading && categoryCounts.all > 0 && (
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
@@ -247,19 +220,28 @@ export function ProductList() {
         </div>
       )}
 
-      {/* Results count */}
-      {!isLoading && categoryCounts.all > 0 && (
-        <p className="text-sm text-muted-foreground" aria-live="polite">
-          {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
-          {selectedCategory !== 'all' && ` en ${getCategoryConfig(selectedCategory).label}`}
-          {searchQuery && ` para "${searchQuery}"`}
-        </p>
-      )}
-
-      {/* Content */}
+      {/* CONTENIDO PRINCIPAL */}
       {renderContent()}
 
-      {/* Product Form Modal */}
+      {/* BOTÓN FLOTANTE (FAB) CIRCULAR CON ETIQUETA - Solo Mobile */}
+      <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
+        
+        {/* Etiqueta flotante (La píldora) */}
+        <span className="bg-card border border-border text-foreground text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500">
+          Nuevo Producto
+        </span>
+
+        {/* Botón Circular */}
+        <button
+          onClick={openCreateModal}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-90 hover:scale-105"
+          style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.2))' }}
+        >
+          <Plus className="h-8 w-8" />
+        </button>
+      </div>
+
+      {/* MODALES */}
       <ProductForm
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -268,19 +250,17 @@ export function ProductList() {
         isLoading={isSubmitting}
       />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Eliminar producto"
-        message={`¿Estás seguro de eliminar "${deletingProduct?.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${deletingProduct?.name}"?`}
         confirmText="Eliminar"
         isLoading={isDeleting}
         variant="danger"
       />
 
-      {/* Toasts */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
