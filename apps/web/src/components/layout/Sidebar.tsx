@@ -70,11 +70,7 @@ const secondaryNavItems: NavItem[] = [
     href: routes.profile,
     icon: User,
   },
-  {
-    label: 'Ayuda',
-    href: '/help',
-    icon: HelpCircle,
-  },
+  
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
