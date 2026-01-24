@@ -33,13 +33,8 @@ function formatMonthLabel(monthKey: string): string {
 
 /**
  * GET /api/v1/analytics/monthly
- * Obtiene métricas mensuales de compras
  */
-export const getMonthlyAnalytics = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getMonthlyAnalytics = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
@@ -48,23 +43,17 @@ export const getMonthlyAnalytics = async (
     const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
     const purchases = await prisma.purchase.findMany({
-      where: {
-        userId,
-        date: { gte: startDate },
-      },
+      where: { userId, date: { gte: startDate } },
       include: { items: true },
       orderBy: { date: 'asc' },
     });
 
     const monthlyData: Record<string, any> = {};
 
-    // Inicializar meses
     for (let i = 0; i < months; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyData[monthKey] = {
-        totalSpent: 0, totalBase: 0, totalSavings: 0, totalPurchases: 0, totalItems: 0,
-      };
+      monthlyData[monthKey] = { totalSpent: 0, totalBase: 0, totalSavings: 0, totalPurchases: 0, totalItems: 0 };
     }
 
     purchases.forEach((purchase) => {
@@ -74,13 +63,11 @@ export const getMonthlyAnalytics = async (
       if (monthlyData[monthKey]) {
         let pBase = 0;
         let pSavings = 0;
-
         purchase.items.forEach((item) => {
           const { base, savings } = calculateItemTotals(item);
           pBase += base;
           pSavings += savings;
         });
-
         monthlyData[monthKey].totalBase += pBase;
         monthlyData[monthKey].totalSavings += pSavings;
         monthlyData[monthKey].totalSpent += (pBase - pSavings);
@@ -98,35 +85,23 @@ export const getMonthlyAnalytics = async (
         totalSavings: Math.round(data.totalSavings * 100) / 100,
         totalPurchases: data.totalPurchases,
         totalItems: data.totalItems,
-        averagePerPurchase: data.totalPurchases > 0 
-          ? Math.round((data.totalSpent / data.totalPurchases) * 100) / 100 
-          : 0,
+        averagePerPurchase: data.totalPurchases > 0 ? Math.round((data.totalSpent / data.totalPurchases) * 100) / 100 : 0,
       }))
       .sort((a, b) => b.month.localeCompare(a.month));
 
-    const summary = {
-      totalSpent: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) * 100) / 100,
-      totalBase: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalBase, 0) * 100) / 100,
-      totalSavings: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalSavings, 0) * 100) / 100,
-      totalPurchases: monthlyAnalytics.reduce((sum, m) => sum + m.totalPurchases, 0),
-      totalItems: monthlyAnalytics.reduce((sum, m) => sum + m.totalItems, 0),
-      averageMonthlySpent: Math.round((monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) / months) * 100) / 100,
-      period: {
-        months,
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: now.toISOString().split('T')[0],
-      },
-    };
-
-    return successResponse(res, { monthly: monthlyAnalytics, summary });
-  } catch (error) {
-    next(error);
-  }
+    return successResponse(res, { 
+        monthly: monthlyAnalytics, 
+        summary: {
+            totalSpent: Math.round(monthlyAnalytics.reduce((sum, m) => sum + m.totalSpent, 0) * 100) / 100,
+            totalPurchases: monthlyAnalytics.reduce((sum, m) => sum + m.totalPurchases, 0),
+            period: { months, startDate: startDate.toISOString().split('T')[0], endDate: now.toISOString().split('T')[0] }
+        }
+    });
+  } catch (error) { next(error); }
 };
 
 /**
  * GET /api/v1/analytics/summary
- * Obtiene resumen general de todas las compras del usuario
  */
 export const getSummary = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -138,7 +113,7 @@ export const getSummary = async (req: Request, res: Response, next: NextFunction
 
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
       const [year, month] = monthParam.split('-').map(Number);
-      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
+      dateFilter = { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) };
       periodLabel = formatMonthLabel(monthParam);
     }
 
@@ -161,7 +136,6 @@ export const getSummary = async (req: Request, res: Response, next: NextFunction
         const { total } = calculateItemTotals(item);
         pTotal += total;
       });
-      
       totalSpent += pTotal;
       totalItems += purchase.items.length;
       storeSpending[purchase.storeId] = (storeSpending[purchase.storeId] || 0) + pTotal;
@@ -170,30 +144,33 @@ export const getSummary = async (req: Request, res: Response, next: NextFunction
     let topStoreId: string | null = null;
     let topStoreSpending = 0;
     Object.entries(storeSpending).forEach(([id, spending]) => {
-      if (spending > topStoreSpending) {
-        topStoreId = id;
-        topStoreSpending = spending;
-      }
+      if (spending > topStoreSpending) { topStoreId = id; topStoreSpending = spending; }
     });
+    
+    interface StoreSummary {
+  id: string;
+  name: string;
+  totalSpent: number;
+}
 
-    // 1. Tipamos el objeto para que TS no se queje de la estructura
-    let topStore: { id: string; name: string; totalSpent: number } | null = null;
+    // ... dentro de getSummary
+let topStore: StoreSummary | null = null; 
 
-    if (topStoreId) {
-      const store = await prisma.store.findUnique({ 
-        where: { id: topStoreId }, 
-        select: { id: true, name: true } 
-      });
+if (topStoreId) {
+  const store = await prisma.store.findUnique({ 
+    where: { id: topStoreId }, 
+    select: { id: true, name: true } 
+  });
 
-      if (store) {
-        // 2. Usamos el spread y nos aseguramos de que totalSpent sea el tipo esperado
-        topStore = {
-          id: store.id,
-          name: store.name,
-          totalSpent: Math.round(topStoreSpending * 100) / 100
-        };
-      }
-    }
+  if (store) {
+    // Ahora TS sabe que 'store' tiene id y name, y 'topStore' acepta este objeto
+    topStore = { 
+      id: store.id, 
+      name: store.name, 
+      totalSpent: Math.round(topStoreSpending * 100) / 100 
+    };
+  }
+}
 
     return successResponse(res, {
       totalSpent: Math.round(totalSpent * 100) / 100,
@@ -205,6 +182,174 @@ export const getSummary = async (req: Request, res: Response, next: NextFunction
       topStore,
       ...(periodLabel && { period: periodLabel }),
     });
+  } catch (error) { next(error); }
+};
+
+/**
+ * GET /api/v1/analytics/by-store
+ */
+export const getByStore = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    
+    // 1. Captura agresiva del parámetro
+    const rawMonth = (req.query.month || req.query['month']) as string;
+    
+    // 2. Limpieza total (quitamos comillas simples, dobles y espacios)
+    const cleanMonth = rawMonth 
+      ? String(rawMonth).replace(/['"]+/g, '').trim() 
+      : undefined;
+
+    let dateFilter: any;
+    let periodLabel: string;
+
+    // 3. Regex más flexible (por si acaso hay guiones diferentes)
+    const isValidMonth = cleanMonth && /^\d{4}[-]\d{2}$/.test(cleanMonth);
+
+    if (isValidMonth) {
+      const [year, month] = cleanMonth!.split('-').map(Number);
+      
+      // Rango UTC estricto
+      dateFilter = {
+        gte: new Date(Date.UTC(year, month - 1, 1)),
+        lt: new Date(Date.UTC(year, month, 1))
+      };
+      
+      // Forzamos el label para confirmar que entró aquí
+      periodLabel = formatMonthLabel(cleanMonth!);
+    } else {
+      // Si llegas aquí, es que el 'if' falló
+      const fallbackDate = new Date();
+      fallbackDate.setMonth(fallbackDate.getMonth() - 6);
+      dateFilter = { gte: fallbackDate };
+      periodLabel = "Últimos 6 meses";
+    }
+    const purchases = await prisma.purchase.findMany({
+      where: { 
+        userId, 
+        date: dateFilter // Filtramos las compras directamente por fecha
+      },
+      include: { 
+        store: true, 
+        items: true 
+      }
+    });
+
+    const storesMap = purchases.reduce((acc, purchase) => {
+      if (!purchase.store) return acc;
+      
+      const storeId = purchase.storeId;
+      if (!acc[storeId]) {
+        acc[storeId] = { 
+          id: storeId, 
+          name: purchase.store.name, 
+          totalSpent: 0, 
+          totalPurchases: 0 
+        };
+      }
+
+      // Sumamos los items usando el helper para asegurar precisión decimal
+      let purchaseTotal = 0;
+      purchase.items.forEach(item => {
+        const { total } = calculateItemTotals(item);
+        purchaseTotal += total;
+      });
+
+      acc[storeId].totalSpent += purchaseTotal;
+      acc[storeId].totalPurchases += 1;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const byStore = Object.values(storesMap)
+      .map((s: any) => ({
+        ...s,
+        totalSpent: Math.round(s.totalSpent * 100) / 100 // Redondeo por tienda
+      }))
+      .sort((a: any, b: any) => b.totalSpent - a.totalSpent);
+
+    const totalSpent = byStore.reduce((sum, s: any) => sum + s.totalSpent, 0);
+
+    return successResponse(res, { 
+      byStore, 
+      totalSpent: Math.round(totalSpent * 100) / 100,
+      period: periodLabel 
+    });
+  } catch (error) { 
+    next(error); 
+  }
+};
+
+/**
+ * GET /api/v1/analytics/by-category
+ */
+export const getByCategory = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const monthParam = req.query.month as string | undefined;
+
+    let dateFilter: any;
+    let periodLabel: string | undefined; // <--- SE DECLARA AQUÍ
+
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [year, month] = monthParam.split('-').map(Number);
+      // Usamos UTC para que coincida con el almacenamiento de la DB
+      dateFilter = { 
+        gte: new Date(Date.UTC(year, month - 1, 1)), 
+        lt: new Date(Date.UTC(year, month, 1)) 
+      };
+      periodLabel = formatMonthLabel(monthParam);
+    } else {
+      // Fallback si no hay mes: últimos 6 meses
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 5);
+      startDate.setDate(1);
+      dateFilter = { gte: startDate };
+      periodLabel = "Últimos 6 meses";
+    }
+
+    // FILTRO CRUCIAL: Accedemos a la fecha a través de la relación 'purchase'
+    const purchaseItems = await prisma.purchaseItem.findMany({
+      where: { 
+        purchase: { 
+          userId, 
+          date: dateFilter 
+        } 
+      },
+      include: { product: true },
+    });
+
+    const categoryData: Record<string, any> = {};
+
+    purchaseItems.forEach((item) => {
+      // Usamos la categoría del producto o 'Otros' si es null
+      const category = item.product.category || 'Otros';
+      const { total } = calculateItemTotals(item);
+
+      if (!categoryData[category]) {
+        categoryData[category] = { name: category, amount: 0, count: 0 };
+      }
+
+      categoryData[category].amount += total;
+      categoryData[category].count += 1;
+    });
+
+    const grandTotal = Object.values(categoryData).reduce((sum, c: any) => sum + c.amount, 0);
+
+    const byCategory = Object.values(categoryData)
+      .map((data: any) => ({
+        name: data.name,
+        amount: Math.round(data.amount * 100) / 100,
+        percentage: grandTotal > 0 ? Math.round((data.amount / grandTotal) * 100) : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    // RESPUESTA: Ahora periodLabel existe y los datos están filtrados
+    return successResponse(res, { 
+      byCategory, 
+      grandTotal: Math.round(grandTotal * 100) / 100, 
+      period: periodLabel 
+    });
+
   } catch (error) {
     next(error);
   }
@@ -220,12 +365,9 @@ export const getTopProducts = async (req: Request, res: Response, next: NextFunc
     const monthParam = req.query.month as string | undefined;
 
     let dateFilter: any;
-    let periodLabel: string | undefined;
-
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
       const [year, month] = monthParam.split('-').map(Number);
-      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
-      periodLabel = formatMonthLabel(monthParam);
+      dateFilter = { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) };
     }
 
     const purchaseItems = await prisma.purchaseItem.findMany({
@@ -234,191 +376,32 @@ export const getTopProducts = async (req: Request, res: Response, next: NextFunc
     });
 
     const productData: Record<string, any> = {};
-
     purchaseItems.forEach((item) => {
       const productId = item.product.id;
       const { total, quantity } = calculateItemTotals(item);
-      const unitPrice = Number(item.unitPrice);
-
       if (!productData[productId]) {
-        productData[productId] = {
-          product: item.product,
-          totalSpent: 0,
-          totalQuantity: 0,
-          purchaseCount: 0,
-          prices: [],
-        };
+        productData[productId] = { product: item.product, totalSpent: 0, totalQuantity: 0, prices: [] };
       }
-
       productData[productId].totalSpent += total;
       productData[productId].totalQuantity += quantity;
-      productData[productId].purchaseCount += 1;
-      productData[productId].prices.push(unitPrice);
+      productData[productId].prices.push(Number(item.unitPrice));
     });
+
+    const grandTotal = Object.values(productData).reduce((sum, p: any) => sum + p.totalSpent, 0);
 
     const topProducts = Object.values(productData)
       .map((data: any) => ({
         ...data.product,
         totalSpent: Math.round(data.totalSpent * 100) / 100,
         totalQuantity: Math.round(data.totalQuantity * 1000) / 1000,
-        purchaseCount: data.purchaseCount,
-        avgPrice: Math.round((data.prices.reduce((s: number, p: number) => s + p, 0) / data.prices.length) * 100) / 100,
-        minPrice: Math.round(Math.min(...data.prices) * 100) / 100,
-        maxPrice: Math.round(Math.max(...data.prices) * 100) / 100,
+        percentage: grandTotal > 0 ? Math.round((data.totalSpent / grandTotal) * 100) : 0,
+        avgPrice: Math.round((data.prices.reduce((s: any, p: any) => s + p, 0) / data.prices.length) * 100) / 100
       }))
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, limit);
 
-    const grandTotal = Object.values(productData).reduce((sum, p: any) => sum + p.totalSpent, 0);
-
-    const topProductsWithPercentage = topProducts.map((product) => ({
-      ...product,
-      percentage: grandTotal > 0 ? Math.round((product.totalSpent / grandTotal) * 10000) / 100 : 0,
-    }));
-
-    return successResponse(res, {
-      topProducts: topProductsWithPercentage,
-      totalProducts: Object.keys(productData).length,
-      grandTotal: Math.round(grandTotal * 100) / 100,
-      ...(periodLabel && { period: periodLabel }),
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * GET /api/v1/analytics/by-store
- */
-export const getByStore = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user!.id;
-    const monthParam = req.query.month as string | undefined;
-    const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
-
-    let dateFilter: any;
-    let periodLabel: string | undefined;
-
-    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-      const [year, month] = monthParam.split('-').map(Number);
-      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
-      periodLabel = formatMonthLabel(monthParam);
-    } else {
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - months + 1);
-      startDate.setDate(1);
-      dateFilter = { gte: startDate };
-    }
-
-    const purchases = await prisma.purchase.findMany({
-      where: { userId, date: dateFilter },
-      include: { store: true, items: true },
-    });
-
-    const storeData: Record<string, any> = {};
-
-    purchases.forEach((purchase) => {
-      const storeId = purchase.store.id;
-      if (!storeData[storeId]) {
-        storeData[storeId] = {
-          store: purchase.store, totalSpent: 0, totalBase: 0, totalSavings: 0, totalPurchases: 0, totalItems: 0,
-        };
-      }
-
-      let pBase = 0, pSavings = 0;
-      purchase.items.forEach(item => {
-        const { base, savings } = calculateItemTotals(item);
-        pBase += base; pSavings += savings;
-      });
-
-      storeData[storeId].totalBase += pBase;
-      storeData[storeId].totalSavings += pSavings;
-      storeData[storeId].totalSpent += (pBase - pSavings);
-      storeData[storeId].totalPurchases += 1;
-      storeData[storeId].totalItems += purchase.items.length;
-    });
-
-    const byStore = Object.values(storeData)
-      .map((data: any) => ({
-        ...data.store,
-        totalSpent: Math.round(data.totalSpent * 100) / 100,
-        totalBase: Math.round(data.totalBase * 100) / 100,
-        totalSavings: Math.round(data.totalSavings * 100) / 100,
-        totalPurchases: data.totalPurchases,
-        totalItems: data.totalItems,
-        averagePerPurchase: data.totalPurchases > 0 ? Math.round((data.totalSpent / data.totalPurchases) * 100) / 100 : 0,
-      }))
-      .sort((a, b) => b.totalSpent - a.totalSpent);
-
-    return successResponse(res, { byStore, ...(periodLabel && { period: periodLabel }) });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * GET /api/v1/analytics/by-category
- */
-export const getByCategory = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user!.id;
-    const monthParam = req.query.month as string | undefined;
-    const months = Math.min(Math.max(parseInt(req.query.months as string) || 6, 1), 24);
-
-    let dateFilter: any;
-    let periodLabel: string | undefined;
-
-    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-      const [year, month] = monthParam.split('-').map(Number);
-      dateFilter = { gte: new Date(year, month - 1, 1), lt: new Date(year, month, 1) };
-      periodLabel = formatMonthLabel(monthParam);
-    } else {
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - months + 1);
-      startDate.setDate(1);
-      dateFilter = { gte: startDate };
-    }
-
-    const purchaseItems = await prisma.purchaseItem.findMany({
-      where: { purchase: { userId, date: dateFilter } },
-      include: { product: true },
-    });
-
-    const categoryData: Record<string, any> = {};
-
-    purchaseItems.forEach((item) => {
-      const category = item.product.category;
-      const { base, savings, total, quantity } = calculateItemTotals(item);
-
-      if (!categoryData[category]) {
-        categoryData[category] = { totalSpent: 0, totalBase: 0, totalSavings: 0, totalItems: 0, totalQuantity: 0 };
-      }
-
-      categoryData[category].totalBase += base;
-      categoryData[category].totalSavings += savings;
-      categoryData[category].totalSpent += total;
-      categoryData[category].totalItems += 1;
-      categoryData[category].totalQuantity += quantity;
-    });
-
-    const grandTotal = Object.values(categoryData).reduce((sum, c: any) => sum + c.totalSpent, 0);
-
-    const byCategory = Object.entries(categoryData)
-      .map(([category, data]: [string, any]) => ({
-        category,
-        totalSpent: Math.round(data.totalSpent * 100) / 100,
-        totalBase: Math.round(data.totalBase * 100) / 100,
-        totalSavings: Math.round(data.totalSavings * 100) / 100,
-        totalItems: data.totalItems,
-        totalQuantity: Math.round(data.totalQuantity * 1000) / 1000,
-        percentage: grandTotal > 0 ? Math.round((data.totalSpent / grandTotal) * 10000) / 100 : 0,
-      }))
-      .sort((a, b) => b.totalSpent - a.totalSpent);
-
-    return successResponse(res, { byCategory, grandTotal: Math.round(grandTotal * 100) / 100, ...(periodLabel && { period: periodLabel }) });
-  } catch (error) {
-    next(error);
-  }
+    return successResponse(res, { topProducts, grandTotal: Math.round(grandTotal * 100) / 100 });
+  } catch (error) { next(error); }
 };
 
 /**
@@ -433,7 +416,7 @@ export const comparePrices = async (req: Request, res: Response, next: NextFunct
       return errorResponse(res, 'El parámetro productId es requerido', ERROR_CODES.BAD_REQUEST.code);
     }
 
-    const product = await prisma.product.findFirst({ where: { id: productId, userId }, select: { id: true, name: true, category: true, brand: true } });
+    const product = await prisma.product.findFirst({ where: { id: productId, userId } });
     if (!product) return errorResponse(res, 'Producto no encontrado', ERROR_CODES.NOT_FOUND.code);
 
     const purchaseItems = await prisma.purchaseItem.findMany({
@@ -442,68 +425,31 @@ export const comparePrices = async (req: Request, res: Response, next: NextFunct
       orderBy: { purchase: { date: 'desc' } },
     });
 
-    if (purchaseItems.length === 0) {
-      return successResponse(res, { product, comparison: [], bestOption: null, totalPurchases: 0 });
-    }
-
     const storeStats: Record<string, any> = {};
-
     purchaseItems.forEach((item) => {
       const storeId = item.purchase.storeId;
       const unitPrice = Number(item.unitPrice);
       const purchaseDate = new Date(item.purchase.date);
 
       if (!storeStats[storeId]) {
-        storeStats[storeId] = { store: item.purchase.store, prices: [], lastPrice: unitPrice, lastDate: purchaseDate, count: 0 };
+        storeStats[storeId] = { store: item.purchase.store, prices: [], lastPrice: unitPrice, lastDate: purchaseDate };
       }
-
       storeStats[storeId].prices.push(unitPrice);
-      storeStats[storeId].count += 1;
       if (purchaseDate > storeStats[storeId].lastDate) {
         storeStats[storeId].lastPrice = unitPrice;
         storeStats[storeId].lastDate = purchaseDate;
       }
     });
 
-    const comparison = Object.values(storeStats)
-      .map((stat: any) => {
-        const minPrice = Math.min(...stat.prices);
-        const maxPrice = Math.max(...stat.prices);
-        const avgPrice = stat.prices.reduce((s: number, p: number) => s + p, 0) / stat.prices.length;
+    const comparison = Object.values(storeStats).map((stat: any) => ({
+      store: stat.store,
+      minPrice: Math.min(...stat.prices),
+      maxPrice: Math.max(...stat.prices),
+      avgPrice: Math.round((stat.prices.reduce((s: any, p: any) => s + p, 0) / stat.prices.length) * 100) / 100,
+      lastPrice: stat.lastPrice,
+      lastDate: stat.lastDate.toISOString().split('T')[0]
+    })).sort((a, b) => a.avgPrice - b.avgPrice);
 
-        return {
-          store: stat.store,
-          minPrice: Math.round(minPrice * 100) / 100,
-          maxPrice: Math.round(maxPrice * 100) / 100,
-          avgPrice: Math.round(avgPrice * 100) / 100,
-          lastPrice: Math.round(stat.lastPrice * 100) / 100,
-          lastDate: stat.lastDate.toISOString().split('T')[0],
-          purchaseCount: stat.count,
-          priceVariation: stat.prices.length > 1 ? Math.round(((maxPrice - minPrice) / minPrice) * 10000) / 100 : 0,
-        };
-      })
-      .sort((a, b) => a.avgPrice - b.avgPrice);
-
-    const bestOption = comparison.length > 0 ? {
-      storeId: comparison[0].store.id,
-      storeName: comparison[0].store.name,
-      avgPrice: comparison[0].avgPrice,
-      lastPrice: comparison[0].lastPrice,
-      savings: comparison.length > 1 ? Math.round((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) * 100) / 100 : 0,
-      savingsPercentage: comparison.length > 1 ? Math.round(((comparison[comparison.length - 1].avgPrice - comparison[0].avgPrice) / comparison[comparison.length - 1].avgPrice) * 10000) / 100 : 0,
-    } : null;
-
-    const allPrices = purchaseItems.map(item => Number(item.unitPrice));
-    const globalStats = {
-      minPrice: Math.round(Math.min(...allPrices) * 100) / 100,
-      maxPrice: Math.round(Math.max(...allPrices) * 100) / 100,
-      avgPrice: Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100,
-      totalPurchases: purchaseItems.length,
-      storesCount: comparison.length,
-    };
-
-    return successResponse(res, { product, comparison, bestOption, globalStats });
-  } catch (error) {
-    next(error);
-  }
+    return successResponse(res, { product, comparison });
+  } catch (error) { next(error); }
 };
