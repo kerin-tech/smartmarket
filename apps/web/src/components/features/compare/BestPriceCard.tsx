@@ -23,9 +23,10 @@ export function BestPriceCard({ bestOption }: BestPriceCardProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-lg font-bold text-success-900">{bestOption.storeName}</p>
-          <p className="text-2xl font-bold text-success-700 mt-1">
-            {formatCurrency(bestOption.lastPrice)}
-          </p>
+          <p className="text-2xl font-bold text-success-600">
+  {/* Usamos fallback para que nunca sea undefined/NaN */}
+  {formatCurrency(bestOption.price || (bestOption as any).lastPrice || 0)}
+</p>
         </div>
 
         {bestOption.savings > 0 && (

@@ -1,8 +1,6 @@
-// src/components/features/compare/CompareView.tsx
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { ProductSelector } from './ProductSelector';
 import { BestPriceCard } from './BestPriceCard';
@@ -21,12 +19,10 @@ import type { PriceComparisonResponse } from '@/types/analytics.types';
 export function CompareView() {
   const { toasts, removeToast, error: showError } = useToast();
 
-  // Estados
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [comparisonData, setComparisonData] = useState<PriceComparisonResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Cargar datos de comparación cuando se selecciona un producto
   const loadComparison = useCallback(async (productId: string) => {
     setIsLoading(true);
     try {
@@ -40,7 +36,6 @@ export function CompareView() {
     }
   }, [showError]);
 
-  // Cuando cambia el producto seleccionado
   useEffect(() => {
     if (selectedProduct) {
       loadComparison(selectedProduct.id);
@@ -49,12 +44,59 @@ export function CompareView() {
     }
   }, [selectedProduct, loadComparison]);
 
-  // Manejar selección de producto
+  // --- LÓGICA DE CÁLCULO DE ESTADÍSTICAS ---
+  const derivedStats = useMemo(() => {
+    // 1. Verificamos si comparisonData existe y tiene la lista interna
+    if (!comparisonData || !comparisonData.comparison) {
+      return null;
+    }
+
+    const list = comparisonData.comparison;
+
+    // 2. Extraer precios asegurando que sean números. 
+    // Si item.lastPrice no existe, usamos item.avgPrice como respaldo.
+    const allPrices = list.map(item => {
+      const p = Number(item.lastPrice || item.avgPrice || 0);
+      return isNaN(p) ? 0 : p;
+    });
+
+    if (allPrices.length === 0) return null;
+
+    const globalMin = Math.min(...allPrices);
+    const globalMax = Math.max(...allPrices);
+    const globalAvg = allPrices.reduce((a, b) => a + b, 0) / allPrices.length;
+
+    // 3. Encontrar la mejor tienda
+    const bestStore = [...list].sort((a, b) => {
+      const priceA = Number(a.avgPrice || a.lastPrice || 0);
+      const priceB = Number(b.avgPrice || b.lastPrice || 0);
+      return priceA - priceB;
+    })[0];
+
+    return {
+      globalStats: {
+        minPrice: globalMin,
+        maxPrice: globalMax,
+        avgPrice: Math.round(globalAvg * 100) / 100,
+        totalPurchases: list.length,
+        storesCount: list.length
+      },
+      // En CompareView.tsx, dentro del useMemo
+      bestOption: {
+        storeId: bestStore.store.id,
+        storeName: bestStore.store.name,
+        // ASEGÚRATE DE QUE SE LLAME 'price'
+        price: Number(bestStore.lastPrice || bestStore.avgPrice || 0),
+        avgPrice: Number(bestStore.avgPrice || 0),
+        lastDate: bestStore.lastDate
+      }
+    };
+  }, [comparisonData]);
+
   const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
   };
 
-  // Manejar clear de producto
   const handleClearProduct = () => {
     setSelectedProduct(null);
     setComparisonData(null);
@@ -62,55 +104,45 @@ export function CompareView() {
 
   return (
     <div className="space-y-6">
-      {/* Título */}
       <h1 className="text-2xl font-bold text-foreground">Comparar Precios</h1>
 
-      {/* Selector de producto */}
       <ProductSelector
         selectedProduct={selectedProduct}
         onSelect={handleSelectProduct}
         onClear={handleClearProduct}
       />
 
-      {/* Contenido basado en estado */}
       {!selectedProduct ? (
-        // Estado inicial - sin producto seleccionado
         <CompareEmptyState type="initial" />
       ) : isLoading ? (
-        // Loading
         <CompareSkeleton />
       ) : comparisonData ? (
-        // Datos cargados
         <>
-          {/* Card del producto */}
           <ProductCard product={comparisonData.product} />
 
           {comparisonData.comparison.length === 0 ? (
-            // Sin historial de precios
-            <CompareEmptyState 
-              type="no-history" 
-              productName={comparisonData.product.name} 
+            <CompareEmptyState
+              type="no-history"
+              productName={comparisonData.product.name}
             />
           ) : (
             <>
-              {/* Mejor precio */}
-              {comparisonData.bestOption && (
-                <BestPriceCard bestOption={comparisonData.bestOption} />
-              )}
+              {/* Usamos derivedStats para la mejor opción */}
+              {derivedStats && (
+  <BestPriceCard bestOption={derivedStats.bestOption as any} />
+)}
 
-              {/* Comparativa por local */}
               <StoreComparisonList
                 stores={comparisonData.comparison}
-                bestStoreId={comparisonData.bestOption?.storeId}
+                bestStoreId={derivedStats?.bestOption.storeId}
               />
 
-              {/* Estadísticas */}
-              <PriceStatsCard stats={comparisonData.globalStats} />
+              {/* Pasamos las estadísticas calculadas al card */}
+              <PriceStatsCard stats={derivedStats?.globalStats as any} />
             </>
           )}
         </>
       ) : (
-        // Error o sin datos
         <CompareEmptyState type="no-history" />
       )}
 
@@ -119,16 +151,7 @@ export function CompareView() {
   );
 }
 
-// Componente interno para mostrar card del producto
-interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    category: string;
-    brand: string;
-  };
-}
-
+// --- PRODUCT CARD COMPONENT ---
 function ProductCard({ product }: ProductCardProps) {
   const config = getCategoryConfig(product.category);
 
@@ -147,4 +170,13 @@ function ProductCard({ product }: ProductCardProps) {
       </div>
     </div>
   );
+}
+
+interface ProductCardProps {
+  product: {
+    id: string;
+    name: string;
+    category: string;
+    brand: string;
+  };
 }

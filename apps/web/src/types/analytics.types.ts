@@ -59,8 +59,8 @@ export interface ByStoreResponse {
 }
 
 export interface CategoryBreakdown {
-  category: string;
-  totalSpent: number;
+  name: string;      // Antes decía category
+  amount: number;    // Antes decía totalSpent
   totalItems: number;
   totalQuantity: number;
   percentage: number;
@@ -120,8 +120,10 @@ export interface PriceComparisonBestOption {
   storeName: string;
   avgPrice: number;
   lastPrice: number;
+  price: number; // <--- AGREGAR ESTO
   savings: number;
   savingsPercentage: number;
+  lastDate?: string; // Agregado por si acaso lo usas
 }
 
 export interface PriceComparisonGlobalStats {
