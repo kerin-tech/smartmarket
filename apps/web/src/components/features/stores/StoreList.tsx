@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -47,7 +48,6 @@ export function StoreList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Cargar tiendas al montar
   useEffect(() => {
     const loadStores = async () => {
       setLoading(true);
@@ -60,11 +60,9 @@ export function StoreList() {
         setLoading(false);
       }
     };
-
     loadStores();
-  }, []);
+  }, [setLoading, setStores, showError]);
 
-  // Crear o editar tienda
   const handleSubmit = async (data: StoreFormValues) => {
     setIsSubmitting(true);
     try {
@@ -85,10 +83,8 @@ export function StoreList() {
     }
   };
 
-  // Eliminar tienda
   const handleDelete = async () => {
     if (!deletingStore) return;
-
     setIsDeleting(true);
     try {
       await storeService.delete(deletingStore.id);
@@ -102,26 +98,21 @@ export function StoreList() {
     }
   };
 
-  // Renderizar contenido
   const renderContent = () => {
-    if (isLoading) {
-      return <StoreListSkeleton count={6} />;
-    }
+    if (isLoading) return <StoreListSkeleton count={6} />;
 
-    // Empty state: sin tiendas
     if (stores.length === 0) {
       return (
         <EmptyState
           type="stores"
           title="No tienes locales"
-          description="Agrega los locales donde compras frecuentemente para poder registrar tus compras y comparar precios."
+          description="Agrega los locales donde compras frecuentemente para comparar precios."
           actionLabel="Agregar primer local"
           onAction={openCreateModal}
         />
       );
     }
 
-    // Empty state: sin resultados de búsqueda
     if (filteredStores.length === 0) {
       return (
         <EmptyState
@@ -134,9 +125,8 @@ export function StoreList() {
       );
     }
 
-    // Mostrar lista de tiendas
     return (
-      <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
+      <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border shadow-sm">
         {filteredStores.map((store) => (
           <StoreCard
             key={store.id}
@@ -151,13 +141,16 @@ export function StoreList() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Mis Locales</h1>
-        </div>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />}>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-foreground">Mis Locales</h1>
+        {/* Visible solo en Web */}
+        <Button 
+          onClick={openCreateModal} 
+          leftIcon={<Plus className="h-5 w-5" />}
+          className="hidden sm:flex"
+        >
           Nuevo local
         </Button>
       </div>
@@ -185,6 +178,20 @@ export function StoreList() {
       {/* Content */}
       {renderContent()}
 
+      {/* BOTÓN FLOTANTE (FAB) CON ETIQUETA - Mobile (bottom-28) */}
+      <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
+        <span className="bg-card border border-border text-foreground text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 uppercase tracking-tight">
+          Nuevo Local
+        </span>
+        <button
+          onClick={openCreateModal}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-90"
+          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
+        >
+          <Plus className="h-8 w-8" />
+        </button>
+      </div>
+
       {/* Store Form Modal */}
       <StoreForm
         isOpen={isModalOpen}
@@ -200,13 +207,12 @@ export function StoreList() {
         onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Eliminar local"
-        message={`¿Estás seguro de eliminar "${deletingStore?.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${deletingStore?.name}"?`}
         confirmText="Eliminar"
         isLoading={isDeleting}
         variant="danger"
       />
 
-      {/* Toasts */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );

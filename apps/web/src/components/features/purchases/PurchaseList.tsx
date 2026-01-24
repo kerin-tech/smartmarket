@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import { cn } from '@/lib/utils'; // Asegúrate de importar tu utilidad cn
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { FilterSelect } from '@/components/ui/FilterSelect';
@@ -20,21 +21,18 @@ import { usePurchaseStore, useTotalAmount, usePurchasesByMonth } from '@/stores/
 import { purchaseService } from '@/services/purchase.service';
 import { storeService } from '@/services/store.service';
 import { formatCurrency } from '@/utils/formatters';
-import type { CreatePurchaseRequest, Purchase } from '@/types/purchase.types';
+import type { CreatePurchaseRequest } from '@/types/purchase.types';
 import type { Store } from '@/types/store.types';
 
-// Generar opciones de mes (últimos 12 meses)
 const generateMonthOptions = () => {
   const options = [];
   const today = new Date();
-  
   for (let i = 0; i < 12; i++) {
     const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
     const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const label = date.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
     options.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
   }
-  
   return options;
 };
 
@@ -75,10 +73,8 @@ export function PurchaseList() {
 
   const monthOptions = generateMonthOptions();
 
-  // Cargar compras
   useEffect(() => {
     let isMounted = true;
-    
     const loadPurchases = async () => {
       setLoading(true);
       try {
@@ -92,24 +88,15 @@ export function PurchaseList() {
           setPagination(response.pagination);
         }
       } catch (err: any) {
-        if (isMounted) {
-          showError(err.message || 'Error al cargar las compras');
-        }
+        if (isMounted) showError(err.message || 'Error al cargar las compras');
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
-
     loadPurchases();
-    
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [filters.month, filters.storeId, filters.search, pagination.page, pagination.limit]);
 
-  // Cargar tiendas para filtro
   useEffect(() => {
     const loadStores = async () => {
       try {
@@ -122,7 +109,6 @@ export function PurchaseList() {
     loadStores();
   }, []);
 
-  // Debounce de búsqueda
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery !== (filters.search || '')) {
@@ -132,7 +118,6 @@ export function PurchaseList() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Crear o editar compra
   const handleSubmit = async (data: CreatePurchaseRequest) => {
     setIsSubmitting(true);
     try {
@@ -153,10 +138,8 @@ export function PurchaseList() {
     }
   };
 
-  // Eliminar compra
   const handleDelete = async () => {
     if (!deletingPurchase) return;
-
     setIsDeleting(true);
     try {
       await purchaseService.delete(deletingPurchase.id);
@@ -170,67 +153,50 @@ export function PurchaseList() {
     }
   };
 
-  // Opciones para filtro de tiendas
   const storeFilterOptions = [
     { value: 'all', label: 'Todos los locales' },
     ...stores.map(s => ({ value: s.id, label: s.name })),
   ];
 
-  // Opciones para filtro de mes
   const monthFilterOptions = [
     { value: 'all', label: 'Todos los meses' },
     ...monthOptions,
   ];
 
-  // Renderizar contenido
   const renderContent = () => {
-    if (isLoading) {
-      return <PurchaseListSkeleton count={6} />;
-    }
-
-    // Empty state: sin compras
+    if (isLoading) return <PurchaseListSkeleton count={6} />;
     if (pagination.total === 0 && !filters.month && !filters.storeId && !filters.search) {
       return (
         <EmptyState
           type="purchases"
-          title="No tienes compras registradas"
-          description="Registra tu primera compra para comenzar a comparar precios y hacer seguimiento de tus gastos."
+          title="No tienes compras"
+          description="Registra tu primera compra para comenzar el seguimiento."
           actionLabel="Registrar primera compra"
           onAction={openCreateModal}
         />
       );
     }
-
-    // Empty state: sin resultados de búsqueda/filtro
     if (purchases.length === 0) {
       return (
         <EmptyState
           type="purchases"
           title="Sin resultados"
-          description={
-            filters.search 
-              ? `No encontramos compras que coincidan con "${filters.search}"` 
-              : 'No hay compras con los filtros seleccionados'
-          }
+          description="No hay compras con los filtros seleccionados"
           actionLabel="Limpiar filtros"
           onAction={resetFilters}
         />
       );
     }
 
-    // Mostrar compras agrupadas por mes
     return (
       <div className="space-y-6">
         {purchasesByMonth.map((group) => (
           <section key={group.monthKey}>
-            {/* Month header */}
             <h2 className="flex items-center justify-between text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">
               <span>{group.monthLabel}</span>
-              <span className="text-muted-foreground">{formatCurrency(group.total)}</span>
+              <span className="text-muted-foreground font-mono">{formatCurrency(group.total)}</span>
             </h2>
-
-            {/* Purchases list */}
-            <div className="bg-card rounded-xl border border-color overflow-hidden divide-y divide-border">
+            <div className="bg-card rounded-xl border border-border overflow-hidden divide-y divide-border shadow-sm">
               {group.purchases.map((purchase) => (
                 <PurchaseCard
                   key={purchase.id}
@@ -248,18 +214,23 @@ export function PurchaseList() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Mis Compras</h1>
           {!isLoading && pagination.total > 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              Total: <span className="font-semibold text-primary-600">{formatCurrency(totalAmount)}</span>
+              Total: <span className="font-semibold text-primary">{formatCurrency(totalAmount)}</span>
             </p>
           )}
         </div>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />}>
+        {/* Botón Desktop */}
+        <Button 
+          onClick={openCreateModal} 
+          leftIcon={<Plus className="h-5 w-5" />}
+          className="hidden sm:flex"
+        >
           Nueva compra
         </Button>
       </div>
@@ -288,20 +259,26 @@ export function PurchaseList() {
         </div>
       )}
 
-      {/* Results count */}
-      {!isLoading && pagination.total > 0 && (
-        <p className="text-sm text-muted-foreground" aria-live="polite">
-          {pagination.total} {pagination.total === 1 ? 'compra' : 'compras'}
-          {filters.search && ` para "${filters.search}"`}
-        </p>
-      )}
-
       {/* Content */}
       {renderContent()}
 
+      {/* BOTÓN FLOTANTE (FAB) CON ETIQUETA - Solo Mobile */}
+      <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
+        <span className="bg-card border border-border text-foreground text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 uppercase">
+          Nueva Compra
+        </span>
+        <button
+          onClick={openCreateModal}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-90"
+          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
+        >
+          <Plus className="h-8 w-8" />
+        </button>
+      </div>
+
       {/* Pagination */}
       {!isLoading && pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-2 pt-4">
           <Button
             variant="outline"
             size="sm"
@@ -310,9 +287,6 @@ export function PurchaseList() {
           >
             Anterior
           </Button>
-          <span className="flex items-center px-4 text-sm text-muted-foreground">
-            Página {pagination.page} de {pagination.totalPages}
-          </span>
           <Button
             variant="outline"
             size="sm"
@@ -324,7 +298,7 @@ export function PurchaseList() {
         </div>
       )}
 
-      {/* Purchase Form Modal */}
+      {/* Modals & Toasts */}
       <PurchaseForm
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -332,20 +306,16 @@ export function PurchaseList() {
         purchase={editingPurchase}
         isLoading={isSubmitting}
       />
-
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Eliminar compra"
-        message={`¿Estás seguro de eliminar esta compra en "${deletingPurchase?.store.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar esta compra?`}
         confirmText="Eliminar"
         isLoading={isDeleting}
         variant="danger"
       />
-
-      {/* Toasts */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );

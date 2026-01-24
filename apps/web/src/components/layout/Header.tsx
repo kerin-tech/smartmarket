@@ -4,33 +4,31 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { 
-  Menu, 
-  Bell, 
   User, 
   LogOut, 
-  Settings, 
   ChevronDown,
-  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
-import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/auth.store';
 import { authService } from '@/services/auth.service';
 import { routes } from '@/config/app.config';
 
-interface HeaderProps {
-  onMenuClick: () => void;
-  isSidebarOpen: boolean;
-}
-
-export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
+export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Lógica para el nombre de la página en Mobile
+  const getPageTitle = () => {
+    if (pathname === '/') return 'Dashboard';
+    const segment = pathname.split('/')[1];
+    return segment.charAt(0).toUpperCase() + segment.slice(1);
+  };
 
   const handleLogout = async () => {
     await authService.logout();
@@ -41,108 +39,72 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-card border-b border-color">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
-        {/* Left side */}
-        <div className="flex items-center gap-3">
-          {/* Mobile menu button */}
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-          >
-            {isSidebarOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-
-          {/* Logo - visible on mobile */}
+        
+        {/* --- SECCIÓN IZQUIERDA --- */}
+        <div className="flex items-center gap-4">
+          {/* Mobile: Logo SMK */}
           <div className="lg:hidden">
             <Logo size="sm" showText={false} />
           </div>
+
+          {/* Web: Breadcrumb (Simple) */}
+          <nav className="hidden lg:flex items-center text-sm font-medium">
+            <span className="text-muted-foreground">App</span>
+            <span className="mx-2 text-muted-foreground">/</span>
+            <span className="text-foreground">{getPageTitle()}</span>
+          </nav>
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-2">
-          {/* Notifications */}
-          <ThemeToggle />
-          <button
-            className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            aria-label="Notificaciones"
-          >
-            <Bell className="h-5 w-5" />
-            {/* Badge de notificación */}
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error-500 rounded-full" />
-          </button>
+        {/* --- SECCIÓN CENTRO (Mobile Only) --- */}
+        <div className="lg:hidden absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-sm font-bold text-foreground uppercase tracking-wider">
+            {getPageTitle()}
+          </h1>
+        </div>
 
-          {/* Profile dropdown */}
+        {/* --- SECCIÓN DERECHA --- */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+
+          {/* User Profile Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 p-1.5 pr-3 rounded-lg hover:bg-muted transition-colors"
+              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary-700">
+              <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center border border-primary-200">
+                <span className="text-sm font-bold text-primary-700">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
-              <span className="hidden sm:block text-sm font-medium text-foreground max-w-[120px] truncate">
-                {user?.name || 'Usuario'}
-              </span>
               <ChevronDown className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform",
+                "h-4 w-4 text-muted-foreground transition-transform hidden sm:block",
                 isProfileOpen && "rotate-180"
               )} />
             </button>
 
-            {/* Dropdown menu */}
             {isProfileOpen && (
               <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setIsProfileOpen(false)}
-                />
-                
-                {/* Menu */}
-                <div className="absolute right-0 mt-2 w-56 bg-card rounded-xl border border-color shadow-lg z-20 py-1 animate-scale-in">
-                  {/* User info */}
-                  <div className="px-4 py-3 border-b border-color">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {user?.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user?.email}
-                    </p>
+                <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)} />
+                <div className="absolute right-0 mt-2 w-52 bg-card rounded-xl border border-color shadow-lg z-20 py-1 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-color bg-muted/30">
+                    <p className="text-sm font-bold text-foreground truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
 
-                  {/* Menu items */}
                   <div className="py-1">
                     <Link
                       href={routes.profile}
                       onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                     >
-                      <User className="h-4 w-4" />
+                      <User className="h-4 w-4 text-muted-foreground" />
                       Mi perfil
                     </Link>
-                    <button
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        // TODO: Abrir configuración
-                      }}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Configuración
-                    </button>
-                  </div>
-
-                  {/* Logout */}
-                  <div className="border-t border-color py-1">
+                    
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-error-600 hover:bg-error-50 transition-colors"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-950/30 transition-colors border-t border-color"
                     >
                       <LogOut className="h-4 w-4" />
                       Cerrar sesión
@@ -153,6 +115,7 @@ export function Header({ onMenuClick, isSidebarOpen }: HeaderProps) {
             )}
           </div>
         </div>
+
       </div>
     </header>
   );

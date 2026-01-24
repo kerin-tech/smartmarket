@@ -13,18 +13,15 @@ interface LogoProps {
 
 const sizes = {
   sm: {
-    container: 'w-8 h-8',
-    icon: 'h-4 w-4',
+    icon: 'h-6 w-6',
     text: 'text-lg',
   },
   md: {
-    container: 'w-10 h-10',
-    icon: 'h-5 w-5',
+    icon: 'h-7 w-7',
     text: 'text-xl',
   },
   lg: {
-    container: 'w-12 h-12',
-    icon: 'h-6 w-6',
+    icon: 'h-9 w-9',
     text: 'text-2xl',
   },
 };
@@ -35,19 +32,24 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
   return (
     <Link
       href={routes.home}
-      className={cn('flex items-center gap-2.5 focus:outline-none', className)}
+      className={cn(
+        'flex items-center gap-2 group focus:outline-none transition-opacity hover:opacity-90', 
+        className
+      )}
     >
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md',
-          sizeConfig.container
-        )}
-      >
-        <ShoppingCart className={cn('text-white', sizeConfig.icon)} />
+      {/* Icono minimalista sin fondo */}
+      <div className="flex items-center justify-center text-primary transition-transform group-hover:scale-105">
+        <ShoppingCart className={sizeConfig.icon} strokeWidth={2.5} />
       </div>
+
+      {/* Texto del Logo */}
       {showText && (
-        <span className={cn('font-bold text-foreground', sizeConfig.text)}>
-          SmartMarket
+        <span className={cn(
+          'font-black tracking-tight text-foreground uppercase italic', 
+          sizeConfig.text
+        )}>
+          SMK
+          <span className="text-primary not-italic">.</span>
         </span>
       )}
     </Link>

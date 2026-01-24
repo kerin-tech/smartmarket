@@ -2,85 +2,90 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  Package,
   ShoppingCart,
   History,
+  Scale,
   User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { routes } from '@/config/app.config';
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ElementType;
-}
-
-const navItems: NavItem[] = [
-  {
-    label: 'Inicio',
-    href: routes.dashboard,
-    icon: LayoutDashboard,
-  },
-  {
-    label: 'Productos',
-    href: routes.products,
-    icon: Package,
-  },
-  {
-    label: 'Compras',
-    href: routes.purchases,
-    icon: ShoppingCart,
-  },
-  {
-    label: 'Historial',
-    href: routes.history,
-    icon: History,
-  },
-  {
-    label: 'Perfil',
-    href: routes.profile,
-    icon: User,
-  },
+const navItems = [
+  { label: 'Inicio', href: routes.dashboard, icon: LayoutDashboard },
+  { label: 'Compras', href: routes.purchases, icon: ShoppingCart },
+  { label: 'Historial', href: routes.history, icon: History },
+  { label: 'Comparar', href: '/compare', icon: Scale },
+  { label: 'Perfil', href: routes.profile, icon: User },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
-  const isActive = (href: string) => {
+  useEffect(() => {
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+      if (Math.abs(currentScrollY - lastScrollY) < 15) return;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 100) { 
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', controlNavbar, { passive: true });
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
+
+  const checkActive = (href: string) => {
     if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-color lg:hidden safe-bottom">
-      <div className="flex items-center justify-around h-16">
+    <nav 
+      className={cn(
+        'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md transition-all duration-500 ease-in-out',
+        'bg-card/80 backdrop-blur-lg border border-border shadow-2xl rounded-2xl lg:hidden',
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-32 opacity-0 pointer-events-none'
+      )}
+    >
+      <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = isActive(item.href);
+          const active = checkActive(item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 h-full px-2 transition-colors',
-                active
-                  ? 'text-primary-600'
-                  : 'text-muted-foreground hover:text-muted-foreground'
+                'flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-90',
+                active ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5', active && 'text-primary-600')} />
+              {/* Indicador sutil debajo del icono */}
+              <Icon className={cn('h-5 w-5 mb-1 transition-transform', active && 'stroke-[2.5px] scale-110')} />
+              
               <span className={cn(
-                'text-xs mt-1',
-                active ? 'font-medium' : 'font-normal'
+                'text-[9px] font-bold uppercase tracking-tight transition-opacity',
+                active ? 'opacity-100' : 'opacity-60'
               )}>
                 {item.label}
               </span>
+
+              {/* Barra de estado activa en la parte inferior */}
+              {active && (
+                <div className="absolute bottom-1 w-5 h-0.5 bg-primary rounded-full animate-in fade-in slide-in-from-bottom-1" />
+              )}
             </Link>
           );
         })}

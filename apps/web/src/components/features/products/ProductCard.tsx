@@ -22,10 +22,8 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
   const config = getCategoryConfig(product.category);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Resaltar texto de búsqueda
   const highlightText = (text: string, query: string) => {
     if (!query) return text;
-    
     const regex = new RegExp(`(${query})`, 'gi');
     const parts = text.split(regex);
     
@@ -41,15 +39,18 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors">
+    <div 
+      onClick={() => onEdit(product)} // <-- Click en la tarjeta para editar
+      className="flex items-center gap-3 p-4 bg-card hover:bg-muted transition-colors cursor-pointer group"
+    >
       {/* Emoji/Icon */}
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-xl">
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
         {config.emoji}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-foreground truncate">
+        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
           {highlightText(product.name, searchQuery || '')}
         </h3>
         <p className="text-xs text-muted-foreground">
@@ -66,7 +67,7 @@ export function ProductCard({ product, onEdit, onDelete, searchQuery }: ProductC
             e.stopPropagation();
             isMenuOpen ? closeMenu() : openMenu(product.id);
           }}
-          className="p-2 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 transition-colors"
           aria-label={`Opciones para ${product.name}`}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
