@@ -69,22 +69,22 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-90',
-                active ? 'text-primary' : 'text-muted-foreground'
+                active ? 'text-primary-500' : 'text-muted-foreground'
               )}
             >
               {/* Indicador sutil debajo del icono */}
               <Icon className={cn('h-5 w-5 mb-1 transition-transform', active && 'stroke-[2.5px] scale-110')} />
               
               <span className={cn(
-                'text-[9px] font-bold uppercase tracking-tight transition-opacity',
-                active ? 'opacity-100' : 'opacity-60'
+                'text-[11px] font-semibold tracking-wide transition-opacity',
+                active ? 'opacity-100' : 'opacity-80'
               )}>
                 {item.label}
               </span>
 
               {/* Barra de estado activa en la parte inferior */}
               {active && (
-                <div className="absolute bottom-1 w-5 h-0.5 bg-primary rounded-full animate-in fade-in slide-in-from-bottom-1" />
+                <div className="absolute bottom-1 w-5 h-0.5 bg-primary-500 rounded-full animate-in fade-in slide-in-from-bottom-1" />
               )}
             </Link>
           );

@@ -1,5 +1,3 @@
-// src/components/forms/RegisterForm.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { AlertCircle } from 'lucide-react';
 
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +18,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import { routes } from '@/config/app.config';
 import type { ApiError } from '@/types/auth.types';
 
-// Campos válidos del formulario de registro
 const validRegisterFields = ['name', 'email', 'password', 'confirmPassword'];
 
 export function RegisterForm() {
@@ -27,15 +25,16 @@ export function RegisterForm() {
   const { setAuth } = useAuthStore();
   const { toasts, removeToast, success, error: showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isValid, touchedFields },
+    formState: { errors, isValid },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    mode: 'onBlur', // Validación al perder foco
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       email: '',
@@ -46,6 +45,7 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
+    setGeneralError(null);
 
     try {
       const response = await authService.register({
@@ -54,110 +54,91 @@ export function RegisterForm() {
         password: data.password,
       });
 
-      // Guardar autenticación en el store
       setAuth(response.user, response.token);
+      success('¡Cuenta creada! Bienvenido a SmartMarket');
 
-      // Mostrar mensaje de éxito
-      success('¡Cuenta creada exitosamente! Bienvenido a SmartMarket');
-
-      // Redireccionar al dashboard después de un breve delay
       setTimeout(() => {
         router.push(routes.dashboard);
       }, 1500);
     } catch (err) {
       const apiError = err as ApiError;
-
-      // Manejar error de email duplicado
-      if (apiError.statusCode === 409 || apiError.message?.toLowerCase().includes('email')) {
-        setError('email', {
-          type: 'manual',
-          message: 'Este correo electrónico ya está registrado',
-        });
-      } else if (apiError.errors && apiError.errors.length > 0) {
-        // Mapear errores de campo específicos del servidor
-        apiError.errors.forEach((fieldError) => {
-          if (fieldError.field && validRegisterFields.includes(fieldError.field)) {
-            setError(fieldError.field as keyof RegisterFormValues, {
-              type: 'manual',
-              message: fieldError.message,
-            });
+      
+      if (apiError.statusCode === 409) {
+        setError('email', { message: 'Este correo ya está registrado' });
+      } else if (apiError.errors) {
+        apiError.errors.forEach((fe) => {
+          if (fe.field && validRegisterFields.includes(fe.field)) {
+            setError(fe.field as any, { message: fe.message });
           }
         });
       } else {
-        // Error general
-        showError(apiError.message || 'Error al crear la cuenta. Por favor, intenta de nuevo.');
+        setGeneralError(apiError.message || 'Error al crear la cuenta');
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // El botón está deshabilitado si hay errores o si no es válido
-  const isButtonDisabled = !isValid || Object.keys(errors).length > 0;
-
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <Input
-          label="Nombre completo"
-          type="text"
-          placeholder="Ej: Juan Pérez"
-          autoComplete="name"
-          disabled={isSubmitting}
-          error={touchedFields.name ? errors.name?.message : undefined}
-          {...register('name')}
-        />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {generalError && (
+          <div className="flex items-center gap-3 p-4 rounded-xl border bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 animate-in fade-in">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-bold">{generalError}</p>
+          </div>
+        )}
 
-        <Input
-          label="Correo electrónico"
-          type="email"
-          placeholder="tu@correo.com"
-          autoComplete="email"
-          disabled={isSubmitting}
-          error={touchedFields.email ? errors.email?.message : undefined}
-          {...register('email')}
-        />
+        <div className="space-y-3">
+          <Input
+            label="Nombre"
+            placeholder="Ej: Juan Pérez"
+            {...register('name')}
+            error={errors.name?.message}
+          />
 
-        <Input
-          label="Contraseña"
-          type="password"
-          placeholder="Mínimo 8 caracteres"
-          autoComplete="new-password"
-          disabled={isSubmitting}
-          error={touchedFields.password ? errors.password?.message : undefined}
-          helperText={
-            !errors.password && !touchedFields.password
-              ? 'Debe incluir mayúscula, minúscula y número'
-              : undefined
-          }
-          {...register('password')}
-        />
+          <Input
+            label="Email"
+            type="email"
+            placeholder="tu@correo.com"
+            {...register('email')}
+            error={errors.email?.message}
+          />
 
-        <Input
-          label="Confirmar contraseña"
-          type="password"
-          placeholder="Repite tu contraseña"
-          autoComplete="new-password"
-          disabled={isSubmitting}
-          error={touchedFields.confirmPassword ? errors.confirmPassword?.message : undefined}
-          {...register('confirmPassword')}
-        />
+          <Input
+            label="Contraseña"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            {...register('password')}
+            error={errors.password?.message}
+          />
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          isLoading={isSubmitting}
-          disabled={isButtonDisabled}
-          leftIcon={!isSubmitting ? <UserPlus className="h-5 w-5" /> : undefined}
-        >
-          Crear cuenta
-        </Button>
+          <Input
+            label="Confirmar"
+            type="password"
+            placeholder="Repite tu contraseña"
+            {...register('confirmPassword')}
+            error={errors.confirmPassword?.message}
+          />
+        </div>
+
+        <div className="pt-4">
+          <Button
+            type="submit"
+            fullWidth
+            size="lg"
+            isLoading={isSubmitting}
+            disabled={!isValid || isSubmitting}
+            className="rounded-xl font-bold h-12"
+          >
+            Registrarme
+          </Button>
+        </div>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         ¿Ya tienes cuenta?{' '}
-        <Link href={routes.login} className="link font-medium">
+        <Link href={routes.login} className="text-primary-600 font-bold hover:underline">
           Inicia sesión
         </Link>
       </p>

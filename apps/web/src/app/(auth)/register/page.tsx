@@ -1,49 +1,59 @@
-// src/app/(auth)/register/page.tsx
-
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { RegisterForm } from '@/components/forms/RegisterForm';
 import { Logo } from '@/components/layout/Logo';
 import { routes } from '@/config/app.config';
 
 export const metadata: Metadata = {
   title: 'Crear cuenta | SmartMarket',
-  description:
-    'Crea tu cuenta en SmartMarket y empieza a comparar precios de tus compras del hogar',
 };
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+    /* Background general usando bg-card */
+    <div className="min-h-screen flex flex-col md:items-center md:justify-center bg-card px-6 py-8 md:px-4">
       <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-card rounded-2xl shadow-soft-xl p-8">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
+        
+        {/* Botón Atrás - Visible en mobile y desktop para registro */}
+        <Link 
+          href={routes.login} 
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 group"
+        >
+          <div className="p-2 rounded-full border border-border group-hover:bg-muted">
+            <ChevronLeft className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium">Volver</span>
+        </Link>
+
+        {/* Contenedor tipo Modal solo en Desktop */}
+        <div className="md:bg-card md:p-8 md:rounded-2xl md:shadow-soft-xl md:border md:border-border">
+          
+          <div className="flex justify-start md:justify-center mb-8">
             <Logo size="lg" />
           </div>
 
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground">Crea tu cuenta</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Empieza a comparar precios y ahorra en tus compras
+          <div className="mb-8 text-left md:text-center">
+            <h1 className="text-3xl md:text-2xl font-bold text-foreground tracking-tight">
+              Crea tu cuenta ahora
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground font-medium">
+              Únete y empieza a ahorrar en tus compras
             </p>
           </div>
 
-          {/* Form */}
           <RegisterForm />
         </div>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        {/* Footer Legal */}
+        <p className="mt-8 text-center text-xs text-muted-foreground px-4">
           Al crear tu cuenta, aceptas nuestros{' '}
-          <Link href={routes.terms} className="link">
-            Términos de servicio
+          <Link href={routes.terms} className="text-primary-600 hover:underline">
+            Términos
           </Link>{' '}
           y{' '}
-          <Link href={routes.privacy} className="link">
-            Política de privacidad
+          <Link href={routes.privacy} className="text-primary-600 hover:underline">
+            Privacidad
           </Link>
         </p>
       </div>

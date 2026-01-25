@@ -1,6 +1,6 @@
-// src/components/ui/EmptyState.tsx
+'use client';
 
-import { Package, ShoppingBag, Store, FileText } from 'lucide-react';
+import { Package, ShoppingBag, Store, FileText, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';
 
@@ -22,11 +22,12 @@ const icons: Record<EmptyStateType, React.ElementType> = {
   default: FileText,
 };
 
+// Colores actualizados para que coincidan con la nueva estética
 const colors: Record<EmptyStateType, string> = {
-  products: 'bg-primary-100 text-primary-600',
-  stores: 'bg-warning-100 text-warning-600',
-  purchases: 'bg-success-100 text-success-600',
-  default: 'bg-muted text-muted-foreground',
+  products: 'bg-muted text-primary-600',
+  stores: 'bg-muted   text-primary-600',
+  purchases: 'bg-muted text-primary-600',
+  default: 'bg-muted text-primary-600',
 };
 
 export function EmptyState({
@@ -41,14 +42,42 @@ export function EmptyState({
   const colorClass = colors[type];
 
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12 px-4', className)}>
-      <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mb-4', colorClass)}>
-        <Icon className="h-8 w-8" />
+    <div 
+      className={cn(
+        'flex flex-col items-center justify-center py-20 px-4 text-center',
+        'bg-card rounded-[2rem] border border-border shadow-sm',
+        'animate-in fade-in zoom-in-95 duration-300',
+        className
+      )}
+    >
+      {/* Icon Container */}
+      <div className={cn(
+        'w-24 h-24 rounded-full flex items-center justify-center mb-8',
+        colorClass
+      )}>
+        <Icon className="h-10 w-10" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2 text-center">{title}</h3>
-      <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{description}</p>
+
+      {/* Text Content */}
+      <h3 className="text-2xl font-extrabold text-foreground mb-3 tracking-tight">
+        {title}
+      </h3>
+      <p className="text-muted-foreground mb-8 max-w-sm leading-relaxed">
+        {description}
+      </p>
+
+      {/* Action Button */}
       {actionLabel && onAction && (
-        <Button onClick={onAction}>
+        <Button 
+          onClick={onAction}
+          size="lg"
+          variant={'outline'}
+          leftIcon={<Plus className="h-5 w-5" />}
+          className={cn(
+            "px-8",
+            type !== 'default' && ""
+          )}
+        >
           {actionLabel}
         </Button>
       )}

@@ -1,72 +1,51 @@
-// src/components/features/compare/CompareEmptyState.tsx
-
 'use client';
 
-import { Search, ShoppingCart, BarChart3 } from 'lucide-react';
+import { Scale, Plus, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 interface CompareEmptyStateProps {
-  type: 'initial' | 'no-history' | 'no-products';
-  productName?: string;
+  hasAnyHistory: boolean;
 }
 
-export function CompareEmptyState({ type, productName }: CompareEmptyStateProps) {
-  if (type === 'initial') {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mb-4">
-          <Search className="h-8 w-8 text-primary-500" />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground mb-2">
-          Busca un producto
-        </h2>
-        <p className="text-muted-foreground max-w-xs">
-          Escribe el nombre de un producto para comparar sus precios en diferentes locales
-        </p>
-      </div>
-    );
-  }
+export function CompareEmptyState({ hasAnyHistory }: CompareEmptyStateProps) {
+  const title = !hasAnyHistory 
+    ? "Sin datos para comparar" 
+    : "No hay datos suficientes";
 
-  if (type === 'no-history') {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-          <BarChart3 className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground mb-2">
-          Sin historial de precios
-        </h2>
-        <p className="text-muted-foreground max-w-xs mb-6">
-          {productName 
-            ? `No hay compras registradas para "${productName}". Registra una compra para comenzar a comparar precios.`
-            : 'Este producto no tiene compras registradas aún.'
-          }
-        </p>
-        <Link href="/purchases">
-          <Button variant="outline" leftIcon={<ShoppingCart className="h-5 w-5" />}>
-            Registrar compra
-          </Button>
-        </Link>
-      </div>
-    );
-  }
+  const description = !hasAnyHistory
+    ? "Necesitas registrar tus primeras compras para poder realizar comparativas entre meses y ver tu evolución."
+    : "Para comparar, asegúrate de tener compras registradas en los periodos seleccionados.";
 
-  // no-products
+  const buttonLabel = !hasAnyHistory ? "Registrar primera compra" : "Registrar compra";
+  
+  const icon = !hasAnyHistory 
+    ? <Scale className="h-10 w-10 text-primary-600" />
+    : <ArrowLeftRight className="h-10 w-10 text-muted-foreground" />;
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card rounded-[2rem] border border-border shadow-sm animate-in fade-in zoom-in-95 duration-300">
+      {/* Mantenemos bg-muted según tus ajustes */}
+      <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-8">
+        {icon}
       </div>
-      <h2 className="text-lg font-semibold text-foreground mb-2">
-        Sin productos
+      
+      <h2 className="text-2xl font-extrabold text-foreground mb-3 tracking-tight">
+        {title}
       </h2>
-      <p className="text-muted-foreground max-w-xs mb-6">
-        Aún no tienes productos registrados. Agrega productos para poder comparar precios.
+      
+      <p className="text-muted-foreground mb-8 max-w-sm leading-relaxed">
+        {description}
       </p>
-      <Link href="/products">
-        <Button leftIcon={<ShoppingCart className="h-5 w-5" />}>
-          Agregar productos
+      
+      <Link href="/purchases">
+        <Button 
+          size="lg"
+          variant="outline" // Ajustado a outline como pediste
+          leftIcon={<Plus className="h-5 w-5" />}
+          className={!hasAnyHistory ? "px-8" : "px-8"}
+        >
+          {buttonLabel}
         </Button>
       </Link>
     </div>

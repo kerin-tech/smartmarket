@@ -13,6 +13,7 @@ import { getCategoryConfig } from '@/types/product.types';
 import type { Product } from '@/types/product.types';
 import type { PurchaseItemFormData } from '@/types/purchase.types';
 
+// 1. Definir la interfaz que faltaba
 interface AddItemModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,14 +68,14 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
         
         if (editingItem.discountPercentage && editingItem.discountPercentage > 0) {
           setHasDiscount(true);
-          setDiscountPercentage(String(editingItem.discountPercentage));
+          setDiscountPercentage(Math.round(editingItem.discountPercentage).toString());
           const base = editingItem.quantity * editingItem.unitPrice;
           const total = base * (1 - (editingItem.discountPercentage / 100));
-          setTotalPaidWithDiscount(total.toFixed(2));
+          setTotalPaidWithDiscount(Math.round(total).toString());
         } else {
           setHasDiscount(false);
           setDiscountPercentage('0');
-          setTotalPaidWithDiscount((editingItem.quantity * editingItem.unitPrice).toString());
+          setTotalPaidWithDiscount(Math.round(editingItem.quantity * editingItem.unitPrice).toString());
         }
         setStep('details');
       }
@@ -96,20 +97,16 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
 
   useEffect(() => {
     if (!hasDiscount) {
-      setTotalPaidWithDiscount(totalListPrice.toFixed(2));
+      setTotalPaidWithDiscount(Math.round(totalListPrice).toString());
       setDiscountPercentage('0');
-    } else {
-      const disc = toNumber(discountPercentage);
-      const newTotal = totalListPrice * (1 - (disc / 100));
-      setTotalPaidWithDiscount(newTotal.toFixed(2));
     }
-  }, [hasDiscount, totalListPrice, discountPercentage]);
+  }, [hasDiscount, totalListPrice]);
 
   const handleDiscountPercentChange = (val: string) => {
     setDiscountPercentage(val);
     const disc = toNumber(val);
     const newTotal = totalListPrice * (1 - (disc / 100));
-    setTotalPaidWithDiscount(newTotal.toFixed(2));
+    setTotalPaidWithDiscount(Math.round(newTotal).toString());
   };
 
   const handleTotalPaidChange = (val: string) => {
@@ -117,7 +114,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
     const finalTotal = toNumber(val);
     if (totalListPrice > 0) {
       const percent = ((totalListPrice - finalTotal) / totalListPrice) * 100;
-      setDiscountPercentage(percent.toFixed(2));
+      setDiscountPercentage(Math.round(percent).toString());
     }
   };
 
@@ -302,7 +299,6 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
           </div>
 
           <ModalFooter>
-            <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
             {!editingItem && <Button variant="outline" onClick={handleBack}>Atrás</Button>}
             <Button onClick={handleAddItem} disabled={!isValid}>
               {editingItem ? 'Guardar Cambios' : 'Agregar a la Compra'}
