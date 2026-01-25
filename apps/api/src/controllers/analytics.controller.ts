@@ -187,15 +187,14 @@ if (topStoreId) {
 
 /**
  * GET /api/v1/analytics/by-store
+ * Devuelve el desglose de gastos por local con detalle de productos y descuentos.
  */
 export const getByStore = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     
-    // 1. Captura agresiva del parámetro
+    // 1. Captura y limpieza del parámetro de mes
     const rawMonth = (req.query.month || req.query['month']) as string;
-    
-    // 2. Limpieza total (quitamos comillas simples, dobles y espacios)
     const cleanMonth = rawMonth 
       ? String(rawMonth).replace(/['"]+/g, '').trim() 
       : undefined;
@@ -203,38 +202,42 @@ export const getByStore = async (req: Request, res: Response, next: NextFunction
     let dateFilter: any;
     let periodLabel: string;
 
-    // 3. Regex más flexible (por si acaso hay guiones diferentes)
     const isValidMonth = cleanMonth && /^\d{4}[-]\d{2}$/.test(cleanMonth);
 
     if (isValidMonth) {
       const [year, month] = cleanMonth!.split('-').map(Number);
-      
-      // Rango UTC estricto
       dateFilter = {
         gte: new Date(Date.UTC(year, month - 1, 1)),
         lt: new Date(Date.UTC(year, month, 1))
       };
-      
-      // Forzamos el label para confirmar que entró aquí
       periodLabel = formatMonthLabel(cleanMonth!);
     } else {
-      // Si llegas aquí, es que el 'if' falló
       const fallbackDate = new Date();
       fallbackDate.setMonth(fallbackDate.getMonth() - 6);
       dateFilter = { gte: fallbackDate };
       periodLabel = "Últimos 6 meses";
     }
+
+    // 2. Consulta a la base de datos incluyendo items y productos
     const purchases = await prisma.purchase.findMany({
       where: { 
         userId, 
-        date: dateFilter // Filtramos las compras directamente por fecha
+        date: dateFilter 
       },
       include: { 
         store: true, 
-        items: true 
+        items: {
+          include: {
+            product: true
+          }
+        } 
+      },
+      orderBy: {
+        date: 'desc'
       }
     });
 
+    // 3. Procesamiento y Agrupación con cálculo de totales corregido
     const storesMap = purchases.reduce((acc, purchase) => {
       if (!purchase.store) return acc;
       
@@ -244,29 +247,51 @@ export const getByStore = async (req: Request, res: Response, next: NextFunction
           id: storeId, 
           name: purchase.store.name, 
           totalSpent: 0, 
-          totalPurchases: 0 
+          totalPurchases: 0,
+          purchases: [] 
         };
       }
 
-      // Sumamos los items usando el helper para asegurar precisión decimal
-      let purchaseTotal = 0;
-      purchase.items.forEach(item => {
-        const { total } = calculateItemTotals(item);
-        purchaseTotal += total;
+      let currentPurchaseTotal = 0;
+      
+      // Mapeamos los items de esta compra específica
+      const itemsDetail = purchase.items.map(item => {
+        const { total, quantity } = calculateItemTotals(item);
+        currentPurchaseTotal += total; // Acumulamos para el total de la compra
+        
+        return {
+          id: item.id,
+          productName: item.product.name,
+          quantity,
+          total: Math.round(total * 100) / 100,
+          discountPercentage: Number(item.discountPercentage || 0) // <--- Info vital para el resaltado
+        };
       });
 
-      acc[storeId].totalSpent += purchaseTotal;
+      // Actualizamos los acumuladores de la TIENDA
+      acc[storeId].totalSpent += currentPurchaseTotal;
       acc[storeId].totalPurchases += 1;
+
+      // Agregamos la compra al historial de esta tienda
+      acc[storeId].purchases.push({
+        id: purchase.id,
+        date: purchase.date,
+        total: Math.round(currentPurchaseTotal * 100) / 100,
+        items: itemsDetail
+      });
+
       return acc;
     }, {} as Record<string, any>);
 
+    // 4. Formateo y ordenamiento final
     const byStore = Object.values(storesMap)
       .map((s: any) => ({
         ...s,
-        totalSpent: Math.round(s.totalSpent * 100) / 100 // Redondeo por tienda
+        totalSpent: Math.round(s.totalSpent * 100) / 100
       }))
       .sort((a: any, b: any) => b.totalSpent - a.totalSpent);
 
+    // Calculamos el totalSpent global para los porcentajes del frontend
     const totalSpent = byStore.reduce((sum, s: any) => sum + s.totalSpent, 0);
 
     return successResponse(res, { 
