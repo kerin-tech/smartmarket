@@ -187,15 +187,14 @@ if (topStoreId) {
 
 /**
  * GET /api/v1/analytics/by-store
+ * Devuelve el desglose de gastos por local con detalle de productos y descuentos.
  */
 export const getByStore = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     
-    // 1. Captura agresiva del parámetro
+    // 1. Captura y limpieza del parámetro de mes
     const rawMonth = (req.query.month || req.query['month']) as string;
-    
-    // 2. Limpieza total (quitamos comillas simples, dobles y espacios)
     const cleanMonth = rawMonth 
       ? String(rawMonth).replace(/['"]+/g, '').trim() 
       : undefined;
@@ -203,38 +202,42 @@ export const getByStore = async (req: Request, res: Response, next: NextFunction
     let dateFilter: any;
     let periodLabel: string;
 
-    // 3. Regex más flexible (por si acaso hay guiones diferentes)
     const isValidMonth = cleanMonth && /^\d{4}[-]\d{2}$/.test(cleanMonth);
 
     if (isValidMonth) {
       const [year, month] = cleanMonth!.split('-').map(Number);
-      
-      // Rango UTC estricto
       dateFilter = {
         gte: new Date(Date.UTC(year, month - 1, 1)),
         lt: new Date(Date.UTC(year, month, 1))
       };
-      
-      // Forzamos el label para confirmar que entró aquí
       periodLabel = formatMonthLabel(cleanMonth!);
     } else {
-      // Si llegas aquí, es que el 'if' falló
       const fallbackDate = new Date();
       fallbackDate.setMonth(fallbackDate.getMonth() - 6);
       dateFilter = { gte: fallbackDate };
       periodLabel = "Últimos 6 meses";
     }
+
+    // 2. Consulta a la base de datos incluyendo items y productos
     const purchases = await prisma.purchase.findMany({
       where: { 
         userId, 
-        date: dateFilter // Filtramos las compras directamente por fecha
+        date: dateFilter 
       },
       include: { 
         store: true, 
-        items: true 
+        items: {
+          include: {
+            product: true
+          }
+        } 
+      },
+      orderBy: {
+        date: 'desc'
       }
     });
 
+    // 3. Procesamiento y Agrupación con cálculo de totales corregido
     const storesMap = purchases.reduce((acc, purchase) => {
       if (!purchase.store) return acc;
       
@@ -244,29 +247,51 @@ export const getByStore = async (req: Request, res: Response, next: NextFunction
           id: storeId, 
           name: purchase.store.name, 
           totalSpent: 0, 
-          totalPurchases: 0 
+          totalPurchases: 0,
+          purchases: [] 
         };
       }
 
-      // Sumamos los items usando el helper para asegurar precisión decimal
-      let purchaseTotal = 0;
-      purchase.items.forEach(item => {
-        const { total } = calculateItemTotals(item);
-        purchaseTotal += total;
+      let currentPurchaseTotal = 0;
+      
+      // Mapeamos los items de esta compra específica
+      const itemsDetail = purchase.items.map(item => {
+        const { total, quantity } = calculateItemTotals(item);
+        currentPurchaseTotal += total; // Acumulamos para el total de la compra
+        
+        return {
+          id: item.id,
+          productName: item.product.name,
+          quantity,
+          total: Math.round(total * 100) / 100,
+          discountPercentage: Number(item.discountPercentage || 0) // <--- Info vital para el resaltado
+        };
       });
 
-      acc[storeId].totalSpent += purchaseTotal;
+      // Actualizamos los acumuladores de la TIENDA
+      acc[storeId].totalSpent += currentPurchaseTotal;
       acc[storeId].totalPurchases += 1;
+
+      // Agregamos la compra al historial de esta tienda
+      acc[storeId].purchases.push({
+        id: purchase.id,
+        date: purchase.date,
+        total: Math.round(currentPurchaseTotal * 100) / 100,
+        items: itemsDetail
+      });
+
       return acc;
     }, {} as Record<string, any>);
 
+    // 4. Formateo y ordenamiento final
     const byStore = Object.values(storesMap)
       .map((s: any) => ({
         ...s,
-        totalSpent: Math.round(s.totalSpent * 100) / 100 // Redondeo por tienda
+        totalSpent: Math.round(s.totalSpent * 100) / 100
       }))
       .sort((a: any, b: any) => b.totalSpent - a.totalSpent);
 
+    // Calculamos el totalSpent global para los porcentajes del frontend
     const totalSpent = byStore.reduce((sum, s: any) => sum + s.totalSpent, 0);
 
     return successResponse(res, { 
@@ -406,6 +431,7 @@ export const getTopProducts = async (req: Request, res: Response, next: NextFunc
 
 /**
  * GET /api/v1/analytics/compare-prices
+ * Compara precios entre locales y genera historial detallado con descuentos
  */
 export const comparePrices = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -416,73 +442,104 @@ export const comparePrices = async (req: Request, res: Response, next: NextFunct
       return errorResponse(res, 'El parámetro productId es requerido', ERROR_CODES.BAD_REQUEST.code);
     }
 
-    const product = await prisma.product.findFirst({ where: { id: productId, userId } });
+    const product = await prisma.product.findFirst({ 
+      where: { id: productId, userId } 
+    });
+    
     if (!product) return errorResponse(res, 'Producto no encontrado', ERROR_CODES.NOT_FOUND.code);
 
+    // Obtenemos todos los ítems de compra de este producto
     const purchaseItems = await prisma.purchaseItem.findMany({
       where: { productId, purchase: { userId } },
-      include: { purchase: { include: { store: true } } },
-      orderBy: { purchase: { date: 'desc' } }, // Importante: Descendente para que el index 0 sea el último
+      include: { 
+        purchase: { 
+          include: { store: true } 
+        } 
+      },
+      orderBy: { purchase: { date: 'desc' } }, 
     });
 
     const storeStats: Record<string, any> = {};
 
+    // 1. Procesar Datos para Comparación por Local
     purchaseItems.forEach((item) => {
       const storeId = item.purchase.storeId;
       const unitPrice = Number(item.unitPrice);
+      const discountPercentage = Number(item.discountPercentage || 0);
+      
+      // PRECIO REAL PAGADO (Neto)
+      const finalPrice = Number((unitPrice * (1 - discountPercentage / 100)).toFixed(2));
       const purchaseDate = new Date(item.purchase.date);
 
       if (!storeStats[storeId]) {
         storeStats[storeId] = {
           store: item.purchase.store,
-          prices: [],
-          lastPrice: unitPrice,
+          finalPrices: [], // Lista de precios finales pagados
+          lastPrice: finalPrice,
           lastDate: purchaseDate,
-          minPrice: unitPrice,
+          minPrice: finalPrice,
           minPriceDate: purchaseDate
         };
       }
 
-      storeStats[storeId].prices.push(unitPrice);
+      storeStats[storeId].finalPrices.push(finalPrice);
 
+      // Actualizar si es la compra más reciente
       if (purchaseDate > storeStats[storeId].lastDate) {
-        storeStats[storeId].lastPrice = unitPrice;
+        storeStats[storeId].lastPrice = finalPrice;
         storeStats[storeId].lastDate = purchaseDate;
       }
 
-      if (unitPrice < storeStats[storeId].minPrice) {
-        storeStats[storeId].minPrice = unitPrice;
+      // Actualizar si es el precio más bajo histórico en este local
+      if (finalPrice < storeStats[storeId].minPrice) {
+        storeStats[storeId].minPrice = finalPrice;
         storeStats[storeId].minPriceDate = purchaseDate;
       }
     });
 
+    // 2. Formatear la Comparativa (La lista de locales)
     const comparison = Object.values(storeStats).map((stat: any) => {
-  const lastPrice = stat.lastPrice;
-  const previousPrice = stat.prices.length > 1 ? stat.prices[1] : null;
-  
-  // Determinamos la tendencia
-  let trend: 'up' | 'down' | 'stable' = 'stable';
-  if (previousPrice !== null) {
-    if (lastPrice < previousPrice) trend = 'down';
-    else if (lastPrice > previousPrice) trend = 'up';
-  }
+      const lastPrice = stat.lastPrice;
+      const previousPrice = stat.finalPrices.length > 1 ? stat.finalPrices[1] : null;
+      
+      let trend: 'up' | 'down' | 'stable' = 'stable';
+      if (previousPrice !== null) {
+        if (lastPrice < previousPrice) trend = 'down';
+        else if (lastPrice > previousPrice) trend = 'up';
+      }
 
-  return {
-    store: stat.store,
-    minPrice: stat.minPrice,
-    minPriceDate: stat.minPriceDate.toISOString().split('T')[0],
-    maxPrice: Math.max(...stat.prices),
-    avgPrice: Math.round((stat.prices.reduce((s: any, p: any) => s + p, 0) / stat.prices.length) * 100) / 100,
-    lastPrice: lastPrice,
-    lastDate: stat.lastDate.toISOString().split('T')[0],
-    purchaseCount: stat.prices.length,
-    // Enviamos la tendencia clara al front
-    previousPrice,
-    trend 
-  };
-  }).sort((a, b) => a.minPrice - b.minPrice);
+      return {
+        store: stat.store,
+        minPrice: stat.minPrice,
+        minPriceDate: stat.minPriceDate.toISOString().split('T')[0],
+        maxPrice: Math.max(...stat.finalPrices),
+        avgPrice: Math.round((stat.finalPrices.reduce((s: any, p: any) => s + p, 0) / stat.finalPrices.length) * 100) / 100,
+        lastPrice: lastPrice,
+        lastDate: stat.lastDate.toISOString().split('T')[0],
+        purchaseCount: stat.finalPrices.length,
+        previousPrice,
+        trend 
+      };
+    }).sort((a, b) => a.minPrice - b.minPrice);
 
-    return successResponse(res, { product, comparison });
+    // 3. Generar el Historial Detallado para el Timeline (De nuevo a viejo)
+    const history = purchaseItems.map(item => {
+      const uPrice = Number(item.unitPrice);
+      const dPercent = Number(item.discountPercentage || 0);
+      const fPrice = Number((uPrice * (1 - dPercent / 100)).toFixed(2));
+
+      return {
+        id: item.id,
+        date: item.purchase.date.toISOString().split('T')[0],
+        storeName: item.purchase.store.name,
+        originalPrice: uPrice,
+        discountPercentage: dPercent,
+        finalPrice: fPrice,
+        quantity: Number(item.quantity)
+      };
+    });
+
+    return successResponse(res, { product, comparison, history });
   } catch (error) { 
     next(error); 
   }

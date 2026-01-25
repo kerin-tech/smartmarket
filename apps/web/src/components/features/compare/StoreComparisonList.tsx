@@ -40,7 +40,7 @@ export function StoreComparisonList({ stores, bestStoreId }: StoreComparisonList
               key={item.store.id}
               className={cn(
                 'flex items-center gap-3 p-3 rounded-lg transition-colors',
-                isBest ? 'bg-success-50 border border-success-200' : 'bg-muted'
+                isBest ? 'border border-border' : 'border border-border'
               )}
             >
               {/* Icon */}

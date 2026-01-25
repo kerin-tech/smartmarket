@@ -2,7 +2,8 @@
 
 'use client';
 
-import { MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, ChevronDown, ChevronUp, Package, Tag } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type { StoreBreakdown as StoreBreakdownType } from '@/types/analytics.types';
 
@@ -13,65 +14,118 @@ interface StoreBreakdownProps {
 }
 
 export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdownProps) {
-  if (isLoading) {
-    return <StoreBreakdownSkeleton />;
-  }
+  const [expandedStore, setExpandedStore] = useState<string | null>(null);
 
-  if (stores.length === 0) {
-    return (
-      <div className="bg-card rounded-xl border border-color p-6">
-        <h3 className="text-base font-semibold text-foreground mb-4">
-          Gastos por local
-        </h3>
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No hay datos de locales para este mes
-        </p>
-      </div>
-    );
-  }
+  const toggleStore = (storeId: string) => {
+    setExpandedStore(expandedStore === storeId ? null : storeId);
+  };
+
+  if (isLoading) return <StoreBreakdownSkeleton />;
 
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <h3 className="text-base font-semibold text-foreground mb-4">
-        Gastos por local
-      </h3>
+    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <h3 className="text-xl font-bold text-foreground mb-6">Gastos por local</h3>
 
       <div className="space-y-4">
         {stores.map((store) => {
-  // Protección: Si el porcentaje es mayor a 100, algo anda mal con el filtro
-  const percentage = totalSpent > 0 
-    ? Math.min(Math.round((store.totalSpent / totalSpent) * 100), 100) 
-    : 0;
+          const percentage = totalSpent > 0 
+            ? Math.min(Math.round((store.totalSpent / totalSpent) * 100), 100) 
+            : 0;
+          const isExpanded = expandedStore === store.id;
 
           return (
-            <div
-              key={store.id}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
-            >
-              {/* Icon */}
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-primary-600" />
-              </div>
+            <div key={store.id} className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+              isExpanded ? 'border-primary-400 bg-primary-50/5 ring-1 ring-primary-100' : 'border-border'
+            }`}>
+              {/* Header Tienda */}
+              <button 
+                onClick={() => toggleStore(store.id)} 
+                className="w-full flex items-center gap-3 sm:gap-4 p-4 sm:p-5 text-left hover:bg-muted/30 transition-colors"
+              >
+                {/* ICONO: min-w garantiza visibilidad en mobile */}
+                <div className={`shrink-0 flex items-center justify-center rounded-xl transition-colors
+                  w-12 h-12 min-w-[3rem] sm:w-14 sm:h-14 sm:min-w-[3.5rem]
+                  ${isExpanded ? 'bg-primary-600 text-white' : 'bg-primary-100 text-primary-600'}`}
+                >
+                  <MapPin className="h-6 w-6 sm:h-7 sm:w-7" />
+                </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground truncate">
-                      {store.name}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {store.totalPurchases} {store.totalPurchases === 1 ? 'compra' : 'compras'}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatCurrency(store.totalSpent)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{percentage}%</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-base sm:text-lg font-bold text-foreground truncate uppercase tracking-tight">
+                        {store.name}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{store.totalPurchases} compras</p>
+                    </div>
+
+                    <div className="text-right flex items-center gap-2 sm:gap-4 shrink-0">
+                      <div>
+                        <p className="text-base sm:text-lg font-bold text-foreground whitespace-nowrap">
+                          {formatCurrency(store.totalSpent)}
+                        </p>
+                        <p className="text-xs sm:text-sm font-bold text-primary-600">{percentage}%</p>
+                      </div>
+                      {isExpanded ? (
+                        <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground shrink-0" />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </button>
+
+              {/* Detalle de productos */}
+              {isExpanded && (
+                <div className="bg-muted/20 border-t border-border/50">
+                  <div className="max-h-[450px] overflow-y-auto p-4 space-y-5 custom-scrollbar">
+                    {store.purchases.map((purchase) => (
+                      <div key={purchase.id} className="bg-card rounded-lg border border-border/60 overflow-hidden">
+                        <div className="bg-muted/40 px-4 py-2.5 border-b border-border/50 flex justify-between items-center">
+                          <span className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-wider">
+                            {new Date(purchase.date).toLocaleDateString('es-CO', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric' 
+                            })}
+                          </span>
+                          <span className="text-sm font-bold text-primary-700">
+                            {formatCurrency(purchase.total)}
+                          </span>
+                        </div>
+                        
+                        <div className="divide-y divide-border/30">
+                          {purchase.items.map((item: any) => (
+                            <div key={item.id} className="flex justify-between items-center p-4 gap-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Package className="h-5 w-5 text-muted-foreground/30 shrink-0" />
+                                <p className="text-sm sm:text-base font-medium text-foreground truncate">
+                                  <span className="font-bold text-primary-600">{item.quantity}x</span> {item.productName}
+                                </p>
+                              </div>
+                              
+                              <div className="flex flex-row items-center gap-2 sm:gap-3 shrink-0">
+                                {item.discountPercentage > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] sm:text-xs font-black text-success-800 bg-success-100 px-2 py-0.5 rounded uppercase">
+                                    <Tag className="h-3 w-3" />
+                                    {item.discountPercentage}%
+                                  </span>
+                                )}
+                                <span className={`text-sm sm:text-base font-bold ${
+                                  item.discountPercentage > 0 ? 'text-success-600' : 'text-foreground'
+                                }`}>
+                                  {formatCurrency(item.total)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -82,25 +136,11 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
 function StoreBreakdownSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-color p-6">
-      <div className="h-5 w-32 bg-secondary-200 rounded animate-pulse mb-4" />
+    <div className="bg-card rounded-xl border border-border p-6">
+      <div className="h-7 w-48 bg-secondary-200 rounded animate-pulse mb-6" />
       <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-start gap-3 p-3">
-            <div className="w-10 h-10 bg-secondary-200 rounded-lg animate-pulse" />
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="w-28 h-4 bg-secondary-200 rounded animate-pulse" />
-                  <div className="w-16 h-3 bg-secondary-200 rounded animate-pulse" />
-                </div>
-                <div className="text-right space-y-1">
-                  <div className="w-24 h-4 bg-secondary-200 rounded animate-pulse" />
-                  <div className="w-10 h-3 bg-secondary-200 rounded animate-pulse ml-auto" />
-                </div>
-              </div>
-            </div>
-          </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 bg-secondary-100 rounded-xl animate-pulse" />
         ))}
       </div>
     </div>
