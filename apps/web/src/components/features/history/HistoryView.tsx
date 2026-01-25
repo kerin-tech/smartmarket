@@ -41,20 +41,20 @@ function HistoryContent() {
   const [byStore, setByStore] = useState<StoreBreakdownType[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(monthParam || getCurrentMonth());
 
-  // REFERENCIA PARA EVITAR RACE CONDITIONS
+  // Referencia para manejar la última petición y evitar que se pisen (Race Conditions)
   const lastRequestedMonth = useRef<string | null>(null);
 
   const loadMonthData = useCallback(async (month: string) => {
-    lastRequestedMonth.current = month; // Registramos cuál es el último mes que el usuario pidió
+    lastRequestedMonth.current = month;
     setIsLoadingMonth(true);
-    
+
     try {
       const [categoryRes, storeRes] = await Promise.all([
         analyticsService.getByCategory({ month }),
         analyticsService.getByStore({ month }),
       ]);
-      
-      // SOLO actualizamos si esta respuesta coincide con lo último que pidió el usuario
+
+      // Solo actualizamos si la respuesta que llega es del último mes solicitado
       if (lastRequestedMonth.current === month) {
         setByCategory(categoryRes.byCategory);
         setByStore(storeRes.byStore);
@@ -76,7 +76,6 @@ function HistoryContent() {
       try {
         const monthlyRes = await analyticsService.getMonthly(12);
         setMonthlyData(monthlyRes.monthly);
-        // Cargamos los datos del mes inicial
         await loadMonthData(selectedMonth);
       } catch (err: any) {
         showError(err.message || 'Error al cargar el historial');
@@ -85,9 +84,8 @@ function HistoryContent() {
       }
     };
     loadInitialData();
-  }, [loadMonthData, showError]); // Se ejecuta solo al montar
+  }, [loadMonthData, showError]);
 
-  // Sincronizar URL con estado local
   useEffect(() => {
     if (monthParam && monthParam !== selectedMonth) {
       setSelectedMonth(monthParam);
@@ -97,24 +95,42 @@ function HistoryContent() {
 
   const handleMonthChange = (newMonth: string) => {
     if (newMonth === selectedMonth || isLoadingMonth) return;
-    
-    // Actualizamos URL (esto disparará el useEffect de arriba)
     router.push(`/history?month=${newMonth}`, { scroll: false });
     setSelectedMonth(newMonth);
     loadMonthData(newMonth);
   };
 
-  const currentMonthData = useMemo(() => 
+  const currentMonthData = useMemo(() =>
     monthlyData.find((m) => m.month === selectedMonth),
     [monthlyData, selectedMonth]
   );
 
+  // Cálculo de comparación para el SummaryCard
+  const comparisonData = useMemo(() => {
+    const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
+    const current = monthlyData[currentIndex];
+    const previous = monthlyData[currentIndex + 1]; // Array suele venir DESC (el siguiente es el mes pasado)
+
+    if (!current || !previous || previous.totalSpent === 0) return null;
+
+    const diff = current.totalSpent - previous.totalSpent;
+    const percentage = Math.round((Math.abs(diff) / previous.totalSpent) * 100);
+
+    return {
+      previousMonth: formatMonthLabel(previous.month),
+      percentage,
+      direction: diff > 0 ? 'up' as const : diff < 0 ? 'down' as const : 'equal' as const
+    };
+  }, [monthlyData, selectedMonth]);
+
   const handlePreviousMonth = () => {
+    if (isLoadingMonth) return;
     const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
     if (currentIndex < monthlyData.length - 1) handleMonthChange(monthlyData[currentIndex + 1].month);
   };
 
   const handleNextMonth = () => {
+    if (isLoadingMonth) return;
     const currentIndex = monthlyData.findIndex((m) => m.month === selectedMonth);
     if (currentIndex > 0) handleMonthChange(monthlyData[currentIndex - 1].month);
   };
@@ -122,59 +138,73 @@ function HistoryContent() {
   if (isLoading) return <HistorySkeleton />;
 
   return (
-    <div className="min-h-screen">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-4xl font-black text-foreground tracking-tight">Historial</h1>
-        <MonthSelector 
-          currentMonth={selectedMonth} 
-          monthLabel={formatMonthLabel(selectedMonth)} 
-          onPrevious={handlePreviousMonth} 
-          onNext={handleNextMonth} 
-          hasPrevious={monthlyData.findIndex((m) => m.month === selectedMonth) < monthlyData.length - 1} 
-          hasNext={monthlyData.findIndex((m) => m.month === selectedMonth) > 0} 
-          disabled={isLoadingMonth} // Evita spam de clics mientras carga
+    <div className="min-h-screen p-4 sm:p-8">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
+        <h1 className="text-3xl font-black text-foreground tracking-tight">Historial</h1>
+        <MonthSelector
+          currentMonth={selectedMonth}
+          monthLabel={formatMonthLabel(selectedMonth)}
+          onPrevious={handlePreviousMonth}
+          onNext={handleNextMonth}
+          hasPrevious={monthlyData.findIndex((m) => m.month === selectedMonth) < monthlyData.length - 1}
+          hasNext={monthlyData.findIndex((m) => m.month === selectedMonth) > 0}
+          disabled={isLoadingMonth}
         />
       </header>
 
       {(!currentMonthData || currentMonthData.totalPurchases === 0) ? (
         <HistoryEmptyState monthLabel={formatMonthLabel(selectedMonth)} hasAnyHistory={true} />
       ) : (
-        <div className="columns-1 lg:columns-2 gap-4 space-y-8 [column-fill:_balance]">
-          <div className="break-inside-avoid">
-            <SummaryCard 
-              total={currentMonthData.totalSpent} 
-              purchaseCount={currentMonthData.totalPurchases} 
-              productCount={currentMonthData.totalItems} 
-              comparison={null} 
+        /* DISPOSICIÓN: 1 -> 2 -> 1 */
+        <div className="flex flex-col gap-6">
+
+          {/* 1. Caja Superior: Resumen (Ancho completo) */}
+          <div className="w-full">
+            <SummaryCard
+              total={currentMonthData.totalSpent}
+              purchaseCount={currentMonthData.totalPurchases}
+              productCount={currentMonthData.totalItems}
+              comparison={comparisonData}
             />
           </div>
 
-          <div className="break-inside-avoid">
-            {isLoadingMonth ? (
-              <div className="h-[300px] bg-muted/50 animate-pulse rounded-3xl" />
-            ) : (
-              <CategoryBreakdown categories={byCategory as any} />
-            )}
-          </div>
+          {/* 2. Fila del Medio: Categorías y Locales */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
 
-          <div className="break-inside-avoid">
-            {isLoadingMonth ? (
-              <div className="h-[500px] bg-muted/50 animate-pulse rounded-3xl" />
-            ) : (
-              <StoreBreakdown stores={byStore} totalSpent={currentMonthData?.totalSpent || 0} />
-            )}
+            <div className="flex"> {/* El flex aquí es vital para el estiramiento */}
+              {isLoadingMonth ? (
+                <div className="w-full h-full min-h-[400px] bg-muted/50 animate-pulse rounded-3xl" />
+              ) : (
+                /* Usamos un wrapper con flex-1 para inyectar el alto al componente */
+                <div className="flex-1 [&>div]:h-full">
+                  <CategoryBreakdown categories={byCategory as any} />
+                </div>
+              )}
+            </div>
+
+            <div className="flex">
+              {isLoadingMonth ? (
+                <div className="w-full h-full min-h-[400px] bg-muted/50 animate-pulse rounded-3xl" />
+              ) : (
+                /* El selector [&>div]:h-full obliga al primer div del componente a medir el 100% */
+                <div className="flex-1 [&>div]:h-full">
+                  <StoreBreakdown stores={byStore} totalSpent={currentMonthData?.totalSpent || 0} />
+                </div>
+              )}
+            </div>
           </div>
-          
-          <div className="break-inside-avoid">
-            <TrendChart 
-              data={monthlyData} 
-              currentMonth={selectedMonth} 
-              onMonthClick={handleMonthChange} 
+          {/* 3. Caja Inferior: Gráfico de Tendencia (Ancho completo) */}
+          <div className="w-full pt-4">
+            <TrendChart
+              data={monthlyData}
+              currentMonth={selectedMonth}
+              onMonthClick={handleMonthChange}
             />
           </div>
+
         </div>
       )}
-      
+
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
