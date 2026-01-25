@@ -138,7 +138,7 @@ function HistoryContent() {
   if (isLoading) return <HistorySkeleton />;
 
   return (
-    <div className="min-h-screen p-4 sm:p-8">
+    <div className="min-h-screen ">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
         <h1 className="text-3xl font-black text-foreground tracking-tight">Historial</h1>
         <MonthSelector
