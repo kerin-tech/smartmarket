@@ -9,7 +9,7 @@ import { StoreComparisonList } from './StoreComparisonList';
 import { PriceStatsCard } from './PriceStatsCard';
 import { CompareEmptyState } from './CompareEmptyState';
 import { CompareSkeleton } from './CompareSkeleton';
-import { PriceHistoryTimeline } from './PriceHistoryTimeline'; // Nuevo Componente
+import { PriceHistoryTimeline } from './PriceHistoryTimeline';
 import { ToastContainer } from '@/components/ui/Toast';
 
 import { useToast } from '@/hooks/useToast';
@@ -17,6 +17,16 @@ import { analyticsService } from '@/services/analytics.service';
 import { getCategoryConfig } from '@/types/product.types';
 import type { Product } from '@/types/product.types';
 import type { PriceComparisonResponse } from '@/types/analytics.types';
+
+// --- INTERFACES ---
+interface ProductCardProps {
+  product: {
+    id: string;
+    name: string;
+    category: string;
+    brand: string;
+  };
+}
 
 export function CompareView() {
   const { toasts, removeToast, error: showError } = useToast();
@@ -93,7 +103,7 @@ export function CompareView() {
     setComparisonData(null);
   };
 
-return (
+  return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Comparar Precios</h1>
 
@@ -109,10 +119,6 @@ return (
         <CompareSkeleton />
       ) : comparisonData ? (
         <>
-          {/* Contenedor Sticky: 
-              - top-20: Ajuste para quedar debajo del header (aprox 80px). 
-              - z-30: Para asegurar que esté por encima de otros elementos al hacer scroll.
-          */}
           <div className="sticky top-20 z-30 mb-6">
             <ProductCard product={comparisonData.product} />
           </div>
@@ -150,14 +156,13 @@ return (
   );
 }
 
-// --- PRODUCT CARD COMPONENT (CON COLORES ORIGINALES) ---
+// --- PRODUCT CARD COMPONENT ---
 function ProductCard({ product }: ProductCardProps) {
   const config = getCategoryConfig(product.category);
   const CategoryIcon = config.icon || ShoppingCart;
 
   return (
-    /* bg-card/95 y backdrop-blur para que al flotar sobre el contenido se vea pulido */
-    <div className="bg-card rounded-xl border border-border p-4 shadow-md transition-all">
+    <div className="bg-card rounded-xl border border-border p-4 shadow-md transition-all backdrop-blur-sm bg-card/95">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
           <CategoryIcon className="h-6 w-6 text-primary-600" />
@@ -171,15 +176,4 @@ function ProductCard({ product }: ProductCardProps) {
       </div>
     </div>
   );
-}
-
-
-
-interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    category: string;
-    brand: string;
-  };
 }
