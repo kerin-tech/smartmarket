@@ -103,7 +103,7 @@ function HistoryContent() {
     if (currentIndex > 0) handleMonthChange(monthlyData[currentIndex - 1].month);
   };
 
-  if (isLoading) return <div className="p-8"><HistorySkeleton /></div>;
+  if (isLoading) return <HistorySkeleton />;
 
   return (
     /* Eliminamos overflow-hidden para permitir scroll general */
