@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ShoppingCart } from 'lucide-react'; // Importamos fallback
+import { ShoppingCart } from 'lucide-react';
 
 import { ProductSelector } from './ProductSelector';
 import { BestPriceCard } from './BestPriceCard';
@@ -9,6 +9,7 @@ import { StoreComparisonList } from './StoreComparisonList';
 import { PriceStatsCard } from './PriceStatsCard';
 import { CompareEmptyState } from './CompareEmptyState';
 import { CompareSkeleton } from './CompareSkeleton';
+import { PriceHistoryTimeline } from './PriceHistoryTimeline'; // Nuevo Componente
 import { ToastContainer } from '@/components/ui/Toast';
 
 import { useToast } from '@/hooks/useToast';
@@ -92,7 +93,7 @@ export function CompareView() {
     setComparisonData(null);
   };
 
-  return (
+return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Comparar Precios</h1>
 
@@ -108,7 +109,13 @@ export function CompareView() {
         <CompareSkeleton />
       ) : comparisonData ? (
         <>
-          <ProductCard product={comparisonData.product} />
+          {/* Contenedor Sticky: 
+              - top-20: Ajuste para quedar debajo del header (aprox 80px). 
+              - z-30: Para asegurar que esté por encima de otros elementos al hacer scroll.
+          */}
+          <div className="sticky top-20 z-30 mb-6">
+            <ProductCard product={comparisonData.product} />
+          </div>
 
           {comparisonData.comparison.length === 0 ? (
             <CompareEmptyState
@@ -126,6 +133,10 @@ export function CompareView() {
                 bestStoreId={derivedStats?.bestOption.storeId}
               />
 
+              {comparisonData.history && comparisonData.history.length > 0 && (
+                <PriceHistoryTimeline history={comparisonData.history} />
+              )}
+
               <PriceStatsCard stats={derivedStats?.globalStats as any} />
             </>
           )}
@@ -139,15 +150,15 @@ export function CompareView() {
   );
 }
 
-// --- PRODUCT CARD COMPONENT (CORREGIDO) ---
+// --- PRODUCT CARD COMPONENT (CON COLORES ORIGINALES) ---
 function ProductCard({ product }: ProductCardProps) {
   const config = getCategoryConfig(product.category);
   const CategoryIcon = config.icon || ShoppingCart;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+    /* bg-card/95 y backdrop-blur para que al flotar sobre el contenido se vea pulido */
+    <div className="bg-card rounded-xl border border-border p-4 shadow-md transition-all">
       <div className="flex items-center gap-4">
-        {/* Reemplazado Emoji por Icono de Lucide con tus colores */}
         <div className="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
           <CategoryIcon className="h-6 w-6 text-primary-600" />
         </div>
@@ -161,6 +172,8 @@ function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
+
+
 
 interface ProductCardProps {
   product: {

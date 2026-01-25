@@ -46,7 +46,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
           return (
             <div
               key={store.id}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg border border-solid border-border transition-colors"
             >
               {/* Icon */}
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">

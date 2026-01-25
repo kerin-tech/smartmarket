@@ -68,9 +68,9 @@ export function SpendingCard({
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-primary-500/10 transition-colors" />
 
         {/* Etiqueta con variable secundaria */}
-        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mb-1">
+        <h3 className="text-base font-semibold text-foreground">
           Gasto este mes
-        </p>
+        </h3>
 
         {/* Mes actual */}
         <p className="text-secondary-500 text-sm mb-4 capitalize">{monthLabel}</p>

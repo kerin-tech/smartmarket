@@ -142,4 +142,15 @@ export interface PriceComparisonResponse {
   comparison: PriceComparisonStore[];
   bestOption: PriceComparisonBestOption | null;
   globalStats: PriceComparisonGlobalStats;
+  history: PriceHistoryItem[]; 
+}
+
+export interface PriceHistoryItem {
+  id: string;
+  date: string;
+  storeName: string;
+  originalPrice: number;
+  discountPercentage: number;
+  finalPrice: number;
+  quantity: number;
 }
