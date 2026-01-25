@@ -51,13 +51,14 @@ class App {
   }
 
   private setRoutes(): void {
-    const {
-      api: { version },
-    } = appConfig;
-    const { env } = environment;
-    this.express.use('/', home);
-    this.express.use(`/api/${version}/${env}`, routes);
-  }
+  const { api: { version } } = appConfig;
+  const routePrefix = environment.isProd() 
+    ? `/api/${version}` 
+    : `/api/${version}/${environment.env}`;
+
+  this.express.use('/', home);
+  this.express.use(routePrefix, routes);
+}
 
   private setErrorHandler(): void {
     this.express.use(errorHandler);
