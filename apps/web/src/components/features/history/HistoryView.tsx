@@ -1,7 +1,9 @@
+// src/components/features/history/HistoryView.tsx
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation'; // Agregamos useRouter
+import { useSearchParams, useRouter } from 'next/navigation';
 import { MonthSelector } from './MonthSelector';
 import { SummaryCard } from './SummaryCard';
 import { CategoryBreakdown } from './CategoryBreakdown';
@@ -28,7 +30,7 @@ const formatMonthLabel = (monthKey: string) => {
 
 function HistoryContent() {
   const searchParams = useSearchParams();
-  const router = useRouter(); // Para actualizar la URL al hacer clic
+  const router = useRouter();
   const monthParam = searchParams.get('month');
   const { toasts, removeToast, error: showError } = useToast();
 
@@ -38,7 +40,6 @@ function HistoryContent() {
   const [byCategory, setByCategory] = useState<CategoryBreakdownType[]>([]);
   const [byStore, setByStore] = useState<StoreBreakdownType[]>([]);
   
-  // Iniciamos el estado con lo que venga en la URL o el mes actual
   const [selectedMonth, setSelectedMonth] = useState(monthParam || getCurrentMonth());
 
   const loadMonthData = useCallback(async (month: string) => {
@@ -57,15 +58,12 @@ function HistoryContent() {
     }
   }, [showError]);
 
-  // Carga inicial de la lista de meses
   useEffect(() => {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
         const monthlyRes = await analyticsService.getMonthly(12);
         setMonthlyData(monthlyRes.monthly);
-        
-        // Cargar datos del mes seleccionado inicialmente
         await loadMonthData(selectedMonth);
       } catch (err: any) {
         showError(err.message || 'Error al cargar el historial');
@@ -74,24 +72,18 @@ function HistoryContent() {
       }
     };
     loadInitialData();
-  }, [loadMonthData, showError]); // Se ejecuta solo al montar
+  }, [loadMonthData, showError]);
 
-  // CLAVE: Sincronizar estado LOCAL cuando la URL cambie (ej: desde el Dashboard)
   useEffect(() => {
     if (monthParam && monthParam !== selectedMonth) {
       setSelectedMonth(monthParam);
       loadMonthData(monthParam);
     }
-  }, [monthParam, loadMonthData]); // Escuchamos cambios en la URL
+  }, [monthParam, loadMonthData, selectedMonth]);
 
-  // Manejador central que actualiza AMBOS: Estado y URL
   const handleMonthChange = async (newMonth: string) => {
     if (newMonth === selectedMonth) return;
-    
-    // 1. Actualizamos URL (opcional, pero recomendado para consistencia)
     router.push(`/history?month=${newMonth}`, { scroll: false });
-    
-    // 2. Actualizamos estado local y cargamos datos
     setSelectedMonth(newMonth);
     await loadMonthData(newMonth);
   };
@@ -111,53 +103,70 @@ function HistoryContent() {
     if (currentIndex > 0) handleMonthChange(monthlyData[currentIndex - 1].month);
   };
 
-  if (isLoading) return <div className="space-y-6"><h1 className="text-2xl font-bold">Historial</h1><HistorySkeleton /></div>;
+  if (isLoading) return <div className="p-8"><HistorySkeleton /></div>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Historial</h1>
-      
-      <MonthSelector 
-        currentMonth={selectedMonth} 
-        monthLabel={formatMonthLabel(selectedMonth)} 
-        onPrevious={handlePreviousMonth} 
-        onNext={handleNextMonth} 
-        hasPrevious={monthlyData.findIndex((m) => m.month === selectedMonth) < monthlyData.length - 1} 
-        hasNext={monthlyData.findIndex((m) => m.month === selectedMonth) > 0} 
-      />
+    /* Eliminamos overflow-hidden para permitir scroll general */
+    <div className="min-h-screen">
+      {/* Header Fijo/Normal */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <h1 className="text-4xl font-black text-foreground tracking-tight">Historial</h1>
+        <MonthSelector 
+          currentMonth={selectedMonth} 
+          monthLabel={formatMonthLabel(selectedMonth)} 
+          onPrevious={handlePreviousMonth} 
+          onNext={handleNextMonth} 
+          hasPrevious={monthlyData.findIndex((m) => m.month === selectedMonth) < monthlyData.length - 1} 
+          hasNext={monthlyData.findIndex((m) => m.month === selectedMonth) > 0} 
+        />
+      </header>
 
       {(!currentMonthData || currentMonthData.totalPurchases === 0) ? (
         <HistoryEmptyState monthLabel={formatMonthLabel(selectedMonth)} hasAnyHistory={true} />
       ) : (
-        <>
-          <SummaryCard 
-            total={currentMonthData.totalSpent} 
-            purchaseCount={currentMonthData.totalPurchases} 
-            productCount={currentMonthData.totalItems} 
-            comparison={null} 
-          />
-          <div className="grid gap-6 lg:grid-cols-2">
+        /* DISPOSICIÓN MASONRY / DOS COLUMNAS CON UN SOLO SCROLL */
+        <div className="columns-1 lg:columns-2 gap-4 space-y-8 [column-fill:_balance]">
+          
+          {/* Bloque 1: Resumen (Izquierda arriba) */}
+          <div className="break-inside-avoid ">
+            <SummaryCard 
+              total={currentMonthData.totalSpent} 
+              purchaseCount={currentMonthData.totalPurchases} 
+              productCount={currentMonthData.totalItems} 
+              comparison={null} 
+            />
+          </div>
+
+          {/* Bloque 2: Categorías (Derecha arriba) */}
+          <div className="break-inside-avoid ">
             {isLoadingMonth ? (
-              <>
-                <div className="bg-card rounded-xl border border-border p-6 h-[300px] animate-pulse" />
-                <div className="bg-card rounded-xl border border-border p-6 h-[300px] animate-pulse" />
-              </>
+              <div className="h-[300px] bg-muted/50 animate-pulse rounded-3xl" />
             ) : (
-              <>
-                <CategoryBreakdown categories={byCategory as any} />
-                <StoreBreakdown stores={byStore} totalSpent={currentMonthData.totalSpent} />
-              </>
+              <CategoryBreakdown categories={byCategory as any} />
             )}
           </div>
-        </>
-      )}
 
-      {/* El TrendChart ahora usa el handleMonthChange corregido */}
-      <TrendChart 
-        data={monthlyData} 
-        currentMonth={selectedMonth} 
-        onMonthClick={handleMonthChange} 
-      />
+          {/* Bloque 3: Trend Chart (Izquierda abajo) */}
+          <div className="break-inside-avoid  ">
+            {isLoadingMonth ? (
+              <div className="h-[500px] bg-muted/50 animate-pulse rounded-3xl" />
+            ) : (
+              <StoreBreakdown stores={byStore} totalSpent={currentMonthData?.totalSpent || 0} />
+            )}
+          </div>
+          
+          {/* Bloque 4: Locales (Derecha abajo) */}
+          <div className="break-inside-avoid ">
+            <TrendChart 
+              data={monthlyData} 
+              currentMonth={selectedMonth} 
+              onMonthClick={handleMonthChange} 
+            />
+          </div>
+
+
+        </div>
+      )}
       
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>

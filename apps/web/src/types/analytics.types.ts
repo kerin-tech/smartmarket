@@ -40,16 +40,27 @@ export interface SummaryResponse {
   } | null;
 }
 
+export interface StorePurchaseItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  total: number;
+}
+
+export interface StorePurchaseDetail {
+  id: string;
+  date: string;
+  total: number;
+  items: StorePurchaseItem[];
+}
+
 export interface StoreBreakdown {
   id: string;
   name: string;
-  location: string;
   totalSpent: number;
   totalPurchases: number;
-  totalItems: number;
-  averagePerPurchase: number;
+  purchases: StorePurchaseDetail[]; // <-- La clave del ajuste
 }
-
 export interface ByStoreResponse {
   byStore: StoreBreakdown[];
   period: {
