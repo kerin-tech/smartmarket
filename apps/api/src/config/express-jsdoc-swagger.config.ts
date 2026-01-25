@@ -1,13 +1,24 @@
 import * as path from 'path';
 import appConfig from './app.config';
-import environment from '@/config/env';
 
-const { env, port } = environment;
+// Leemos directamente de process.env para evitar la referencia circular de la clase Environment
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isProd = nodeEnv === 'production';
+const port = process.env.PORT || appConfig.defaultPort;
+const appUrl = process.env.APP_BASE_URL || 'http://localhost';
+
 const {
   api: { basePath, version },
   docs: { swaggerUIPath, apiDocsPath },
 } = appConfig;
-const baseDir = path.join(__dirname, '../../');
+
+const baseDir = path.resolve(__dirname, '../../');
+
+// Construcción de la URL sin depender de la instancia de la clase
+const swaggerUrl = isProd 
+  ? `${appUrl}/${basePath}/${version}`
+  : `${appUrl}:${port}/${basePath}/${version}/${nodeEnv}`;
+
 const expressJSDocSwaggerConfig = {
   info: {
     version: '1.0.0',
@@ -19,22 +30,8 @@ const expressJSDocSwaggerConfig = {
   },
   servers: [
     {
-      url: `${environment.appUrl}:${port}/{basePath}/{version}/{env}`,
-      description: 'Express Server',
-      variables: {
-        port: {
-          default: String(port),
-        },
-        basePath: {
-          default: basePath,
-        },
-        version: {
-          default: version,
-        },
-        env: {
-          default: env,
-        },
-      },
+      url: swaggerUrl,
+      description: isProd ? 'Production Server' : 'Development Server',
     },
   ],
   security: {
@@ -44,23 +41,13 @@ const expressJSDocSwaggerConfig = {
     },
   },
   baseDir,
-  // Glob pattern to find your jsdoc files (multiple patterns can be added in an array)
   filesPattern: `${baseDir}/src/**/*.routes.ts`,
-  // URL where SwaggerUI will be rendered
   swaggerUIPath,
-  // Expose OpenAPI UI
   exposeSwaggerUI: true,
-  // Expose Open API JSON Docs documentation in `apiDocsPath` path.
   exposeApiDocs: true,
-  // Open API JSON Docs endpoint.
   apiDocsPath,
-  // Set non-required fields as nullable by default
   notRequiredAsNullable: false,
-  // You can customize your UI options.
-  // you can extend swagger-ui-express config. You can checkout an example of this
-  // in the `example/configuration/swaggerOptions.js`
   swaggerUiOptions: {},
-  // multiple option in case you want more that one instance
   multiple: true,
 };
 
