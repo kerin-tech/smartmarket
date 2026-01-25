@@ -38,7 +38,7 @@ export function SummaryCard({
       case 'up':
         return 'text-danger-700 bg-danger-100 ';
       case 'down':
-        return 'text-emerald-700 bg-emerald-100';
+        return 'text-success-600 bg-success-100';
       default:
         return 'text-muted-foreground bg-muted';
     }

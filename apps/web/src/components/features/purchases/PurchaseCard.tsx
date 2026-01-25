@@ -15,8 +15,20 @@ interface PurchaseCardProps {
 }
 
 function formatDateLong(date: string): string {
+  if (!date) return 'Fecha no disponible';
+
   const d = new Date(date);
-  return d.toLocaleDateString('es-CO', {
+
+
+  if (isNaN(d.getTime())) return 'Fecha inválida';
+
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth();
+  const day = d.getUTCDate();
+
+  const localDate = new Date(year, month, day);
+
+  return localDate.toLocaleDateString('es-CO', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -75,7 +87,7 @@ export function PurchaseCard({ purchase, onEdit, onDelete, searchQuery }: Purcha
         </p>
         {searchQuery && (
           <p className="text-xs text-primary-600 mt-0.5">
-            Coincide con tu búsqueda
+            Coincidencia
           </p>
         )}
       </div>

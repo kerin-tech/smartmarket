@@ -1,5 +1,3 @@
-// src/components/forms/LoginForm.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { LogIn, AlertCircle } from 'lucide-react'; // Añadido AlertCircle
+import { AlertCircle } from 'lucide-react';
 
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -59,20 +57,14 @@ export function LoginForm() {
       });
 
       setAuth(response.user, response.token);
-      success(`¡Bienvenido de nuevo, ${response.user.name}!`);
+      success(`¡Bienvenido, ${response.user.name}!`);
 
       setTimeout(() => {
         router.push(routes.dashboard);
       }, 1000);
     } catch (err) {
       const apiError = err as ApiError;
-      if (apiError.statusCode === 401 || apiError.statusCode === 404) {
-        setGeneralError('Correo electrónico o contraseña incorrectos');
-      } else if (apiError.statusCode === 429) {
-        setGeneralError('Demasiados intentos. Por favor, espera unos minutos.');
-      } else {
-        setGeneralError(apiError.message || 'Error al iniciar sesión.');
-      }
+      setGeneralError(apiError.message || 'Credenciales incorrectas');
     } finally {
       setIsSubmitting(false);
     }
@@ -80,70 +72,64 @@ export function LoginForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        
-        {/* --- CUADRO DE ERROR GENERAL (Basado en el estilo de tus Toasts) --- */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
         {generalError && (
           <div
             className={cn(
-              "flex items-center gap-3 w-full p-4 rounded-xl border shadow-sm animate-in fade-in slide-in-from-top-2",
-              "bg-red-50 border-red-200 text-red-800", // Estilo Light
-              "dark:bg-red-950/30 dark:border-red-900 dark:text-red-300" // Estilo Dark (sacado de tu Toast)
+              "flex items-center gap-3 w-full p-4 rounded-xl border animate-in fade-in slide-in-from-top-2",
+              "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300"
             )}
             role="alert"
           >
-            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500 dark:text-red-400" />
-            <p className="flex-1 text-sm font-bold leading-tight">
-              {generalError}
-            </p>
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
+            <p className="text-sm font-bold leading-tight">{generalError}</p>
           </div>
         )}
 
-        {/* ... (resto de los Inputs: Email y Password) */}
+        <div className="space-y-4">
+          <Input
+            label="Correo electrónico"
+            placeholder="ejemplo@correo.com"
+            {...register('email')}
+            error={errors.email?.message}
+          />
 
-        <Input
-          label="Correo electrónico"
-          {...register('email')}
-          error={errors.email?.message}
-          // Asegúrate de que tu componente Input use el color 'danger' o 'red' para el texto de error
-        />
-
-        <Input
-          label="Contraseña"
-          type="password"
-          {...register('password')}
-          error={errors.password?.message}
-        />
-
-        <div className="flex items-center justify-between">
-          <Checkbox label="Recordarme" {...register('rememberMe')} />
-          <Link
-            href={routes.forgotPassword}
-            className="text-sm text-primary-600 hover:text-primary-500 transition-colors font-medium"
-          >
-            ¿Olvidaste tu contraseña?
-          </Link>
+          <Input
+            label="Contraseña"
+            type="password"
+            placeholder="Tu contraseña"
+            {...register('password')}
+            error={errors.password?.message}
+          />
         </div>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          isLoading={isSubmitting}
-          leftIcon={<LogIn className="h-5 w-5" />}
-        >
-          Iniciar sesión
-        </Button>
+        <div className="flex items-center">
+          <Checkbox 
+            label="Recordarme en este dispositivo" 
+            {...register('rememberMe')} 
+          />
+        </div>
+
+        <div className="pt-2">
+          <Button
+            type="submit"
+            fullWidth
+            size="lg"
+            isLoading={isSubmitting}
+            className="rounded-xl font-bold h-12"
+          >
+            Iniciar sesión
+          </Button>
+        </div>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        ¿No tienes cuenta?{' '}
-        <Link href={routes.register} className="text-primary-600 hover:underline font-bold">
-          Regístrate
+      <p className="mt-10 text-center text-sm text-muted-foreground">
+        ¿No tienes una cuenta?{' '}
+        <Link href={routes.register} className="text-primary-600 hover:text-primary-500 font-bold transition-colors">
+          Regístrate ahora
         </Link>
       </p>
 
-      {/* Renderizado de Toasts de éxito o errores globales */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   );
