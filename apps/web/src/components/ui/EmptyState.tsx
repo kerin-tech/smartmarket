@@ -27,7 +27,7 @@ const colors: Record<EmptyStateType, string> = {
   products: 'bg-muted text-primary-600',
   stores: 'bg-muted   text-primary-600',
   purchases: 'bg-muted text-primary-600',
-  default: 'bg-muted text-primary-600',
+  default: 'bg-muted text-muted-foreground',
 };
 
 export function EmptyState({
