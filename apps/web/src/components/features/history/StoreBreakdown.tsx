@@ -24,7 +24,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
   return (
     <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-      <h3 className="text-xl font-bold text-foreground mb-6">Gastos por local</h3>
+      <h3 className="text-md font-bold text-foreground mb-6">Gastos por local</h3>
 
       <div className="space-y-4">
         {stores.map((store) => {
@@ -45,7 +45,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
                 {/* ICONO: min-w garantiza visibilidad en mobile */}
                 <div className={`shrink-0 flex items-center justify-center rounded-xl transition-colors
                   w-12 h-12 min-w-[3rem] sm:w-14 sm:h-14 sm:min-w-[3.5rem]
-                  ${isExpanded ? 'bg-primary-600 text-white' : 'bg-primary-100 text-primary-600'}`}
+                  ${isExpanded ? 'bg-primary-200 text-white' : 'bg-primary-100 text-primary-600'}`}
                 >
                   <MapPin className="h-6 w-6 sm:h-7 sm:w-7" />
                 </div>
@@ -53,7 +53,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-base sm:text-lg font-bold text-foreground truncate uppercase tracking-tight">
+                      <h4 className="text-md sm:text-lg font-medium text-foreground truncate tracking-tight">
                         {store.name}
                       </h4>
                       <p className="text-xs sm:text-sm text-muted-foreground">{store.totalPurchases} compras</p>
@@ -61,10 +61,10 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
                     <div className="text-right flex items-center gap-2 sm:gap-4 shrink-0">
                       <div>
-                        <p className="text-base sm:text-lg font-bold text-foreground whitespace-nowrap">
+                        <p className="text-base sm:text-lg font-semibold text-foreground whitespace-nowrap">
                           {formatCurrency(store.totalSpent)}
                         </p>
-                        <p className="text-xs sm:text-sm font-bold text-primary-600">{percentage}%</p>
+                        <p className="text-xs sm:text-sm font-semibold text-primary-600">{percentage}%</p>
                       </div>
                       {isExpanded ? (
                         <ChevronUp className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground shrink-0" />
