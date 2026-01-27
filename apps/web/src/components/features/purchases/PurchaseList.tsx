@@ -289,11 +289,15 @@ export function PurchaseList() {
         </div>
       )}
 
-      {/* FAB Mobile */}
-      <div className="fixed bottom-24 right-6 z-40 sm:hidden">
+    {/* BOTÓN FLOTANTE (FAB) CON ETIQUETA - Mobile (bottom-28) */}
+      <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
+        <span className="bg-card border border-border text-foreground text-sm font-medium px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 ">
+          Nueva compra
+        </span>
         <button
           onClick={openCreateModal}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl active:scale-95 transition-all"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-90"
+          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
         >
           <Plus className="h-8 w-8" />
         </button>

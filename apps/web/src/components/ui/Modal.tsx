@@ -47,29 +47,20 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (isOpen && modalRef.current) {
-      const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      const firstElement = focusableElements[0] as HTMLElement;
-      firstElement?.focus();
-    }
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto">
-      {/* Backdrop */}
+    /* Agregamos !mt-0 para matar el margen del space-y-8 del padre */
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto !mt-0">
+      {/* Backdrop Original (Solo bg-black/60, sin blur) */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/60 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Container para centrar el modal en pantalla */}
-      <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
+      {/* Container - En mobile ocupa todo, en desktop centra con p-4 */}
+      <div className="relative z-10 flex min-h-full w-full items-center justify-center p-0 sm:p-4">
         
         {/* Modal Card */}
         <div
@@ -78,13 +69,16 @@ export function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           className={cn(
-            'relative w-full bg-card text-foreground rounded-xl shadow-2xl transform transition-all',
-            'animate-scale-in my-8 border border-border', // Cambié border-color por border-border
-            'text-left', // <--- FIX: Resetea el alineado para que los inputs no se centren
+            'relative w-full bg-card text-foreground shadow-2xl transform transition-all',
+            'text-left border border-border flex flex-col',
+            // MOBILE: Full screen, no borders
+            'min-h-screen sm:min-h-0 rounded-none sm:rounded-xl',
+            // DESKTOP: Animación y tamaños originales
+            'animate-scale-in sm:my-8', 
             sizes[size]
           )}
         >
-          {/* Header */}
+          {/* Header Original */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <h2 id="modal-title" className="text-lg font-semibold">
               {title}
@@ -100,8 +94,8 @@ export function Modal({
             )}
           </div>
 
-          {/* Content */}
-          <div className="px-6 py-4">
+          {/* Content con Scroll Interno (para que el Header no se vaya en mobile) */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
             {children}
           </div>
         </div>
