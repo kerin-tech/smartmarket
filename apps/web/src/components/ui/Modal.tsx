@@ -13,6 +13,7 @@ export interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
   showCloseButton?: boolean;
+  variant?: 'form' | 'dialog'; // <--- Nueva prop para controlar el comportamiento
 }
 
 const sizes = {
@@ -28,6 +29,7 @@ export function Modal({
   children,
   size = 'md',
   showCloseButton = true,
+  variant = 'form', // Por defecto es tipo formulario (Full screen mobile)
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -49,44 +51,51 @@ export function Modal({
 
   if (!isOpen) return null;
 
+  // Clases dinámicas según la variante
+  const isDialog = variant === 'dialog';
+
   return (
-    /* !mt-0 anula el espacio del padre. items-start en mobile para que pegue arriba */
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-start sm:justify-center overflow-y-auto !mt-0">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto !mt-0">
       
-      {/* Backdrop Original (Sin blur) */}
+      {/* Backdrop (Sin blur) */}
       <div
         className="fixed inset-0 bg-black/60 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Container - Sin padding en mobile para ocupar todo el ancho */}
-      <div className="relative z-10 flex min-h-full w-full items-start sm:items-center justify-center p-0 sm:p-4">
+      {/* Container dinámico */}
+      <div className={cn(
+        "relative z-10 flex min-h-full w-full items-center justify-center transition-all",
+        isDialog ? "p-4" : "p-0 sm:p-4" // Si es diálogo, siempre tiene padding
+      )}>
         
         {/* Modal Card */}
         <div
           ref={modalRef}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="modal-title"
           className={cn(
-            'relative w-full bg-card text-foreground flex flex-col transform transition-all',
-            // MOBILE: Full screen, sin bordes exteriores, color sólido (bg-card ya lo tiene)
-            'min-h-screen sm:min-h-0 border-0 sm:border border-border rounded-none sm:rounded-xl shadow-2xl',
-            // DESKTOP: Animación y margen original
-            'animate-scale-in sm:my-8', 
+            'relative w-full bg-card text-foreground flex flex-col transform transition-all shadow-2xl',
+            'animate-scale-in',
+            
+            // Lógica de bordes y dimensiones según variante
+            isDialog 
+              ? 'rounded-xl border border-border h-auto max-w-[90vw]' // Siempre flotante
+              : 'min-h-screen sm:min-h-0 rounded-none sm:rounded-xl border-0 sm:border border-border', // Full screen en mobile si es form
+            
             sizes[size]
           )}
         >
-          {/* Header - Solo esta línea de borde se mantiene en mobile */}
+          {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 id="modal-title" className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold">
               {title}
             </h2>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="h-5 w-5" />
@@ -94,7 +103,7 @@ export function Modal({
             )}
           </div>
 
-          {/* Content con Scroll Interno */}
+          {/* Content */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {children}
           </div>
