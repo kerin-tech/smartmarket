@@ -50,17 +50,18 @@ export function Modal({
   if (!isOpen) return null;
 
   return (
-    /* Agregamos !mt-0 para matar el margen del space-y-8 del padre */
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto !mt-0">
-      {/* Backdrop Original (Solo bg-black/60, sin blur) */}
+    /* !mt-0 anula el espacio del padre. items-start en mobile para que pegue arriba */
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-start sm:justify-center overflow-y-auto !mt-0">
+      
+      {/* Backdrop Original (Sin blur) */}
       <div
         className="fixed inset-0 bg-black/60 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Container - En mobile ocupa todo, en desktop centra con p-4 */}
-      <div className="relative z-10 flex min-h-full w-full items-center justify-center p-0 sm:p-4">
+      {/* Container - Sin padding en mobile para ocupar todo el ancho */}
+      <div className="relative z-10 flex min-h-full w-full items-start sm:items-center justify-center p-0 sm:p-4">
         
         {/* Modal Card */}
         <div
@@ -69,16 +70,15 @@ export function Modal({
           aria-modal="true"
           aria-labelledby="modal-title"
           className={cn(
-            'relative w-full bg-card text-foreground shadow-2xl transform transition-all',
-            'text-left border border-border flex flex-col',
-            // MOBILE: Full screen, no borders
-            'min-h-screen sm:min-h-0 rounded-none sm:rounded-xl',
-            // DESKTOP: Animación y tamaños originales
+            'relative w-full bg-card text-foreground flex flex-col transform transition-all',
+            // MOBILE: Full screen, sin bordes exteriores, color sólido (bg-card ya lo tiene)
+            'min-h-screen sm:min-h-0 border-0 sm:border border-border rounded-none sm:rounded-xl shadow-2xl',
+            // DESKTOP: Animación y margen original
             'animate-scale-in sm:my-8', 
             sizes[size]
           )}
         >
-          {/* Header Original */}
+          {/* Header - Solo esta línea de borde se mantiene en mobile */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <h2 id="modal-title" className="text-lg font-semibold">
               {title}
@@ -86,7 +86,7 @@ export function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none"
                 aria-label="Cerrar"
               >
                 <X className="h-5 w-5" />
@@ -94,7 +94,7 @@ export function Modal({
             )}
           </div>
 
-          {/* Content con Scroll Interno (para que el Header no se vaya en mobile) */}
+          {/* Content con Scroll Interno */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {children}
           </div>
