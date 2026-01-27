@@ -29,10 +29,10 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: 'onSubmit',
+    mode: 'onTouched', // Cambiado a onTouched para que valide mientras el usuario interactúa
     defaultValues: {
       email: '',
       password: '',
@@ -77,11 +77,11 @@ export function LoginForm() {
           <div
             className={cn(
               "flex items-center gap-3 w-full p-4 rounded-xl border animate-in fade-in slide-in-from-top-2",
-              "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300"
+              "bg-red-800 border-red-600 text-red-200"
             )}
             role="alert"
           >
-            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
+            <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-200" />
             <p className="text-sm font-bold leading-tight">{generalError}</p>
           </div>
         )}
@@ -90,8 +90,9 @@ export function LoginForm() {
           <Input
             label="Correo electrónico"
             placeholder="ejemplo@correo.com"
+            type="email"
             {...register('email')}
-            error={errors.email?.message}
+            error={errors.email?.message} 
           />
 
           <Input
@@ -125,7 +126,7 @@ export function LoginForm() {
 
       <p className="mt-10 text-center text-sm text-muted-foreground">
         ¿No tienes una cuenta?{' '}
-        <Link href={routes.register} className="text-primary-600 hover:text-primary-500 font-bold transition-colors">
+        <Link href={routes.register} className="text-primary-700 hover:text-primary-900 hover:underline font-medium transition-colors">
           Regístrate ahora
         </Link>
       </p>
