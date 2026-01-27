@@ -56,6 +56,9 @@ export default function RegisterPage() {
             Privacidad
           </Link>
         </p>
+         <p className="mt-2 text-center text-xs text-muted-foreground px-4">
+          Development by Kerin Melo © 2026
+        </p>
       </div>
     </div>
   );

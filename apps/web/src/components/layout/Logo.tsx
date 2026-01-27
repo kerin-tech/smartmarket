@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { routes } from '@/config/app.config';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   className?: string;
 }
@@ -23,6 +23,10 @@ const sizes = {
   lg: {
     icon: 'h-9 w-9',
     text: 'text-2xl',
+  },
+ xl: {
+    icon: 'h-12 w-12',
+    text: 'text-4xl',
   },
 };
 

@@ -41,7 +41,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               'placeholder:text-muted-foreground',
               'focus:outline-none focus:ring-2 focus:ring-offset-0',
               error
-                ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20'
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-300/50'
                 : 'border-secondary-300 focus:border-primary-500 focus:ring-primary-500/20',
               disabled && 'cursor-not-allowed bg-muted text-muted-foreground',
               isPassword && 'pr-11',
@@ -74,7 +74,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {error && (
           <p
             id={`${inputId}-error`}
-            className="mt-1.5 text-sm text-error-600"
+            className="mt-1.5 text-sm text-red-500"
             role="alert"
           >
             {error}
