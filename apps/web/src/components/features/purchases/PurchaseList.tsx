@@ -291,7 +291,7 @@ export function PurchaseList() {
 
     {/* BOTÓN FLOTANTE (FAB) CON ETIQUETA - Mobile (bottom-28) */}
       <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
-        <span className="bg-card border border-border text-foreground text-sm font-medium px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 ">
+        <span className="bg-card border border-border text-foreground text-sm font-medium px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 tracking-tight">
           Nueva compra
         </span>
         <button

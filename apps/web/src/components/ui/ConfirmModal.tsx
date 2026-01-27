@@ -30,11 +30,17 @@ export function ConfirmModal({
   variant = 'danger',
 }: ConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={title} 
+      size="sm" 
+      variant="dialog" // <--- Solo esto para que sea flotante en mobile
+    >
       <div className="flex gap-4">
         <div
-          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-            variant === 'danger' ? 'bg-red-600/50' : 'bg-warning-100'
+          className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+            variant === 'danger' ? 'bg-red-500' : 'bg-warning-100'
           }`}
         >
           <AlertTriangle
