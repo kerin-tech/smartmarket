@@ -45,7 +45,7 @@ node_modules/
 /test-reports
 
 
-# Google Cloud credentials
-src/config/google-credentials.json
 google-credentials.json
-*.json.bak
+*.json
+!package.json
+!tsconfig.json

@@ -83,76 +83,134 @@ function parseTicketLines(lines: string[]): TicketLine[] {
 
 /**
  * Parser específico para formato ARA (Jerónimo Martins)
- * Productos a la izquierda, precios en columna separada
+ * Maneja el formato donde:
+ * - Productos y precios están en columnas separadas
+ * - Algunas líneas tienen cantidad/precio unitario debajo del producto
  */
 function parseAraFormat(lines: string[], valorIndex: number): TicketLine[] {
   const results: TicketLine[] = [];
   
-  // Líneas de productos (antes de "Valor")
-  const productLines: string[] = [];
-  // Líneas de precios (después de "Valor")
-  const priceLines: string[] = [];
+  // Separar zona de productos y zona de precios
+  const productZone = lines.slice(0, valorIndex);
+  const priceZone = lines.slice(valorIndex + 1);
   
-  // Ignorar encabezados
+  // Patrones
+  const productLinePattern = /^[\d\s]{6,}\s+[A-Z]/; // Línea que empieza con código
+  const quantityLinePattern = /^\s*(\d+)\s*(UN|EA)\s*X\s*([\d\s]+)?$/i; // "2 UN X 3 450"
+  const weightLinePattern = /^\s*0?[,.]?\s*(\d{1,3})\s*KGM?\s*X\s*([\d\s]+)?$/i; // "0.735 KGM X 9 600"
+  const pricePattern = /^([\d\s]+)\s*[A-Z]?$/; // "6 900 E"
+  
+  // Patrones a ignorar
   const ignorePatterns = [
     /^(nit|tel|comprobante|art[ií]culo|descripci[oó]n|jeronimo|total|descuento|tarjeta|impoconsumo|trackid)/i,
     /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/,
     /^[\-=\*]+$/,
-    /^\d+\s*(UN|EA|KGM)\s*X$/i, // "2 UN X" líneas de cantidad
-    /^0[,\.]\d+\s*KGM\s*X/i, // "0,575 KGM X" líneas de peso
+    /^\d{1,3}$/,  // Solo números cortos
   ];
   
-  const isIgnored = (line: string): boolean => {
+  const shouldIgnore = (line: string): boolean => {
     const trimmed = line.trim();
-    if (trimmed.length < 3) return true;
+    if (trimmed.length < 4) return true;
     return ignorePatterns.some(p => p.test(trimmed));
   };
   
-  // Separar productos y precios
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  // Extraer productos con sus cantidades
+  interface ProductData {
+    name: string;
+    rawLine: string;
+    quantity: number;
+    unitPrice: number | null;
+  }
+  
+  const products: ProductData[] = [];
+  
+  for (let i = 0; i < productZone.length; i++) {
+    const line = productZone[i].trim();
     
-    if (i < valorIndex) {
-      // Zona de productos
-      if (!isIgnored(line) && /^\d+\s+\w+/.test(line)) {
-        // Línea que empieza con código de producto
-        productLines.push(line);
+    if (shouldIgnore(line)) continue;
+    
+    // ¿Es una línea de producto (empieza con código)?
+    if (productLinePattern.test(line)) {
+      // Extraer nombre del producto
+      const nameMatch = line.match(/^[\d\s]+\s+(.+)$/);
+      const productName = nameMatch ? nameMatch[1].trim() : line;
+      
+      // Buscar si la siguiente línea tiene cantidad
+      let quantity = 1;
+      let unitPrice: number | null = null;
+      
+      if (i + 1 < productZone.length) {
+        const nextLine = productZone[i + 1].trim();
+        
+        // Verificar si es línea de cantidad en unidades (ej: "2 UN X 3 450")
+        const qtyMatch = nextLine.match(quantityLinePattern);
+        if (qtyMatch) {
+          quantity = parseInt(qtyMatch[1], 10);
+          if (qtyMatch[3]) {
+            unitPrice = parseInt(qtyMatch[3].replace(/\s/g, ''), 10);
+          }
+          i++; // Saltar la línea de cantidad
+        } else {
+          // Verificar si es línea de peso (ej: "0,735 KGM X 9 600")
+          const weightMatch = nextLine.match(weightLinePattern);
+          if (weightMatch) {
+            // Convertir a decimal (ej: "735" -> 0.735)
+            const decimalPart = weightMatch[1];
+            quantity = parseFloat('0.' + decimalPart);
+            if (weightMatch[2]) {
+              unitPrice = parseInt(weightMatch[2].replace(/\s/g, ''), 10);
+            }
+            i++; // Saltar la línea de peso
+          }
+        }
       }
-    } else if (i > valorIndex) {
-      // Zona de precios
-      const priceMatch = line.match(/^([\d\s]+)\s*[A-Z]?$/);
-      if (priceMatch) {
-        priceLines.push(line);
+      
+      products.push({
+        name: productName,
+        rawLine: line,
+        quantity,
+        unitPrice,
+      });
+    }
+  }
+  
+  // Extraer precios
+  const prices: number[] = [];
+  for (const line of priceZone) {
+    const trimmed = line.trim();
+    const match = trimmed.match(pricePattern);
+    if (match && match[1]) {
+      const priceStr = match[1].replace(/\s/g, '');
+      const price = parseInt(priceStr, 10);
+      if (price > 0 && price < 10000000) { // Filtrar valores absurdos
+        prices.push(price);
       }
     }
   }
   
   // Emparejar productos con precios
-  const maxItems = Math.min(productLines.length, priceLines.length);
+  const maxItems = Math.min(products.length, prices.length);
   
   for (let i = 0; i < maxItems; i++) {
-    const productLine = productLines[i];
-    const priceLine = priceLines[i];
+    const product = products[i];
+    const totalPrice = prices[i];
     
-    // Extraer nombre del producto (quitar código inicial)
-    const productMatch = productLine.match(/^[\d\s]+\s+(.+)$/);
-    const productName = productMatch ? productMatch[1].trim() : productLine;
-    
-    // Extraer precio (quitar letra final si existe)
-    const priceMatch = priceLine.match(/^([\d\s]+)/);
-    const priceStr = priceMatch ? priceMatch[1].replace(/\s/g, '') : '0';
-    const price = parseInt(priceStr, 10);
-    
-    if (productName && price > 0) {
-      results.push({
-        rawText: `${productLine} | ${priceLine}`,
-        productName: cleanProductName(productName),
-        quantity: 1,
-        unitPrice: price,
-        totalPrice: price,
-        confidence: 0.85,
-      });
+    // Calcular precio unitario si no lo tenemos
+    let unitPrice = product.unitPrice;
+    if (!unitPrice && product.quantity !== 1) {
+      unitPrice = Math.round(totalPrice / product.quantity);
+    } else if (!unitPrice) {
+      unitPrice = totalPrice;
     }
+    
+    results.push({
+      rawText: `${product.rawLine} | Qty: ${product.quantity} | Total: ${totalPrice}`,
+      productName: cleanProductName(product.name),
+      quantity: product.quantity,
+      unitPrice: unitPrice,
+      totalPrice: totalPrice,
+      confidence: 0.85,
+    });
   }
   
   return results;

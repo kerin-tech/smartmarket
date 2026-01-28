@@ -21,9 +21,10 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   // Relaciones
-  products  Product[]
-  stores    Store[]
-  purchases Purchase[]
+  products    Product[]
+  stores      Store[]
+  purchases   Purchase[]
+  ticketScans TicketScan[]
 
   @@map("users")
 }
@@ -40,8 +41,10 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
 
   // Relaciones
-  user          User           @relation(fields: [userId], references: [id])
-  purchaseItems PurchaseItem[]
+  user           User             @relation(fields: [userId], references: [id])
+  purchaseItems  PurchaseItem[]
+  matchedInScans TicketScanItem[] @relation("MatchedProduct")
+  finalInScans   TicketScanItem[] @relation("FinalProduct")
 
   @@map("products")
 }
@@ -57,8 +60,9 @@ model Store {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
 
   // Relaciones
-  user      User       @relation(fields: [userId], references: [id])
-  purchases Purchase[]
+  user        User         @relation(fields: [userId], references: [id])
+  purchases   Purchase[]
+  ticketScans TicketScan[]
 
   @@map("stores")
 }
@@ -67,17 +71,19 @@ model Store {
 // Entidad: Purchase (Cabecera de compra)
 // --------------------------------------
 model Purchase {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  storeId   String   @map("store_id") @db.Uuid
-  date      DateTime @db.Date
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp()
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  storeId      String   @map("store_id") @db.Uuid
+  ticketScanId String?  @unique @map("ticket_scan_id") @db.Uuid
+  date         DateTime @db.Date
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   // Relaciones
-  user  User           @relation(fields: [userId], references: [id])
-  store Store          @relation(fields: [storeId], references: [id])
-  items PurchaseItem[]
+  user       User        @relation(fields: [userId], references: [id])
+  store      Store       @relation(fields: [storeId], references: [id])
+  ticketScan TicketScan? @relation(fields: [ticketScanId], references: [id])
+  items      PurchaseItem[]
 
   // Índices
   @@index([date])
@@ -90,13 +96,13 @@ model Purchase {
 // Entidad: PurchaseItem (Detalle de compra)
 // --------------------------------------
 model PurchaseItem {
-  id         String   @id @default(uuid()) @db.Uuid
-  purchaseId String   @map("purchase_id") @db.Uuid
-  productId  String   @map("product_id") @db.Uuid
-  quantity   Decimal  @db.Decimal(10, 3)
-  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  id                 String   @id @default(uuid()) @db.Uuid
+  purchaseId         String   @map("purchase_id") @db.Uuid
+  productId          String   @map("product_id") @db.Uuid
+  quantity           Decimal  @db.Decimal(10, 3)
+  unitPrice          Decimal  @map("unit_price") @db.Decimal(10, 2)
   discountPercentage Float    @default(0)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp()
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp()
 
   // Relaciones
   purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
@@ -106,4 +112,80 @@ model PurchaseItem {
   @@index([purchaseId])
   @@index([productId])
   @@map("purchase_items")
+}
+
+// --------------------------------------
+// Entidad: TicketScan (Ticket escaneado)
+// --------------------------------------
+model TicketScan {
+  id            String           @id @default(uuid()) @db.Uuid
+  userId        String           @map("user_id") @db.Uuid
+  imageUrl      String           @map("image_url") @db.VarChar(500)
+  imagePublicId String           @map("image_public_id") @db.VarChar(255)
+  rawText       String?          @map("raw_text") @db.Text
+  status        TicketScanStatus @default(PENDING)
+  storeId       String?          @map("store_id") @db.Uuid
+  purchaseDate  DateTime?        @map("purchase_date") @db.Date
+  itemsCount    Int              @default(0) @map("items_count")
+  totalAmount   Decimal?         @map("total_amount") @db.Decimal(12, 2)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamp()
+  confirmedAt   DateTime?        @map("confirmed_at") @db.Timestamp()
+
+  // Relaciones
+  user     User             @relation(fields: [userId], references: [id])
+  store    Store?           @relation(fields: [storeId], references: [id])
+  items    TicketScanItem[]
+  purchase Purchase?
+
+  // Índices
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ticket_scans")
+}
+
+// --------------------------------------
+// Entidad: TicketScanItem (Línea de ticket escaneado)
+// --------------------------------------
+model TicketScanItem {
+  id               String               @id @default(uuid()) @db.Uuid
+  ticketScanId     String               @map("ticket_scan_id") @db.Uuid
+  rawText          String               @map("raw_text") @db.VarChar(500)
+  detectedName     String               @map("detected_name") @db.VarChar(255)
+  detectedPrice    Decimal?             @map("detected_price") @db.Decimal(12, 2)
+  detectedQuantity Decimal              @default(1) @map("detected_quantity") @db.Decimal(10, 3)
+  matchedProductId String?              @map("matched_product_id") @db.Uuid
+  matchConfidence  Float?               @map("match_confidence")
+  status           TicketScanItemStatus @default(PENDING)
+  finalProductId   String?              @map("final_product_id") @db.Uuid
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamp()
+
+  // Relaciones
+  ticketScan     TicketScan @relation(fields: [ticketScanId], references: [id], onDelete: Cascade)
+  matchedProduct Product?   @relation("MatchedProduct", fields: [matchedProductId], references: [id])
+  finalProduct   Product?   @relation("FinalProduct", fields: [finalProductId], references: [id])
+
+  // Índices
+  @@index([ticketScanId])
+  @@index([status])
+  @@map("ticket_scan_items")
+}
+
+// --------------------------------------
+// Enums
+// --------------------------------------
+enum TicketScanStatus {
+  PENDING
+  PROCESSING
+  READY
+  CONFIRMED
+  FAILED
+}
+
+enum TicketScanItemStatus {
+  PENDING
+  MATCHED
+  NEW
+  IGNORED
+  CONFIRMED
 }
