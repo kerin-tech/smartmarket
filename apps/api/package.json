@@ -49,6 +49,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/vision": "^5.3.4",
     "@prisma/client": "^5.22.0",
     "axios": "^1.4.0",
     "bcrypt": "^6.0.0",
@@ -60,8 +61,10 @@
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "nocache": "^4.0.0",
     "nodemon": "^3.0.1",
+    "sharp": "^0.34.5",
     "winston": "^3.10.0",
     "zod": "^3.23.8"
   },
@@ -77,6 +80,7 @@
     "@types/jest": "^29.5.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.4",
+    "@types/multer": "^2.0.0",
     "@types/node": "^20.4.8",
     "@types/superagent": "4.1.18",
     "@types/supertest": "^2.0.12",
