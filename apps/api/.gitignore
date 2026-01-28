@@ -43,3 +43,9 @@ node_modules/
 
 # Test reports
 /test-reports
+
+
+# Google Cloud credentials
+src/config/google-credentials.json
+google-credentials.json
+*.json.bak
