@@ -8,6 +8,7 @@ import purchaseRoutes from './purchase.routes';
 import analyticsRoutes from './analytics.routes';
 import userRoutes from './user.routes';
 import ticketRoutes from './ticket.routes';
+import ticketParserRoutes from './ticketParser.routes'; // ← AGREGAR
 
 const router: Router = Router();
 
@@ -16,7 +17,8 @@ router.use('/products', productRoutes);
 router.use('/stores', storeRoutes);
 router.use('/purchases', purchaseRoutes);
 router.use('/analytics', analyticsRoutes);
-router.use("/users", userRoutes)
+router.use('/users', userRoutes);
 router.use('/tickets', ticketRoutes);
+router.use('/ticket-parser', ticketParserRoutes); // ← AGREGAR
 
 export default router;

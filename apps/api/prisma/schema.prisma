@@ -131,6 +131,12 @@ model TicketScan {
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamp()
   confirmedAt   DateTime?        @map("confirmed_at") @db.Timestamp()
 
+  // Campos del parser
+  detectedStoreKey    String? @map("detected_store_key") @db.VarChar(50)
+  detectedStoreName   String? @map("detected_store_name") @db.VarChar(100)
+  detectionConfidence Float?  @map("detection_confidence")
+  parserUsed          String? @map("parser_used") @db.VarChar(50)
+
   // Relaciones
   user     User             @relation(fields: [userId], references: [id])
   store    Store?           @relation(fields: [storeId], references: [id])
@@ -141,6 +147,7 @@ model TicketScan {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([detectedStoreKey])
   @@map("ticket_scans")
 }
 
@@ -159,6 +166,12 @@ model TicketScanItem {
   status           TicketScanItemStatus @default(PENDING)
   finalProductId   String?              @map("final_product_id") @db.Uuid
   createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamp()
+
+  // Campos del parser
+  itemCode        String?  @map("item_code") @db.VarChar(50)
+  unit            String?  @default("UN") @db.VarChar(10)
+  parseConfidence Float?   @map("parse_confidence")
+  flags           String[] @default([])
 
   // Relaciones
   ticketScan     TicketScan @relation(fields: [ticketScanId], references: [id], onDelete: Cascade)
