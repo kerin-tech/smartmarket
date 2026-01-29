@@ -4,8 +4,11 @@ import prisma from "@/config/database";
 import { successResponse, errorResponse } from "../utils/response.handle";
 import { ERROR_CODES } from "../utils/error.codes";
 import { visionService } from "../services/vision.service";
+import { purchaseService } from "../services/purchase.service"; // Importación nueva
 import { CreatePurchaseInput, UpdatePurchaseInput, PurchaseQueryInput, ScanTicketInput } from "../schemas/purchase.schema";
 import { Prisma } from "@prisma/client";
+
+// --- HELPERS DE FORMATO ---
 
 // Calcula el total restando el descuento
 function calculatePurchaseTotal(items: any[]): number {
@@ -55,7 +58,60 @@ function formatPurchase(purchase: any) {
   };
 }
 
-// EXPORTS PARA LAS RUTAS
+// --- ENDPOINTS NUEVOS: IA & SCANNING ---
+
+/**
+ * Recibe una imagen, extrae datos con IA y busca coincidencias con productos existentes.
+ * NO guarda en BD, solo retorna JSON para revisión.
+ */
+export const scanTicket = async (req: Request<{}, {}, ScanTicketInput>, res: Response, next: NextFunction) => {
+  try {
+    const { image } = req.body;
+    const userId = req.user!.id;
+
+    // Llama al servicio de visión mejorado (con Matching)
+    const scanResult = await visionService.scanAndMatch(userId, image);
+
+    return successResponse(
+      res, 
+      scanResult, 
+      "Ticket escaneado. Por favor revisa y confirma los datos."
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Recibe el JSON revisado por el usuario y persiste la compra y productos nuevos en la BD.
+ */
+export const confirmTicket = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Si en Postman envías el objeto completo que recibiste de /scan,
+    // es probable que los datos estén dentro de una propiedad 'data'
+    const payload = req.body.data ? req.body.data : req.body; 
+    const userId = req.user!.id;
+
+    // Validación rápida antes de llamar al servicio
+    if (!payload.items || !Array.isArray(payload.items)) {
+      return errorResponse(res, "El formato de los items es inválido o está vacío", 400);
+    }
+
+    const purchase = await purchaseService.confirmPurchase(userId, payload);
+
+    return successResponse(
+      res, 
+      { purchase: formatPurchase(purchase) }, 
+      "Compra registrada y procesada exitosamente", 
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- ENDPOINTS CRUD EXISTENTES ---
+
 export const getPurchases = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
@@ -100,7 +156,7 @@ export const createPurchase = async (req: Request<{}, {}, CreatePurchaseInput>, 
             productId: item.productId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            discountPercentage: item.discountPercentage || 0 // SE GUARDA EN DB
+            discountPercentage: item.discountPercentage || 0
           }))
         }
       },
@@ -144,29 +200,4 @@ export const deletePurchase = async (req: Request, res: Response, next: NextFunc
     await prisma.purchase.delete({ where: { id: req.params.id } });
     return successResponse(res, null, "Eliminada");
   } catch (error) { next(error); }
-};
-
-export const scanTicket = async (req: Request<{}, {}, ScanTicketInput>, res: Response, next: NextFunction) => {
-  try {
-    const { image } = req.body;
-
-    // 1. Llamar al servicio de IA (Tarea T02)
-    // Pasamos el base64 que viene en el body
-    const extractedData = await visionService.extractDataFromTicket(image);
-
-    if (!extractedData) {
-      return errorResponse(res, "No se pudo extraer información del ticket", 422);
-    }
-
-    // 2. Por ahora devolvemos la data extraída directamente.
-    // El usuario verá en el frontend: "Tienda: Walmart, Fecha: ..., Items: [...]"
-    return successResponse(
-      res, 
-      { extractedData }, 
-      "Ticket procesado correctamente por la IA"
-    );
-  } catch (error) {
-    // Si hay error de API Key o de OpenAI, caerá aquí
-    next(error);
-  }
 };

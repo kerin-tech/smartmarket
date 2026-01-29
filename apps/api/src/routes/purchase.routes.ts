@@ -7,7 +7,8 @@ import {
   createPurchase,
   updatePurchase,
   deletePurchase,
-  scanTicket, // <--- 1. Importamos el nuevo controlador
+  scanTicket,    // IA Scan
+  confirmTicket, // Persistencia en masa <--- Nueva importación
 } from "../controllers/purchase.controller";
 import { checkJwt } from "../middlewares/auth.middleware";
 import { validateSchema } from "../middlewares/validate.middleware";
@@ -16,7 +17,8 @@ import {
   createPurchaseSchema,
   updatePurchaseSchema,
   purchaseQuerySchema,
-  scanTicketSchema, // <--- 2. Importamos el nuevo esquema
+  scanTicketSchema,
+  // confirmPurchaseSchema, // Descomentar si creas una validación específica
 } from "../schemas/purchase.schema";
 
 const router = Router();
@@ -27,11 +29,16 @@ router.use(checkJwt);
 /**
  * POST /api/v1/{env}/purchases/scan
  * @summary Escanear un ticket usando IA (GPT-4o Vision)
- * @tags Purchases
- * @security BearerAuth
- * @param {ScanTicketRequest} request.body.required - Imagen en Base64
+ * @description Envía la imagen para extraer datos y buscar coincidencias (Matching)
  */
 router.post("/scan", validateSchema(scanTicketSchema), scanTicket);
+
+/**
+ * POST /api/v1/{env}/purchases/confirm
+ * @summary Confirmar y registrar la compra en masa
+ * @description Recibe el JSON revisado del scan y persiste todo en la base de datos
+ */
+router.post("/confirm", confirmTicket); // <--- Endpoint añadido
 
 /**
  * GET /api/v1/{env}/purchases
@@ -46,6 +53,7 @@ router.get("/:id", getPurchaseById);
 
 /**
  * POST /api/v1/{env}/purchases
+ * @summary Registro manual de compra (uno a uno)
  */
 router.post("/", validateSchema(createPurchaseSchema), createPurchase);
 
@@ -62,7 +70,7 @@ router.delete("/:id", deletePurchase);
 export default router;
 
 /**
- * DEFINICIONES ADICIONALES PARA SWAGGER
+ * DEFINICIONES PARA SWAGGER (Actualizadas)
  */
 
 /**
@@ -71,17 +79,25 @@ export default router;
  */
 
 /**
+ * @typedef {object} ProductMatch
+ * @property {string} product_id - ID del producto en DB
+ * @property {string} name - Nombre del producto en DB
+ * @property {number} confidence - Nivel de similitud (0 a 1)
+ */
+
+/**
  * @typedef {object} ExtractedItem
- * @property {string} productName - Nombre identificado por la IA
- * @property {number} quantity - Cantidad detectada
- * @property {number} unitPrice - Precio unitario detectado
- * @property {number} discountPercentage - Descuento detectado
+ * @property {string} raw_text - Texto original del ticket
+ * @property {string} detected_name - Nombre limpio por IA
+ * @property {number} detected_price - Precio unitario
+ * @property {number} detected_quantity - Cantidad
+ * @property {ProductMatch} match - Coincidencia encontrada en BD (o null)
  */
 
 /**
  * @typedef {object} ScanResponseData
- * @property {string} storeName - Nombre de la tienda detectada
- * @property {string} date - Fecha en formato ISO
- * @property {array<ExtractedItem>} items - Lista de productos detectados
- * @property {number} total - Total del ticket
+ * @property {string} ticket_id - ID temporal de la sesión de escaneo
+ * @property {string} detected_date - Fecha detectada
+ * @property {string} detected_store - Tienda detectada
+ * @property {array<ExtractedItem>} items - Lista de productos con matching
  */
