@@ -69,6 +69,9 @@ export const scanTicket = async (req: Request<{}, {}, ScanTicketInput>, res: Res
     const { image } = req.body;
     const userId = req.user!.id;
 
+      console.log("Image length:", image?.length);
+    console.log("Image prefix:", image?.substring(0, 50));
+
     // Llama al servicio de visión mejorado (con Matching)
     const scanResult = await visionService.scanAndMatch(userId, image);
 
