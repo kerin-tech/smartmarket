@@ -83,12 +83,13 @@ export const purchaseService = {
   },
 
   async scanTicket(base64Image: string): Promise<any> {
-    const response = await api.post<ApiSuccessResponse<any>>(
-      '/purchases/scan',
-      { image: base64Image }
-    );
-    return response.data.data;
-  },
+  const response = await api.post<ApiSuccessResponse<any>>(
+    '/purchases/scan',
+    { image: base64Image },
+    { timeout: 60000 } // 60 segundos solo para esta llamada
+  );
+  return response.data.data;
+},
 
   async confirmBatch(payload: any): Promise<Purchase> {
     const response = await api.post<ApiSuccessResponse<ApiPurchaseResponse>>(
