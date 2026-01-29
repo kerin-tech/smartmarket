@@ -81,4 +81,20 @@ export const purchaseService = {
   async delete(id: string): Promise<void> {
     await api.delete(`/purchases/${id}`);
   },
+
+  async scanTicket(base64Image: string): Promise<any> {
+    const response = await api.post<ApiSuccessResponse<any>>(
+      '/purchases/scan',
+      { image: base64Image }
+    );
+    return response.data.data;
+  },
+
+  async confirmBatch(payload: any): Promise<Purchase> {
+    const response = await api.post<ApiSuccessResponse<ApiPurchaseResponse>>(
+      '/purchases/confirm',
+      payload
+    );
+    return response.data.data.purchase;
+  },
 };
