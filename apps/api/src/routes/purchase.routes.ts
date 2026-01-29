@@ -7,6 +7,7 @@ import {
   createPurchase,
   updatePurchase,
   deletePurchase,
+  scanTicket, // <--- 1. Importamos el nuevo controlador
 } from "../controllers/purchase.controller";
 import { checkJwt } from "../middlewares/auth.middleware";
 import { validateSchema } from "../middlewares/validate.middleware";
@@ -15,6 +16,7 @@ import {
   createPurchaseSchema,
   updatePurchaseSchema,
   purchaseQuerySchema,
+  scanTicketSchema, // <--- 2. Importamos el nuevo esquema
 } from "../schemas/purchase.schema";
 
 const router = Router();
@@ -23,99 +25,63 @@ const router = Router();
 router.use(checkJwt);
 
 /**
- * GET /api/v1/{env}/purchases
- * @summary Listar compras del usuario con filtros
+ * POST /api/v1/{env}/purchases/scan
+ * @summary Escanear un ticket usando IA (GPT-4o Vision)
  * @tags Purchases
  * @security BearerAuth
+ * @param {ScanTicketRequest} request.body.required - Imagen en Base64
+ */
+router.post("/scan", validateSchema(scanTicketSchema), scanTicket);
+
+/**
+ * GET /api/v1/{env}/purchases
+ * @summary Listar compras del usuario con filtros
  */
 router.get("/", validateQuery(purchaseQuerySchema), getPurchases);
 
 /**
- * GET /api/v1/{env}/purchases/{id}
- * @summary Obtener el detalle de una compra específica
- * @tags Purchases
- * @security BearerAuth
+ * GET /api/v1/{env}/purchases/:id
  */
 router.get("/:id", getPurchaseById);
 
 /**
  * POST /api/v1/{env}/purchases
- * @summary Registrar una nueva compra con múltiples productos y descuentos
- * @tags Purchases
- * @security BearerAuth
- * @param {CreatePurchaseRequest} request.body.required - Datos de la compra
  */
 router.post("/", validateSchema(createPurchaseSchema), createPurchase);
 
 /**
- * PUT /api/v1/{env}/purchases/{id}
- * @summary Actualizar los datos o ítems de una compra existente
- * @tags Purchases
- * @security BearerAuth
- * @param {UpdatePurchaseRequest} request.body.required - Datos a actualizar
+ * PUT /api/v1/{env}/purchases/:id
  */
 router.put("/:id", validateSchema(updatePurchaseSchema), updatePurchase);
 
 /**
- * DELETE /api/v1/{env}/purchases/{id}
- * @summary Eliminar una compra del registro
- * @tags Purchases
- * @security BearerAuth
+ * DELETE /api/v1/{env}/purchases/:id
  */
 router.delete("/:id", deletePurchase);
 
 export default router;
 
 /**
- * DEFINICIONES PARA SWAGGER (Actualizadas a la nueva estructura)
+ * DEFINICIONES ADICIONALES PARA SWAGGER
  */
 
 /**
- * @typedef {object} PurchaseItemRequest
- * @property {string} productId.required - ID del producto (UUID)
- * @property {number} quantity.required - Cantidad (mayor a 0)
- * @property {number} unitPrice.required - Precio unitario (mayor a 0)
- * @property {number} discountPercentage - Porcentaje de descuento (0-100)
+ * @typedef {object} ScanTicketRequest
+ * @property {string} image.required - String de la imagen en formato Base64
  */
 
 /**
- * @typedef {object} CreatePurchaseRequest
- * @property {string} storeId.required - ID de la tienda (UUID)
- * @property {string} date.required - Fecha (YYYY-MM-DD)
- * @property {array<PurchaseItemRequest>} items.required - Lista de productos comprados
+ * @typedef {object} ExtractedItem
+ * @property {string} productName - Nombre identificado por la IA
+ * @property {number} quantity - Cantidad detectada
+ * @property {number} unitPrice - Precio unitario detectado
+ * @property {number} discountPercentage - Descuento detectado
  */
 
 /**
- * @typedef {object} UpdatePurchaseRequest
- * @property {string} storeId - ID de la tienda
- * @property {string} date - Fecha
- * @property {array<PurchaseItemRequest>} items - Nueva lista de productos
- */
-
-/**
- * @typedef {object} PurchaseItemResponse
- * @property {string} id - ID del registro del ítem
- * @property {string} productId - ID del producto
- * @property {number} quantity - Cantidad
- * @property {number} unitPrice - Precio por unidad
- * @property {number} discountPercentage - Descuento aplicado
- * @property {number} subtotal - Total del ítem tras descuento
- * @property {object} product - Datos básicos del producto (nombre, marca, etc)
- */
-
-/**
- * @typedef {object} PurchaseResponseData
- * @property {string} id - ID de la compra
- * @property {string} date - Fecha de compra
- * @property {number} total - Total de la compra (suma de subtotales)
- * @property {number} itemCount - Cantidad de productos diferentes
- * @property {object} store - Datos de la tienda
- * @property {array<PurchaseItemResponse>} items - Detalle de los productos
- */
-
-/**
- * @typedef {object} PurchaseResponse
- * @property {boolean} success - Estado de la operación
- * @property {PurchaseResponseData} data - Información de la compra
- * @property {string} message - Mensaje de confirmación
+ * @typedef {object} ScanResponseData
+ * @property {string} storeName - Nombre de la tienda detectada
+ * @property {string} date - Fecha en formato ISO
+ * @property {array<ExtractedItem>} items - Lista de productos detectados
+ * @property {number} total - Total del ticket
  */

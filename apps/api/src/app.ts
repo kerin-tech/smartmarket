@@ -24,22 +24,23 @@ class App {
     this.initializeDocs();
   }
 
-  private setMiddlewares(): void {
+ private setMiddlewares(): void {
   this.express.use(cors({
-    origin: '*', // Permite peticiones desde Vercel o local
+    origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
   }));
   this.express.use(morgan('dev'));
   this.express.use(nocache());
-  this.express.use(express.json());
-  this.express.use(express.urlencoded({ extended: true }));
+
+  // MODIFICACIÓN AQUÍ: Aumentamos el límite a 50 megas
+  this.express.use(express.json({ limit: '50mb' }));
+  this.express.use(express.urlencoded({ limit: '50mb', extended: true }));
   
-  // Modifica Helmet para permitir los scripts de Swagger
   this.express.use(
     helmet({
-        contentSecurityPolicy: false, // Permite que carguen los scripts de Swagger
-        hsts: false,                 // Evita que el navegador fuerce HTTPS
+        contentSecurityPolicy: false, 
+        hsts: false, 
       })
   );
   
