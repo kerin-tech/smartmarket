@@ -7,6 +7,8 @@ import {
   createPurchase,
   updatePurchase,
   deletePurchase,
+  scanTicket,    // IA Scan
+  confirmTicket, // Persistencia en masa <--- Nueva importación
 } from "../controllers/purchase.controller";
 import { checkJwt } from "../middlewares/auth.middleware";
 import { validateSchema } from "../middlewares/validate.middleware";
@@ -15,6 +17,8 @@ import {
   createPurchaseSchema,
   updatePurchaseSchema,
   purchaseQuerySchema,
+  scanTicketSchema,
+  // confirmPurchaseSchema, // Descomentar si creas una validación específica
 } from "../schemas/purchase.schema";
 
 const router = Router();
@@ -23,99 +27,77 @@ const router = Router();
 router.use(checkJwt);
 
 /**
+ * POST /api/v1/{env}/purchases/scan
+ * @summary Escanear un ticket usando IA (GPT-4o Vision)
+ * @description Envía la imagen para extraer datos y buscar coincidencias (Matching)
+ */
+router.post("/scan", validateSchema(scanTicketSchema), scanTicket);
+
+/**
+ * POST /api/v1/{env}/purchases/confirm
+ * @summary Confirmar y registrar la compra en masa
+ * @description Recibe el JSON revisado del scan y persiste todo en la base de datos
+ */
+router.post("/confirm", confirmTicket); // <--- Endpoint añadido
+
+/**
  * GET /api/v1/{env}/purchases
  * @summary Listar compras del usuario con filtros
- * @tags Purchases
- * @security BearerAuth
  */
 router.get("/", validateQuery(purchaseQuerySchema), getPurchases);
 
 /**
- * GET /api/v1/{env}/purchases/{id}
- * @summary Obtener el detalle de una compra específica
- * @tags Purchases
- * @security BearerAuth
+ * GET /api/v1/{env}/purchases/:id
  */
 router.get("/:id", getPurchaseById);
 
 /**
  * POST /api/v1/{env}/purchases
- * @summary Registrar una nueva compra con múltiples productos y descuentos
- * @tags Purchases
- * @security BearerAuth
- * @param {CreatePurchaseRequest} request.body.required - Datos de la compra
+ * @summary Registro manual de compra (uno a uno)
  */
 router.post("/", validateSchema(createPurchaseSchema), createPurchase);
 
 /**
- * PUT /api/v1/{env}/purchases/{id}
- * @summary Actualizar los datos o ítems de una compra existente
- * @tags Purchases
- * @security BearerAuth
- * @param {UpdatePurchaseRequest} request.body.required - Datos a actualizar
+ * PUT /api/v1/{env}/purchases/:id
  */
 router.put("/:id", validateSchema(updatePurchaseSchema), updatePurchase);
 
 /**
- * DELETE /api/v1/{env}/purchases/{id}
- * @summary Eliminar una compra del registro
- * @tags Purchases
- * @security BearerAuth
+ * DELETE /api/v1/{env}/purchases/:id
  */
 router.delete("/:id", deletePurchase);
 
 export default router;
 
 /**
- * DEFINICIONES PARA SWAGGER (Actualizadas a la nueva estructura)
+ * DEFINICIONES PARA SWAGGER (Actualizadas)
  */
 
 /**
- * @typedef {object} PurchaseItemRequest
- * @property {string} productId.required - ID del producto (UUID)
- * @property {number} quantity.required - Cantidad (mayor a 0)
- * @property {number} unitPrice.required - Precio unitario (mayor a 0)
- * @property {number} discountPercentage - Porcentaje de descuento (0-100)
+ * @typedef {object} ScanTicketRequest
+ * @property {string} image.required - String de la imagen en formato Base64
  */
 
 /**
- * @typedef {object} CreatePurchaseRequest
- * @property {string} storeId.required - ID de la tienda (UUID)
- * @property {string} date.required - Fecha (YYYY-MM-DD)
- * @property {array<PurchaseItemRequest>} items.required - Lista de productos comprados
+ * @typedef {object} ProductMatch
+ * @property {string} product_id - ID del producto en DB
+ * @property {string} name - Nombre del producto en DB
+ * @property {number} confidence - Nivel de similitud (0 a 1)
  */
 
 /**
- * @typedef {object} UpdatePurchaseRequest
- * @property {string} storeId - ID de la tienda
- * @property {string} date - Fecha
- * @property {array<PurchaseItemRequest>} items - Nueva lista de productos
+ * @typedef {object} ExtractedItem
+ * @property {string} raw_text - Texto original del ticket
+ * @property {string} detected_name - Nombre limpio por IA
+ * @property {number} detected_price - Precio unitario
+ * @property {number} detected_quantity - Cantidad
+ * @property {ProductMatch} match - Coincidencia encontrada en BD (o null)
  */
 
 /**
- * @typedef {object} PurchaseItemResponse
- * @property {string} id - ID del registro del ítem
- * @property {string} productId - ID del producto
- * @property {number} quantity - Cantidad
- * @property {number} unitPrice - Precio por unidad
- * @property {number} discountPercentage - Descuento aplicado
- * @property {number} subtotal - Total del ítem tras descuento
- * @property {object} product - Datos básicos del producto (nombre, marca, etc)
- */
-
-/**
- * @typedef {object} PurchaseResponseData
- * @property {string} id - ID de la compra
- * @property {string} date - Fecha de compra
- * @property {number} total - Total de la compra (suma de subtotales)
- * @property {number} itemCount - Cantidad de productos diferentes
- * @property {object} store - Datos de la tienda
- * @property {array<PurchaseItemResponse>} items - Detalle de los productos
- */
-
-/**
- * @typedef {object} PurchaseResponse
- * @property {boolean} success - Estado de la operación
- * @property {PurchaseResponseData} data - Información de la compra
- * @property {string} message - Mensaje de confirmación
+ * @typedef {object} ScanResponseData
+ * @property {string} ticket_id - ID temporal de la sesión de escaneo
+ * @property {string} detected_date - Fecha detectada
+ * @property {string} detected_store - Tienda detectada
+ * @property {array<ExtractedItem>} items - Lista de productos con matching
  */

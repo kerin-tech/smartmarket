@@ -3,8 +3,12 @@ import { Request, Response, NextFunction } from "express";
 import prisma from "@/config/database";
 import { successResponse, errorResponse } from "../utils/response.handle";
 import { ERROR_CODES } from "../utils/error.codes";
-import { CreatePurchaseInput, UpdatePurchaseInput, PurchaseQueryInput } from "../schemas/purchase.schema";
+import { visionService } from "../services/vision.service";
+import { purchaseService } from "../services/purchase.service"; // Importación nueva
+import { CreatePurchaseInput, UpdatePurchaseInput, PurchaseQueryInput, ScanTicketInput } from "../schemas/purchase.schema";
 import { Prisma } from "@prisma/client";
+
+// --- HELPERS DE FORMATO ---
 
 // Calcula el total restando el descuento
 function calculatePurchaseTotal(items: any[]): number {
@@ -54,7 +58,63 @@ function formatPurchase(purchase: any) {
   };
 }
 
-// EXPORTS PARA LAS RUTAS
+// --- ENDPOINTS NUEVOS: IA & SCANNING ---
+
+/**
+ * Recibe una imagen, extrae datos con IA y busca coincidencias con productos existentes.
+ * NO guarda en BD, solo retorna JSON para revisión.
+ */
+export const scanTicket = async (req: Request<{}, {}, ScanTicketInput>, res: Response, next: NextFunction) => {
+  try {
+    const { image } = req.body;
+    const userId = req.user!.id;
+
+      console.log("Image length:", image?.length);
+    console.log("Image prefix:", image?.substring(0, 50));
+
+    // Llama al servicio de visión mejorado (con Matching)
+    const scanResult = await visionService.scanAndMatch(userId, image);
+
+    return successResponse(
+      res, 
+      scanResult, 
+      "Ticket escaneado. Por favor revisa y confirma los datos."
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Recibe el JSON revisado por el usuario y persiste la compra y productos nuevos en la BD.
+ */
+export const confirmTicket = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Si en Postman envías el objeto completo que recibiste de /scan,
+    // es probable que los datos estén dentro de una propiedad 'data'
+    const payload = req.body.data ? req.body.data : req.body; 
+    const userId = req.user!.id;
+
+    // Validación rápida antes de llamar al servicio
+    if (!payload.items || !Array.isArray(payload.items)) {
+      return errorResponse(res, "El formato de los items es inválido o está vacío", 400);
+    }
+
+    const purchase = await purchaseService.confirmPurchase(userId, payload);
+
+    return successResponse(
+      res, 
+      { purchase: formatPurchase(purchase) }, 
+      "Compra registrada y procesada exitosamente", 
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- ENDPOINTS CRUD EXISTENTES ---
+
 export const getPurchases = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
@@ -99,7 +159,7 @@ export const createPurchase = async (req: Request<{}, {}, CreatePurchaseInput>, 
             productId: item.productId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            discountPercentage: item.discountPercentage || 0 // SE GUARDA EN DB
+            discountPercentage: item.discountPercentage || 0
           }))
         }
       },

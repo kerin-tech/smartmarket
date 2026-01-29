@@ -11,7 +11,7 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'full';
   showCloseButton?: boolean;
   variant?: 'form' | 'dialog'; // <--- Nueva prop para controlar el comportamiento
 }
@@ -20,6 +20,7 @@ const sizes = {
   sm: 'sm:max-w-sm',
   md: 'sm:max-w-md',
   lg: 'sm:max-w-lg',
+  full: '',
 };
 
 export function Modal({

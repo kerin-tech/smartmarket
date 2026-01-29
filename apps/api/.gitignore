@@ -43,3 +43,7 @@ node_modules/
 
 # Test reports
 /test-reports
+
+# Credenciales de Google
+src/config/google-credentials.json
+*.json.bak

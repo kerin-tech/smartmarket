@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Plus, RotateCcw, X, Store as StoreIcon, Calendar } from 'lucide-react';
+import { Plus, RotateCcw, X, Store as StoreIcon, Calendar, Camera } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
@@ -180,9 +181,15 @@ export function PurchaseList() {
             </p>
           )}
         </div>
+        <Link href="/purchases/scan">
+    <Button variant="secondary" leftIcon={<Camera className="h-5 w-5" />}>
+      Escanear Ticket
+    </Button>
+  </Link>
         <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />} className="hidden sm:flex shadow-lg shadow-primary/20">
           Nueva compra
         </Button>
+        
       </div>
 
       {/* Barra de Búsqueda y Filtros Unificada (Sin BG) */}
