@@ -69,7 +69,7 @@ export function PurchaseList() {
           limit: pagination.limit,
           ...filters,
         });
-        
+
         if (isMounted) {
           setPurchases(response.purchases);
           setPagination(response.pagination);
@@ -196,14 +196,23 @@ export function PurchaseList() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/purchases/lists" className="flex-1">
+              <Button
+                variant="outline"
+                fullWidth
+                leftIcon={<ClipboardList className="h-5 w-5" />}
+              >
+              Listas de Compras
+            </Button>
+          </Link>
             <div className="hidden sm:block">
               <PurchaseActionSplit onManualClick={openCreateModal} />
             </div>
-          </div>
         </div>
       </div>
+    </div>
 
-      {/* Barra de Búsqueda y Filtros */}
+      {/* Barra de Búsqueda y Filtros */ }
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
           <div className="flex-1">
@@ -279,20 +288,22 @@ export function PurchaseList() {
         {renderContent()}
       </div>
 
-      {/* Paginación */}
-      {!isLoading && pagination.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 pt-8">
-          <Button variant="outline" size="sm" disabled={!pagination.hasPrev} onClick={() => setPage(pagination.page - 1)}>
-            Anterior
-          </Button>
-          <span className="text-sm font-medium">Página {pagination.page} de {pagination.totalPages}</span>
-          <Button variant="outline" size="sm" disabled={!pagination.hasNext} onClick={() => setPage(pagination.page + 1)}>
-            Siguiente
-          </Button>
-        </div>
-      )}
+  {/* Paginación */ }
+  {
+    !isLoading && pagination.totalPages > 1 && (
+      <div className="flex justify-center items-center gap-4 pt-8">
+        <Button variant="outline" size="sm" disabled={!pagination.hasPrev} onClick={() => setPage(pagination.page - 1)}>
+          Anterior
+        </Button>
+        <span className="text-sm font-medium">Página {pagination.page} de {pagination.totalPages}</span>
+        <Button variant="outline" size="sm" disabled={!pagination.hasNext} onClick={() => setPage(pagination.page + 1)}>
+          Siguiente
+        </Button>
+      </div>
+    )
+  }
 
-      {/* FAB - Mobile Only */}
+  {/* FAB - Mobile Only */ }
       <div className="fixed bottom-28 right-6 z-40 flex flex-col items-end gap-4 sm:hidden">
         <Link href="/purchases/lists">
           <button className="flex h-12 w-12 mr-2 items-center justify-center rounded-full bg-card border border-border text-foreground shadow-lg transition-all active:scale-90">
@@ -327,7 +338,7 @@ export function PurchaseList() {
         confirmText="Sí, eliminar" isLoading={isDeleting} variant="danger"
       />
       <ToastContainer toasts={toasts} onClose={removeToast} />
-    </div>
+    </div >
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState, useEffect } from 'react';
-import { Upload, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Camera, Image as ImageIcon, Loader2, FolderOpen } from 'lucide-react'; // Agregué FolderOpen
 import { cn } from '@/lib/utils';
 
 interface TicketUploaderProps {
@@ -20,43 +20,31 @@ const LOADING_MESSAGES = [
   { time: 90000, message: 'Por favor espera, estamos terminando...' },
 ];
 
-/**
- * Detecta si es dispositivo móvil
- */
 const isMobileDevice = (): boolean => {
   if (typeof window === 'undefined') return false;
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 };
 
-/**
- * Comprime una imagen - más agresivo en móvil para fotos de cámara
- */
 const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
-    // Configuración según dispositivo
     const isMobile = isMobileDevice();
-    const maxWidth = isMobile ? 1280 : 1920;  // Más pequeño en móvil
-    const quality = isMobile ? 0.65 : 0.85;   // Más compresión en móvil
-    const maxFileSize = isMobile ? 800 : 1500; // KB máximo aproximado
+    const maxWidth = isMobile ? 1280 : 1920;
+    const quality = isMobile ? 0.65 : 0.85;
+    const maxFileSize = isMobile ? 800 : 1500;
     
     img.onload = () => {
       try {
         let { width, height } = img;
         
-        console.log(`📱 Dispositivo: ${isMobile ? 'Móvil' : 'Desktop'}`);
-        console.log(`📷 Imagen original: ${width}x${height}`);
-        
-        // Redimensionar si es necesario
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
         
-        // Para tickets muy largos (panorámicos), limitar altura también
         const maxHeight = isMobile ? 2500 : 3500;
         if (height > maxHeight) {
           width = Math.round((width * maxHeight) / height);
@@ -75,23 +63,15 @@ const compressImage = (file: File): Promise<string> => {
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Intentar comprimir, reducir calidad si sigue muy grande
         let currentQuality = quality;
         let compressedBase64 = canvas.toDataURL('image/jpeg', currentQuality);
         let attempts = 0;
         
-        // Reducir calidad iterativamente si es muy grande (máx 3 intentos)
         while (compressedBase64.length > maxFileSize * 1024 * 1.33 && attempts < 3) {
           currentQuality -= 0.1;
           compressedBase64 = canvas.toDataURL('image/jpeg', Math.max(currentQuality, 0.4));
           attempts++;
-          console.log(`🔄 Recomprimiendo... calidad: ${currentQuality.toFixed(2)}`);
         }
-        
-        const originalSize = file.size / 1024;
-        const compressedSize = (compressedBase64.length * 0.75) / 1024;
-        console.log(`✅ Compresión: ${originalSize.toFixed(0)}KB → ${compressedSize.toFixed(0)}KB (${((1 - compressedSize/originalSize) * 100).toFixed(0)}% reducción)`);
-        console.log(`📐 Dimensiones finales: ${width}x${height}, calidad: ${currentQuality.toFixed(2)}`);
         
         resolve(compressedBase64);
       } catch (error) {
@@ -153,13 +133,10 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
     
     try {
       setIsCompressing(true);
-      setCompressionStatus(isMobile ? 'Optimizando foto de cámara...' : 'Optimizando imagen...');
+      setCompressionStatus(isMobile ? 'Optimizando foto...' : 'Optimizando imagen...');
       
       const compressedBase64 = await compressImage(file);
       const previewUrl = URL.createObjectURL(file);
-      
-      // Log final para debug
-      console.log(`🚀 Enviando imagen: ~${(compressedBase64.length / 1024).toFixed(0)}KB`);
       
       setIsCompressing(false);
       setCompressionStatus('');
@@ -170,13 +147,11 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
       setIsCompressing(false);
       setCompressionStatus('');
       
-      // Fallback más agresivo para móvil
       if (isMobile) {
-        alert('Error al procesar la imagen. Intenta tomar la foto con menor resolución.');
+        alert('Error al procesar la imagen. Intenta con otra foto.');
         return;
       }
       
-      // Fallback desktop: enviar sin comprimir
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
@@ -206,11 +181,29 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) processFile(file);
+    
+    // Resetear el valor para permitir subir la misma imagen dos veces si falla
+    e.target.value = '';
   }, [processFile]);
 
-  const handleClick = () => fileInputRef.current?.click();
+  // --- NUEVA LÓGICA DE CLICKS ---
 
-  // Estado de compresión
+  // Para Galería / Archivos (Limpia el atributo capture)
+  const handleGalleryClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.removeAttribute('capture');
+      fileInputRef.current.click();
+    }
+  };
+
+  // Para Cámara Directa (Fuerza el atributo capture)
+  const handleCameraClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.click();
+    }
+  };
+
   if (isCompressing) {
     return (
       <div className="relative rounded-2xl overflow-hidden border border-border bg-card p-12">
@@ -223,7 +216,6 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
     );
   }
 
-  // Estado de carga (analizando con IA)
   if (isLoading && preview) {
     return (
       <div className="relative rounded-2xl overflow-hidden border border-border bg-card">
@@ -234,11 +226,6 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
           <p className="text-white/60 text-sm mt-2">
             Tiempo: {formatTime(elapsedTime)}
           </p>
-          {elapsedTime > 30000 && (
-            <p className="text-white/50 text-xs mt-3 text-center px-6">
-              💡 Tickets largos pueden tomar hasta 2 minutos
-            </p>
-          )}
         </div>
       </div>
     );
@@ -246,9 +233,18 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
 
   return (
     <div className="space-y-4">
-      {/* Zona de Drop */}
+      {/* Input oculto - NOTA: Se eliminó capture="environment" por defecto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Dropzone Desktop y Mobile (Comportamiento por defecto: Galería/Opciones) */}
       <div
-        onClick={handleClick}
+        onClick={handleGalleryClick} // Usamos la nueva función
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -258,15 +254,6 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
           isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-border bg-card'
         )}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
         <div className="flex flex-col items-center gap-4">
           <div className={cn(
             'w-16 h-16 rounded-full flex items-center justify-center transition-colors',
@@ -279,8 +266,11 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
             <p className="text-lg font-semibold text-foreground">
               {isDragging ? 'Suelta la imagen aquí' : 'Sube tu ticket'}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
               Arrastra una imagen o haz clic para seleccionar
+            </p>
+            <p className="text-sm text-muted-foreground mt-1 sm:hidden">
+              Toca para seleccionar de la galería o archivos
             </p>
           </div>
 
@@ -291,19 +281,24 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
         </div>
       </div>
 
-      {/* Botón de cámara para móvil */}
-      <div className="sm:hidden">
+      {/* Botones de acción móvil explícitos */}
+      <div className="grid grid-cols-2 gap-3 sm:hidden">
+        {/* Botón Cámara */}
         <button
-          onClick={() => {
-            if (fileInputRef.current) {
-              fileInputRef.current.capture = 'environment';
-              fileInputRef.current.click();
-            }
-          }}
-          className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-primary text-primary-foreground rounded-xl font-medium transition-transform active:scale-95"
+          onClick={handleCameraClick}
+          className="flex items-center justify-center gap-2 py-4 px-4 bg-primary text-primary-foreground rounded-xl font-medium transition-transform active:scale-95"
         >
           <Camera className="h-5 w-5" />
-          Tomar foto del ticket
+          <span>Cámara</span>
+        </button>
+
+        {/* Botón Galería */}
+        <button
+          onClick={handleGalleryClick}
+          className="flex items-center justify-center gap-2 py-4 px-4 bg-secondary text-secondary-foreground rounded-xl font-medium transition-transform active:scale-95 border border-border"
+        >
+          <FolderOpen className="h-5 w-5" />
+          <span>Galería</span>
         </button>
       </div>
 
@@ -314,7 +309,6 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
           <li>• Asegúrate de que el ticket esté bien iluminado</li>
           <li>• Captura todo el ticket en la foto</li>
           <li>• Evita sombras y reflejos</li>
-          <li>• Tickets muy largos pueden tomar hasta 2 minutos</li>
         </ul>
       </div>
     </div>
