@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, X } from 'lucide-react';
+import { Search, ShoppingCart } from 'lucide-react';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Button } from '@/components/ui/Button';
@@ -33,7 +33,8 @@ export function SearchProductModal({
     const loadProducts = async () => {
       setLoading(true);
       try {
-        const response = await productService.getAll({ limit: 100 });
+        // Usar el nuevo endpoint sin paginación
+        const response = await productService.getAllWithoutPagination();
         setProducts(response.products);
         setFilteredProducts(response.products);
       } catch (error) {

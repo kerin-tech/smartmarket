@@ -42,6 +42,16 @@ interface ApiProductsResponse {
   };
 }
 
+interface ApiAllProductsResponse {
+  products: Array<{
+    id: string;
+    name: string;
+    category: string;
+    brand: string;
+  }>;
+  total: number;
+}
+
 // Mapear respuesta del backend al tipo del frontend
 const mapProduct = (backendProduct: ApiProductResponse['product']): Product => ({
   id: backendProduct.id,
@@ -49,6 +59,15 @@ const mapProduct = (backendProduct: ApiProductResponse['product']): Product => (
   category: backendProduct.category,
   brand: backendProduct.brand,
   createdAt: backendProduct.createdAt,
+});
+
+// Mapear producto sin createdAt (para /all)
+const mapProductSimple = (backendProduct: ApiAllProductsResponse['products'][0]): Product => ({
+  id: backendProduct.id,
+  name: backendProduct.name,
+  category: backendProduct.category,
+  brand: backendProduct.brand,
+  createdAt: '', // No viene en /all
 });
 
 export const productService = {
@@ -76,6 +95,21 @@ export const productService = {
     return {
       products: response.data.data.products.map(mapProduct),
       pagination: response.data.data.pagination,
+    };
+  },
+
+  /**
+   * Obtener TODOS los productos sin paginación (para selects, modales, matching)
+   */
+  async getAllWithoutPagination(search?: string): Promise<{ products: Product[]; total: number }> {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    const response = await api.get<ApiSuccessResponse<ApiAllProductsResponse>>(
+      `/products/all${params}`
+    );
+
+    return {
+      products: response.data.data.products.map(mapProductSimple),
+      total: response.data.data.total,
     };
   },
 
