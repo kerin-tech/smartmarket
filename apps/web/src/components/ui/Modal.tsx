@@ -13,14 +13,14 @@ export interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'full';
   showCloseButton?: boolean;
-  variant?: 'form' | 'dialog'; // <--- Nueva prop para controlar el comportamiento
+  variant?: 'form' | 'dialog';
 }
 
 const sizes = {
   sm: 'sm:max-w-sm',
   md: 'sm:max-w-md',
   lg: 'sm:max-w-lg',
-  full: '',
+  full: 'sm:max-w-4xl',
 };
 
 export function Modal({
@@ -30,7 +30,7 @@ export function Modal({
   children,
   size = 'md',
   showCloseButton = true,
-  variant = 'form', // Por defecto es tipo formulario (Full screen mobile)
+  variant = 'form',
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -52,13 +52,12 @@ export function Modal({
 
   if (!isOpen) return null;
 
-  // Clases dinámicas según la variante
   const isDialog = variant === 'dialog';
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto !mt-0">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden !mt-0 h-screen w-screen">
       
-      {/* Backdrop (Sin blur) */}
+      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 transition-opacity"
         onClick={onClose}
@@ -67,8 +66,8 @@ export function Modal({
 
       {/* Container dinámico */}
       <div className={cn(
-        "relative z-10 flex min-h-full w-full items-center justify-center transition-all",
-        isDialog ? "p-4" : "p-0 sm:p-4" // Si es diálogo, siempre tiene padding
+        "relative z-10 flex w-full items-center justify-center transition-all",
+        isDialog ? "p-4 h-auto" : "p-0 sm:p-4 h-[100dvh] sm:h-auto"
       )}>
         
         {/* Modal Card */}
@@ -80,17 +79,17 @@ export function Modal({
             'relative w-full bg-card text-foreground flex flex-col transform transition-all shadow-2xl',
             'animate-scale-in',
             
-            // Lógica de bordes y dimensiones según variante
+            // Lógica de dimensiones corregida
             isDialog 
-              ? 'rounded-xl border border-border h-auto max-w-[90vw]' // Siempre flotante
-              : 'min-h-screen sm:min-h-0 rounded-none sm:rounded-xl border-0 sm:border border-border', // Full screen en mobile si es form
+              ? 'rounded-xl border border-border h-auto max-h-[90vh] max-w-[90vw]' 
+              : 'h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-xl border-0 sm:border border-border',
             
             sizes[size]
           )}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="text-lg font-semibold">
+          {/* Header - flex-none para que no se encoja */}
+          <div className="flex-none flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-lg font-semibold truncate">
               {title}
             </h2>
             {showCloseButton && (
@@ -104,7 +103,7 @@ export function Modal({
             )}
           </div>
 
-          {/* Content */}
+          {/* Content - flex-1 y overflow-y-auto para el scroll interno */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {children}
           </div>
@@ -124,7 +123,7 @@ export function ModalFooter({
   return (
     <div
       className={cn(
-        'flex flex-row items-center justify-end gap-3 pt-4 mt-4 border-t border-border',
+        'flex flex-row items-center justify-end gap-3 pt-4 mt-4 border-t border-border bg-card',
         className
       )}
     >

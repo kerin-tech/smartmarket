@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { Plus, RotateCcw, X, Store as StoreIcon, Calendar, Camera } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Plus, RotateCcw, X, Store as StoreIcon, Calendar, ClipboardList, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
@@ -21,6 +21,7 @@ import { storeService } from '@/services/store.service';
 import { formatCurrency } from '@/utils/formatters';
 import type { CreatePurchaseRequest } from '@/types/purchase.types';
 import type { Store } from '@/types/store.types';
+import { PurchaseActionSplit } from './PurchaseActionSplit';
 
 const MONTHS = [
   { value: '01', label: 'Enero' }, { value: '02', label: 'Febrero' },
@@ -57,6 +58,7 @@ export function PurchaseList() {
   const [stores, setStores] = useState<Store[]>([]);
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
+  // 1. Efecto principal: Carga de compras con dependencias atómicas
   useEffect(() => {
     let isMounted = true;
     const loadPurchases = async () => {
@@ -67,27 +69,38 @@ export function PurchaseList() {
           limit: pagination.limit,
           ...filters,
         });
+        
         if (isMounted) {
           setPurchases(response.purchases);
           setPagination(response.pagination);
+          // Cambiamos el estado de carga SOLO cuando el contenido ya está en el store
+          setLoading(false);
         }
       } catch (err: any) {
-        if (isMounted) showError(err.message || 'Error al cargar las compras');
-      } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          showError(err.message || 'Error al cargar las compras');
+          setLoading(false);
+        }
       }
     };
     loadPurchases();
     return () => { isMounted = false; };
-  }, [filters, pagination.page]);
+    // Usamos propiedades específicas para evitar recreaciones por referencia de objeto
+  }, [filters.search, filters.storeId, filters.month, pagination.page]);
 
+  // 2. Carga de tiendas: Solo una vez al montar el componente
   useEffect(() => {
-    storeService.getAll({ limit: 100 }).then(res => setStores(res.stores)).catch(console.error);
+    storeService.getAll({ limit: 100 })
+      .then(res => setStores(res.stores))
+      .catch(console.error);
   }, []);
 
+  // 3. Debounce para la búsqueda
   useEffect(() => {
     const timer = setTimeout(() => {
-      setFilters({ search: searchQuery || undefined });
+      if (searchQuery !== (filters.search || '')) {
+        setFilters({ search: searchQuery || undefined });
+      }
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -151,7 +164,7 @@ export function PurchaseList() {
     }
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 animate-in fade-in duration-500">
         {purchasesByMonth.map((group) => (
           <section key={group.monthKey}>
             <h2 className="flex items-center justify-between text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4 px-1">
@@ -172,32 +185,28 @@ export function PurchaseList() {
   return (
     <div className="space-y-8 pb-32">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Mis Compras</h1>
-          {!isLoading && pagination.total > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Inversión total: <span className="font-bold text-primary-600">{formatCurrency(totalAmount)}</span>
-            </p>
-          )}
+      <div className="space-y-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Mis Compras</h1>
+            {!isLoading && pagination.total > 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Inversión total: <span className="font-bold text-primary-600">{formatCurrency(totalAmount)}</span>
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block">
+              <PurchaseActionSplit onManualClick={openCreateModal} />
+            </div>
+          </div>
         </div>
-        <Link href="/purchases/scan">
-    <Button variant="secondary" leftIcon={<Camera className="h-5 w-5" />}>
-      Escanear Ticket
-    </Button>
-  </Link>
-        <Button onClick={openCreateModal} leftIcon={<Plus className="h-5 w-5" />} className="hidden sm:flex shadow-lg shadow-primary/20">
-          Nueva compra
-        </Button>
-        
       </div>
 
-      {/* Barra de Búsqueda y Filtros Unificada (Sin BG) */}
-      <div className="space-y-8" >
+      {/* Barra de Búsqueda y Filtros */}
+      <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-          
-          {/* Búsqueda (100% en escritorio) */}
-          <div className="flex-1 ">
+          <div className="flex-1">
             <SearchInput
               placeholder="Buscar por producto o tienda..."
               value={searchQuery}
@@ -207,9 +216,6 @@ export function PurchaseList() {
             />
           </div>
 
-        
-
-          {/* Grid de Selectores */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className='flex-1'>
               <FilterSelect
@@ -219,30 +225,25 @@ export function PurchaseList() {
                 className="sm:border-0 sm:shadow-none"
               />
             </div>
-
             <div className="hidden sm:block w-px h-8 bg-border mx-2" />
-
             <div className='flex gap-2'>
-           <div className="flex-1 w-100 sm:flex-1">
-              <FilterSelect
-                options={[{ value: 'all', label: 'Cualquier mes' }, ...MONTHS]}
-                value={filters.month?.split('-')[1] || 'all'}
-                onChange={handleMonthChange}
-                className="sm:border-0 sm:shadow-none"
-              />
+              <div className="flex-1">
+                <FilterSelect
+                  options={[{ value: 'all', label: 'Cualquier mes' }, ...MONTHS]}
+                  value={filters.month?.split('-')[1] || 'all'}
+                  onChange={handleMonthChange}
+                  className="sm:border-0 sm:shadow-none"
+                />
+              </div>
+              <div className="flex-1">
+                <FilterSelect
+                  options={generateYearOptions()}
+                  value={filters.month?.split('-')[0] || new Date().getFullYear().toString()}
+                  onChange={handleYearChange}
+                  className="sm:border-0 sm:shadow-none"
+                />
+              </div>
             </div>
-
-            <div className=" flex-1">
-              <FilterSelect
-                options={generateYearOptions()}
-                value={filters.month?.split('-')[0] || new Date().getFullYear().toString()}
-                onChange={handleYearChange}
-                className="sm:border-0 sm:shadow-none"
-              />
-            </div>
-            </div>
-
-           
           </div>
         </div>
 
@@ -250,27 +251,23 @@ export function PurchaseList() {
         {(filters.search || filters.storeId || filters.month) && (
           <div className="flex flex-wrap items-center gap-2 px-1 animate-in fade-in duration-300">
             <span className="text-sm font-bold text-muted-foreground tracking-wider mr-1">Filtros:</span>
-            
             {filters.search && (
-              <BadgeFilter label={`"${filters.search}"`} onRemove={() => {setSearchQuery(''); setFilters({ search: undefined });}} />
+              <BadgeFilter label={`"${filters.search}"`} onRemove={() => { setSearchQuery(''); setFilters({ search: undefined }); }} />
             )}
-
             {filters.storeId && (
-              <BadgeFilter 
-                label={getStoreName(filters.storeId) || 'Tienda'} 
+              <BadgeFilter
+                label={getStoreName(filters.storeId) || 'Tienda'}
                 icon={<StoreIcon className="h-3 w-3" />}
-                onRemove={() => setFilters({ storeId: undefined })} 
+                onRemove={() => setFilters({ storeId: undefined })}
               />
             )}
-
             {filters.month && (
-              <BadgeFilter 
-                label={`${getMonthName(filters.month.split('-')[1])} ${filters.month.split('-')[0]}`} 
+              <BadgeFilter
+                label={`${getMonthName(filters.month.split('-')[1])} ${filters.month.split('-')[0]}`}
                 icon={<Calendar className="h-3 w-3" />}
-                onRemove={() => setFilters({ month: undefined })} 
+                onRemove={() => setFilters({ month: undefined })}
               />
             )}
-
             <button onClick={resetFilters} className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors ml-2 flex items-center gap-1">
               <RotateCcw className="h-4 w-4" /> Resetear
             </button>
@@ -278,7 +275,6 @@ export function PurchaseList() {
         )}
       </div>
 
-      {/* Contenido principal */}
       <div className="relative min-h-[400px]">
         {renderContent()}
       </div>
@@ -296,18 +292,32 @@ export function PurchaseList() {
         </div>
       )}
 
-    {/* BOTÓN FLOTANTE (FAB) CON ETIQUETA - Mobile (bottom-28) */}
-      <div className="fixed bottom-28 right-6 z-40 flex items-center gap-3 sm:hidden">
-        <span className="bg-card border border-border text-foreground text-sm font-medium px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 tracking-tight">
-          Nueva compra
-        </span>
+      {/* FAB - Mobile Only */}
+      <div className="fixed bottom-28 right-6 z-40 flex flex-col items-end gap-4 sm:hidden">
+        <Link href="/purchases/lists">
+          <button className="flex h-12 w-12 mr-2 items-center justify-center rounded-full bg-card border border-border text-foreground shadow-lg transition-all active:scale-90">
+            <ClipboardList className="h-5 w-5" />
+          </button>
+        </Link>
         <button
           onClick={openCreateModal}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-90"
-          style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))' }}
+          className="flex h-12 w-12 mr-2 items-center justify-center rounded-full bg-card border border-border text-muted-foreground shadow-xl transition-all active:scale-90"
         >
-          <Plus className="h-8 w-8" />
+          <Plus className="h-6 w-6" />
         </button>
+        <div className="flex items-center gap-3">
+          <span className="bg-card border border-border text-foreground text-sm font-medium px-3 py-1.5 rounded-full shadow-lg animate-in fade-in slide-in-from-right-4 duration-500 tracking-tight">
+            Nueva compra
+          </span>
+          <Link href="/purchases/scan">
+            <button
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xl transition-all active:scale-90"
+              style={{ filter: 'drop-shadow(0 10px 20px rgba(var(--primary-rgb), 0.4))' }}
+            >
+              <Sparkles className="h-8 w-8" />
+            </button>
+          </Link>
+        </div>
       </div>
 
       <PurchaseForm isOpen={isModalOpen} onClose={closeModal} onSubmit={handleSubmit} purchase={editingPurchase} isLoading={isSubmitting} />
@@ -323,10 +333,10 @@ export function PurchaseList() {
 
 function BadgeFilter({ label, onRemove, icon }: { label: string, onRemove: () => void, icon?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1 bg-primary-700 border border-primary/10 rounded-2xl text-primary text-sm font-semibold">
+    <div className="flex items-center gap-2 px-3 py-1 bg-primary-50 border border-primary/20 rounded-2xl text-primary-700 text-sm font-semibold">
       {icon}
       <span className="max-w-[120px] truncate">{label}</span>
-      <button onClick={onRemove} className="hover:bg-primary-600 rounded-md p-0.5 transition-colors">
+      <button onClick={onRemove} className="hover:bg-primary-100 rounded-md p-0.5 transition-colors">
         <X className="h-4 w-4" />
       </button>
     </div>
