@@ -95,7 +95,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading, onQuickCreateLis
                             variant="primary"
                             leftIcon={<ShoppingBag className="h-3.5 w-3.5" />}
                           >
-                            Crear lista de compra
+                            Crear lista
                           </Button>
                         </div>
                         {/* CUERPO: Lista de Productos */}
