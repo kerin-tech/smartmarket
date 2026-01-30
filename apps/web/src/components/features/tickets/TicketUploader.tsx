@@ -21,22 +21,46 @@ const LOADING_MESSAGES = [
 ];
 
 /**
- * Comprime una imagen manteniendo la calidad necesaria para OCR
+ * Detecta si es dispositivo móvil
  */
-const compressImage = (file: File, maxWidth = 1920, quality = 0.85): Promise<string> => {
+const isMobileDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+};
+
+/**
+ * Comprime una imagen - más agresivo en móvil para fotos de cámara
+ */
+const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
+    // Configuración según dispositivo
+    const isMobile = isMobileDevice();
+    const maxWidth = isMobile ? 1280 : 1920;  // Más pequeño en móvil
+    const quality = isMobile ? 0.65 : 0.85;   // Más compresión en móvil
+    const maxFileSize = isMobile ? 800 : 1500; // KB máximo aproximado
+    
     img.onload = () => {
       try {
         let { width, height } = img;
         
-        // Solo redimensionar si es más grande que maxWidth
+        console.log(`📱 Dispositivo: ${isMobile ? 'Móvil' : 'Desktop'}`);
+        console.log(`📷 Imagen original: ${width}x${height}`);
+        
+        // Redimensionar si es necesario
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
+        }
+        
+        // Para tickets muy largos (panorámicos), limitar altura también
+        const maxHeight = isMobile ? 2500 : 3500;
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
         }
         
         canvas.width = width;
@@ -47,18 +71,27 @@ const compressImage = (file: File, maxWidth = 1920, quality = 0.85): Promise<str
           return;
         }
         
-        // Dibujar imagen con mejor calidad
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Convertir a JPEG con la calidad especificada
-        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        // Intentar comprimir, reducir calidad si sigue muy grande
+        let currentQuality = quality;
+        let compressedBase64 = canvas.toDataURL('image/jpeg', currentQuality);
+        let attempts = 0;
         
-        // Log para debug
+        // Reducir calidad iterativamente si es muy grande (máx 3 intentos)
+        while (compressedBase64.length > maxFileSize * 1024 * 1.33 && attempts < 3) {
+          currentQuality -= 0.1;
+          compressedBase64 = canvas.toDataURL('image/jpeg', Math.max(currentQuality, 0.4));
+          attempts++;
+          console.log(`🔄 Recomprimiendo... calidad: ${currentQuality.toFixed(2)}`);
+        }
+        
         const originalSize = file.size / 1024;
-        const compressedSize = (compressedBase64.length * 0.75) / 1024; // Aproximado
-        console.log(`📷 Imagen comprimida: ${originalSize.toFixed(0)}KB → ~${compressedSize.toFixed(0)}KB`);
+        const compressedSize = (compressedBase64.length * 0.75) / 1024;
+        console.log(`✅ Compresión: ${originalSize.toFixed(0)}KB → ${compressedSize.toFixed(0)}KB (${((1 - compressedSize/originalSize) * 100).toFixed(0)}% reducción)`);
+        console.log(`📐 Dimensiones finales: ${width}x${height}, calidad: ${currentQuality.toFixed(2)}`);
         
         resolve(compressedBase64);
       } catch (error) {
@@ -71,9 +104,6 @@ const compressImage = (file: File, maxWidth = 1920, quality = 0.85): Promise<str
   });
 };
 
-/**
- * Formatea el tiempo en formato legible
- */
 const formatTime = (ms: number): string => {
   const seconds = Math.floor(ms / 1000);
   if (seconds < 60) return `${seconds}s`;
@@ -86,10 +116,10 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionStatus, setCompressionStatus] = useState('');
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0].message);
   const [elapsedTime, setElapsedTime] = useState(0);
 
-  // Timer para mensajes de carga
   useEffect(() => {
     if (!isLoading) {
       setElapsedTime(0);
@@ -104,7 +134,6 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  // Actualizar mensaje según tiempo transcurrido
   useEffect(() => {
     if (!isLoading) return;
     
@@ -120,21 +149,34 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
   const processFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) return;
 
+    const isMobile = isMobileDevice();
+    
     try {
       setIsCompressing(true);
+      setCompressionStatus(isMobile ? 'Optimizando foto de cámara...' : 'Optimizando imagen...');
       
-      // Comprimir imagen antes de enviar
-      const compressedBase64 = await compressImage(file, 1920, 0.85);
+      const compressedBase64 = await compressImage(file);
       const previewUrl = URL.createObjectURL(file);
       
+      // Log final para debug
+      console.log(`🚀 Enviando imagen: ~${(compressedBase64.length / 1024).toFixed(0)}KB`);
+      
       setIsCompressing(false);
+      setCompressionStatus('');
       onImageSelect(compressedBase64, previewUrl);
       
     } catch (error) {
       console.error('Error al procesar imagen:', error);
       setIsCompressing(false);
+      setCompressionStatus('');
       
-      // Fallback: enviar sin comprimir
+      // Fallback más agresivo para móvil
+      if (isMobile) {
+        alert('Error al procesar la imagen. Intenta tomar la foto con menor resolución.');
+        return;
+      }
+      
+      // Fallback desktop: enviar sin comprimir
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
@@ -174,7 +216,7 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
       <div className="relative rounded-2xl overflow-hidden border border-border bg-card p-12">
         <div className="flex flex-col items-center justify-center">
           <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-          <p className="text-foreground font-medium">Optimizando imagen...</p>
+          <p className="text-foreground font-medium">{compressionStatus}</p>
           <p className="text-muted-foreground text-sm mt-1">Esto mejora la velocidad de análisis</p>
         </div>
       </div>
