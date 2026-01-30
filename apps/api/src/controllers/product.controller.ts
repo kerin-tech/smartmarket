@@ -11,6 +11,49 @@ import {
 } from "../schemas/product.schema";
 
 /**
+ * GET /products/all
+ * Todos los productos sin paginación (para selects/modales)
+ */
+export const getAllProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user!.id;
+    const search = req.query.search as string | undefined;
+
+    const where: any = { userId };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { brand: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        brand: true,
+      },
+    });
+
+    return successResponse(
+      res,
+      { products, total: products.length },
+      "Productos obtenidos"
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /products
  * Listar productos del usuario con paginación y filtros
  */

@@ -4,6 +4,7 @@ import { Router } from "express";
 import {
   getProducts,
   getProductById,
+  getAllProducts,  // <- Agregar esta importación
   createProduct,
   updateProduct,
   deleteProduct,
@@ -23,8 +24,19 @@ const router = Router();
 router.use(checkJwt);
 
 /**
+ * GET /api/v1/{env}/products/all
+ * @summary Obtener todos los productos sin paginación (para selects/modales)
+ * @tags Products
+ * @security BearerAuth
+ * @param {string} search.query - Buscar por nombre o marca (opcional)
+ * @return {ProductAllResponse} 200 - Lista completa de productos
+ * @return {ErrorResponse} 401 - No autorizado
+ */
+router.get("/all", getAllProducts);  // <- DEBE IR ANTES DE /:id
+
+/**
  * GET /api/v1/{env}/products
- * @summary Listar productos del usuario
+ * @summary Listar productos del usuario con paginación
  * @tags Products
  * @security BearerAuth
  * @param {integer} page.query - Número de página - default: 1
@@ -58,12 +70,6 @@ router.get("/:id", getProductById);
  * @return {ProductResponse} 201 - Producto creado
  * @return {ErrorResponse} 400 - Error de validación
  * @return {ErrorResponse} 401 - No autorizado
- * @example request - Ejemplo
- * {
- *   "name": "Leche Entera",
- *   "category": "Lácteos",
- *   "brand": "Alpina"
- * }
  */
 router.post("/", validateSchema(createProductSchema), createProduct);
 
@@ -99,59 +105,10 @@ router.delete("/:id", deleteProduct);
 export default router;
 
 /**
- * Tipos para Swagger
- * @typedef {object} CreateProductRequest
- * @property {string} name.required - Nombre del producto (min 2 caracteres)
- * @property {string} category.required - Categoría
- * @property {string} brand - Marca (opcional)
- */
-
-/**
- * @typedef {object} UpdateProductRequest
- * @property {string} name - Nombre del producto
- * @property {string} category - Categoría
- * @property {string} brand - Marca
- */
-
-/**
- * @typedef {object} Product
- * @property {string} id - ID del producto
- * @property {string} name - Nombre
- * @property {string} category - Categoría
- * @property {string} brand - Marca
- * @property {string} createdAt - Fecha de creación
- */
-
-/**
- * @typedef {object} Pagination
- * @property {integer} page - Página actual
- * @property {integer} limit - Items por página
- * @property {integer} total - Total de items
- * @property {integer} totalPages - Total de páginas
- * @property {boolean} hasNext - Hay página siguiente
- * @property {boolean} hasPrev - Hay página anterior
- */
-
-/**
- * @typedef {object} ProductListResponse
+ * @typedef {object} ProductAllResponse
  * @property {boolean} success - true
  * @property {object} data
- * @property {array<Product>} data.products - Lista de productos
- * @property {Pagination} data.pagination - Información de paginación
+ * @property {array<Product>} data.products - Lista completa de productos
+ * @property {integer} data.total - Total de productos
  * @property {string} message - Mensaje
- */
-
-/**
- * @typedef {object} ProductResponse
- * @property {boolean} success - true
- * @property {object} data
- * @property {Product} data.product - Producto
- * @property {string} message - Mensaje
- */
-
-/**
- * @typedef {object} SuccessResponse
- * @property {boolean} success - true
- * @property {object} data - null
- * @property {string} message - Mensaje de éxito
  */

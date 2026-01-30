@@ -9,7 +9,7 @@ const openai = new OpenAI({
 const MATCH_THRESHOLDS = {
   HIGH: 0.7,
   MEDIUM: 0.4,
-  LOW: 0.2,
+  LOW: 0.15, // Bajamos un poco para capturar más candidatos
 };
 
 interface ProductMatch {
@@ -33,6 +33,10 @@ export const visionService = {
     
     if (!aiData) throw new Error("No se pudo extraer información del ticket");
 
+    // Log para debug: ver cuántos productos tiene el usuario
+    const totalProducts = await prisma.product.count({ where: { userId } });
+    console.log(`📦 Usuario tiene ${totalProducts} productos en BD`);
+
     // Buscar matches de tienda
     const storeMatches = await this.findStoreMatches(userId, aiData.storeName);
 
@@ -40,6 +44,9 @@ export const visionService = {
     const itemsWithMatch = await Promise.all(
       aiData.items.map(async (item: any) => {
         const matches = await this.findProductMatches(userId, item.productName);
+        
+        // Log para debug
+        console.log(`🔍 "${item.productName}" → ${matches.length} matches encontrados`);
         
         const bestMatch = matches.length > 0 ? matches[0] : null;
         const suggestions = matches.slice(1, 4);
@@ -82,6 +89,10 @@ export const visionService = {
 
   async findStoreMatches(userId: string, storeName: string): Promise<StoreMatch[]> {
     try {
+      // Primero verificar cuántas tiendas tiene el usuario
+      const totalStores = await prisma.store.count({ where: { userId } });
+      console.log(`🏪 Usuario tiene ${totalStores} tiendas en BD`);
+
       const results = await prisma.$queryRaw<Array<{
         id: string;
         name: string;
@@ -92,13 +103,24 @@ export const visionService = {
           id, 
           name,
           location,
-          similarity(name, ${storeName}) as similarity
+          GREATEST(
+            similarity(name, ${storeName}),
+            similarity(LOWER(name), LOWER(${storeName})),
+            word_similarity(${storeName}, name)
+          ) as similarity
         FROM stores
         WHERE user_id = ${userId}::uuid
-          AND similarity(name, ${storeName}) > ${MATCH_THRESHOLDS.LOW}
+          AND (
+            similarity(name, ${storeName}) > ${MATCH_THRESHOLDS.LOW}
+            OR similarity(LOWER(name), LOWER(${storeName})) > ${MATCH_THRESHOLDS.LOW}
+            OR word_similarity(${storeName}, name) > ${MATCH_THRESHOLDS.LOW}
+            OR LOWER(name) LIKE LOWER(${'%' + storeName + '%'})
+          )
         ORDER BY similarity DESC
         LIMIT 5
       `;
+
+      console.log(`🏪 Matches para "${storeName}":`, results.length);
 
       return results.map(r => ({
         store_id: r.id,
@@ -114,6 +136,23 @@ export const visionService = {
 
   async findProductMatches(userId: string, productName: string): Promise<ProductMatch[]> {
     try {
+      // Limpiar el nombre del producto para mejor matching
+      const cleanName = productName
+        .toUpperCase()
+        .replace(/[^\w\sáéíóúñ]/gi, ' ')  // Quitar caracteres especiales
+        .replace(/\s+/g, ' ')              // Normalizar espacios
+        .trim();
+
+      // Extraer palabras clave (ignorar palabras muy cortas)
+      const keywords = cleanName
+        .split(' ')
+        .filter(w => w.length > 2)
+        .slice(0, 3)  // Máximo 3 palabras clave
+        .join(' ');
+
+      console.log(`🔎 Buscando: "${productName}" → keywords: "${keywords}"`);
+
+      // Query mejorada con múltiples estrategias de matching
       const results = await prisma.$queryRaw<Array<{
         id: string;
         name: string;
@@ -124,10 +163,29 @@ export const visionService = {
           id, 
           name,
           category,
-          similarity(name, ${productName}) as similarity
+          GREATEST(
+            similarity(name, ${productName}),
+            similarity(LOWER(name), LOWER(${productName})),
+            similarity(name, ${cleanName}),
+            word_similarity(${productName}, name),
+            word_similarity(${keywords}, name)
+          ) as similarity
         FROM products
         WHERE user_id = ${userId}::uuid
-          AND similarity(name, ${productName}) > ${MATCH_THRESHOLDS.LOW}
+          AND (
+            -- Similarity trigram estándar
+            similarity(name, ${productName}) > ${MATCH_THRESHOLDS.LOW}
+            -- Similarity case-insensitive
+            OR similarity(LOWER(name), LOWER(${productName})) > ${MATCH_THRESHOLDS.LOW}
+            -- Similarity con nombre limpio
+            OR similarity(name, ${cleanName}) > ${MATCH_THRESHOLDS.LOW}
+            -- Word similarity (más flexible con palabras)
+            OR word_similarity(${productName}, name) > ${MATCH_THRESHOLDS.LOW}
+            -- Word similarity con keywords
+            OR word_similarity(${keywords}, name) > ${MATCH_THRESHOLDS.LOW}
+            -- LIKE para coincidencias parciales
+            OR LOWER(name) LIKE LOWER(${'%' + keywords.split(' ')[0] + '%'})
+          )
         ORDER BY similarity DESC
         LIMIT 5
       `;
@@ -233,7 +291,7 @@ RECUERDA: Los números al inicio de línea NO son cantidades. Busca "UN", "KG", 
     try {
       const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
       
-      console.log('Llamando a OpenAI Vision API...');
+      console.log('🤖 Llamando a OpenAI Vision API...');
       const startTime = Date.now();
       
       const response = await openai.chat.completions.create({
@@ -258,7 +316,7 @@ RECUERDA: Los números al inicio de línea NO son cantidades. Busca "UN", "KG", 
         max_tokens: 4096,
       });
 
-      console.log(`OpenAI respondió en ${Date.now() - startTime}ms`);
+      console.log(`✅ OpenAI respondió en ${Date.now() - startTime}ms`);
 
       const content = response.choices[0].message.content;
       return content ? JSON.parse(content) : null;
