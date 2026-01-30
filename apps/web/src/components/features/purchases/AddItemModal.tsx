@@ -42,21 +42,21 @@ export function AddItemModal({ isOpen, onClose, onAddItem, editingItem }: AddIte
   };
 
   useEffect(() => {
-    if (!isOpen) return;
-    const loadProducts = async () => {
-      setLoading(true);
-      try {
-        const response = await productService.getAll({ limit: 100 });
-        setProducts(response.products);
-        setFilteredProducts(response.products);
-      } catch (error) {
-        console.error('Error loading products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProducts();
-  }, [isOpen]);
+  if (!isOpen) return;
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await productService.getAllWithoutPagination();
+      setProducts(response.products);
+      setFilteredProducts(response.products);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadProducts();
+}, [isOpen]);
 
   useEffect(() => {
     if (isOpen && editingItem && products.length > 0) {
