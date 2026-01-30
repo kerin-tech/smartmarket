@@ -282,16 +282,16 @@ export function TicketUploader({ onImageSelect, isLoading, preview }: TicketUplo
       </div>
 
       {/* Botones de acción móvil explícitos */}
-      <div className="grid grid-cols-2 gap-3 sm:hidden">
-       
-        {/* Botón Galería */}
+      <div className="flex gap-3 sm:hidden">
+        {/* Botón Cámara */}
         <button
-          onClick={handleGalleryClick}
-          className="flex items-center justify-center gap-2 py-4 px-4 bg-secondary text-secondary-foreground rounded-xl font-medium transition-transform active:scale-95 border border-border"
+          onClick={handleCameraClick}
+          className="flex flex-1 items-center justify-center gap-2 py-4 px-4 bg-primary text-primary-foreground rounded-xl font-medium transition-transform active:scale-95"
         >
-          <FolderOpen className="h-5 w-5" />
-          <span>Galería</span>
+          <Camera className="h-5 w-5" />
+          <span>Cámara</span>
         </button>
+
       </div>
 
       {/* Tips */}
