@@ -305,11 +305,7 @@ export function PurchaseList() {
 
   {/* FAB - Mobile Only */ }
       <div className="fixed bottom-28 right-6 z-40 flex flex-col items-end gap-4 sm:hidden">
-        <Link href="/purchases/lists">
-          <button className="flex h-12 w-12 mr-2 items-center justify-center rounded-full bg-card border border-border text-foreground shadow-lg transition-all active:scale-90">
-            <ClipboardList className="h-5 w-5" />
-          </button>
-        </Link>
+       
         <button
           onClick={openCreateModal}
           className="flex h-12 w-12 mr-2 items-center justify-center rounded-full bg-card border border-border text-muted-foreground shadow-xl transition-all active:scale-90"

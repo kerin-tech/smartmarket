@@ -1,19 +1,20 @@
-// src/components/features/history/StoreBreakdown.tsx
-
 'use client';
 
 import { useState } from 'react';
-import { MapPin, ChevronDown, ChevronUp, Package, Tag } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Package, Tag, ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type { StoreBreakdown as StoreBreakdownType } from '@/types/analytics.types';
+import { Button } from '@/components/ui';
 
 interface StoreBreakdownProps {
   stores: StoreBreakdownType[];
   totalSpent: number;
   isLoading?: boolean;
+  // Ajustado para recibir el ID de la compra como string
+  onQuickCreateList: (purchaseId: string) => void;
 }
 
-export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdownProps) {
+export function StoreBreakdown({ stores, totalSpent, isLoading, onQuickCreateList }: StoreBreakdownProps) {
   const [expandedStore, setExpandedStore] = useState<string | null>(null);
 
   const toggleStore = (storeId: string) => {
@@ -28,19 +29,17 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
 
       <div className="space-y-4">
         {stores.map((store) => {
-          const percentage = totalSpent > 0 
-            ? Math.min(Math.round((store.totalSpent / totalSpent) * 100), 100) 
+          const percentage = totalSpent > 0
+            ? Math.min(Math.round((store.totalSpent / totalSpent) * 100), 100)
             : 0;
           const isExpanded = expandedStore === store.id;
 
           return (
-            <div key={store.id} className={`rounded-xl border transition-all duration-200 overflow-hidden w-full ${
-              isExpanded ? 'border-primary-400 bg-primary-50/5 ring-1 ring-primary-100' : 'border-border'
-            }`}>
-              
-              {/* Header Tienda: Aplicamos Grid para evitar desborde */}
-              <button 
-                onClick={() => toggleStore(store.id)} 
+            <div key={store.id} className={`rounded-xl border transition-all duration-200 overflow-hidden w-full ${isExpanded ? 'border-primary-400 bg-primary-50/5 ring-1 ring-primary-100' : 'border-border'
+              }`}>
+
+              <button
+                onClick={() => toggleStore(store.id)}
                 className="w-full grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4 p-4 sm:p-5 text-left hover:bg-muted/30 transition-colors"
               >
                 <div className={`shrink-0 flex items-center justify-center rounded-xl transition-colors
@@ -50,7 +49,7 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
                   <MapPin className="h-6 w-6 sm:h-4 sm:w-4" />
                 </div>
 
-                <div className="min-w-0"> {/* min-w-0 permite que el truncate funcione en Grid */}
+                <div className="min-w-0">
                   <h4 className="text-md sm:text-lg font-medium text-foreground truncate tracking-tight">
                     {store.name}
                   </h4>
@@ -72,26 +71,36 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
                 </div>
               </button>
 
-              {/* Detalle de productos */}
               {isExpanded && (
                 <div className="bg-muted/20 border-t border-border/50 w-full overflow-hidden">
                   <div className="max-h-[450px] overflow-y-auto p-4 space-y-5 custom-scrollbar">
                     {store.purchases.map((purchase) => (
-                      <div key={purchase.id} className="bg-card rounded-lg border border-border/60 overflow-hidden w-full">
+                      <div key={purchase.id} className="bg-card rounded-lg border border-border/60 overflow-hidden w-full shadow-sm">
+
+                        {/* HEADER: Solo Fecha y Botón a la izquierda */}
                         <div className="bg-muted/40 px-4 py-2.5 border-b border-border/50 flex justify-between items-center">
-                          <span className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-wider">
-                            {new Date(purchase.date).toLocaleDateString('es-CO', { 
-                              day: '2-digit', month: 'short', year: 'numeric' 
-                            })}
-                          </span>
-                          <span className="text-sm font-bold text-primary-700">
-                            {formatCurrency(purchase.total)}
-                          </span>
+                          {/* Fecha a la izquierda */}
+                          <div className="flex flex-col shrink-0">
+                            <span className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-wider">
+                              {new Date(purchase.date).toLocaleDateString('es-CO', {
+                                day: '2-digit', month: 'short', year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Botón a la derecha */}
+                          <Button
+                            onClick={() => onQuickCreateList(purchase.id)}
+                            size="sm"
+                            variant="primary"
+                            leftIcon={<ShoppingBag className="h-3.5 w-3.5" />}
+                          >
+                            Crear lista de compra
+                          </Button>
                         </div>
-                        
+                        {/* CUERPO: Lista de Productos */}
                         <div className="divide-y divide-border/30">
                           {purchase.items.map((item: any) => (
-                            /* Grid para anclar nombre a la izquierda y precio a la derecha */
                             <div key={item.id} className="grid grid-cols-[1fr_auto] items-center p-4 gap-3">
                               <div className="flex items-center gap-3 min-w-0">
                                 <Package className="h-5 w-5 text-muted-foreground/30 shrink-0" />
@@ -99,23 +108,34 @@ export function StoreBreakdown({ stores, totalSpent, isLoading }: StoreBreakdown
                                   <span className="font-bold text-primary-600">{item.quantity}x</span> {item.productName}
                                 </p>
                               </div>
-                              
+
                               <div className="flex flex-row items-center gap-2 sm:gap-3 shrink-0 ml-auto">
                                 {item.discountPercentage > 0 && (
                                   <span className="flex items-center gap-1 text-[10px] sm:text-xs font-black text-success-800 bg-success-100 px-2 py-0.5 rounded uppercase">
-                                    <Tag className="h-3 w-3" />
                                     {item.discountPercentage}%
                                   </span>
                                 )}
-                                <span className={`text-sm sm:text-base font-bold whitespace-nowrap ${
-                                  item.discountPercentage > 0 ? 'text-success-600' : 'text-foreground'
-                                }`}>
+                                <span className={`text-sm sm:text-base font-bold whitespace-nowrap ${item.discountPercentage > 0 ? 'text-success-600' : 'text-foreground'
+                                  }`}>
                                   {formatCurrency(item.total)}
                                 </span>
                               </div>
                             </div>
                           ))}
                         </div>
+
+                        {/* FOOTER: Total de la compra al final a la derecha */}
+                        <div className="bg-muted/20 px-4 py-3 border-t border-border/40 flex justify-end items-center">
+                          <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">
+                              Total Compra
+                            </span>
+                            <span className="text-lg font-black text-primary-700">
+                              {formatCurrency(purchase.total)}
+                            </span>
+                          </div>
+                        </div>
+
                       </div>
                     ))}
                   </div>
