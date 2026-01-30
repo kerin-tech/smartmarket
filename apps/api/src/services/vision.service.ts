@@ -223,52 +223,39 @@ export const visionService = {
       'Huevos', 'Licores', 'Cuidado Personal', 'Mascotas', 'Bebés', 'Congelados'
     ];
 
-    const systemPrompt = `Eres un experto en extracción de datos de tickets/facturas de supermercados colombianos. Analiza con MÁXIMA PRECISIÓN.
+   const systemPrompt = `Eres un experto en extracción de datos de tickets/facturas de supermercados colombianos. Analiza con MÁXIMA PRECISIÓN.
 
 ## REGLAS CRÍTICAS:
 
-### 1. NUNCA INVENTAR DATOS
-- Si no puedes leer claramente un producto, OMÍTELO
-- Si no puedes leer un precio, OMITE ese producto
-- JAMÁS inventes nombres, precios o cantidades
+### 1. CATEGORIZACIÓN OBLIGATORIA (REGLA DE ORO)
+- **SOLO** puedes usar estas categorías: ${validCategories.join(", ")}
+- **PROHIBIDO** crear nuevas categorías, usar sinónimos o dejar el campo vacío.
+- Si un producto no encaja perfectamente, asígnalo a la categoría más cercana de la lista anterior. 
+- **Bajo ninguna circunstancia** inventes una categoría que no esté en la lista proporcionada.
 
-### 2. NÚMEROS DE LÍNEA vs CANTIDAD (MUY IMPORTANTE)
-- Los números al INICIO de cada línea (1, 2, 3, 4...) son NÚMEROS DE LÍNEA, NO cantidades
-- La CANTIDAD real aparece como:
-  - "2 UN" o "2 UND" → cantidad = 2
-  - "1.5 KG" o "0.500 KGM" → cantidad = 1.5 o 0.5
-  - "x2" o "X 2" → cantidad = 2
-  - "CANT @ PRECIO" (ej: "2 @ 5000") → cantidad = 2, precio = 5000
-- Si NO hay indicación de cantidad, asume cantidad = 1
+### 2. NUNCA INVENTAR DATOS
+- Si no puedes leer claramente un producto o su precio, OMÍTELO.
+- JAMÁS inventes nombres, precios o cantidades.
 
-### 3. FORMATOS POR TIENDA
+### 3. NÚMEROS DE LÍNEA vs CANTIDAD
+- Los números correlativos al INICIO (1, 2, 3...) son NÚMEROS DE LÍNEA, NO cantidades.
+- La CANTIDAD real se identifica por: "UN", "UND", "X", "@", "KGM", "KG".
+- Si NO hay indicación clara de cantidad, asume cantidad = 1.
 
-**DOLLARCITY / GIGANTE DEL HOGAR:**
-- Formato: "1 BOLSA RECICLADA 1112 1 @ 427.00 427.00 B"
-- ⚠️ El "1" al inicio es NÚMERO DE LÍNEA (ignorar)
-- La cantidad está en "1 @ 427.00" → cantidad=1, precio=427
+### 4. LÓGICA POR TIENDA
+- **DOLLARCITY:** El primer número es índice de línea. Cantidad sigue al "@".
+- **D1:** Cantidad precede a "UN".
+- **ARA:** Cuidado con "KGM" (pesados). Ignora códigos internos.
+- **ÉXITO:** Usa el precio final de la línea. Ignora "V.Ahorro" para el cálculo del unitario.
+- **OLÍMPICA:** Ignora las columnas de código de unidad (01, 02...).
 
-**D1:**
-- Formato: "07700304929382 1 UN X $4,490 AVENA TETRA PAK 4,490 A"
-- Cantidad está después del código, antes de "UN"
+### 5. CÁLCULO DE PRECIOS
+- El precio en el JSON debe ser el **PRECIO UNITARIO**.
+- Si el ticket solo da el total de la línea y la cantidad es > 1, calcula: unitPrice = total / quantity.
 
-**ARA (Jerónimo Martins):**
-- Ticket puede estar rotado 90°
-- Cantidad puede ser decimal (KGM = kilogramos)
-
-**ÉXITO:**
-- "V.Ahorro" indica descuento (ignorar para el precio)
-- Usar el precio final de la línea
-
-**OLÍMPICA:**
-- Primera columna (01, 02, 03) es código de unidad, NO cantidad
-- Buscar cantidad en otra columna
-
-### 4. CÁLCULO DE PRECIOS
-- Si ves cantidad y total, calcula: unitPrice = total / quantity
-- El precio en el JSON debe ser el PRECIO UNITARIO
-
-CATEGORÍAS VÁLIDAS: ${validCategories.join(", ")}`;
+### 6. FORMATO DE SALIDA
+- Devuelve exclusivamente un JSON válido.
+- Cada ítem debe tener el nombre, cantidad, unitPrice y la categoría (seleccionada estrictamente de la lista enviada).`;
 
     const userPrompt = `Analiza este ticket y extrae los datos en JSON:
 
