@@ -12,7 +12,10 @@ import { HistorySkeleton } from './HistorySkeleton';
 import { ToastContainer } from '@/components/ui/Toast';
 import { useToast } from '@/hooks/useToast';
 import { analyticsService } from '@/services/analytics.service';
+import { CreateListModal } from '@/components/features/shopping/CreateListModal'; 
+import { shoppingListService } from '@/services/shoppingList.service'; 
 import type { MonthlyData, CategoryBreakdown as CategoryBreakdownType, StoreBreakdown as StoreBreakdownType } from '@/types/analytics.types';
+import type { CreateShoppingListRequest } from '@/types/shoppingList.types';
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -30,8 +33,9 @@ function HistoryContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const monthParam = searchParams.get('month');
-  const { toasts, removeToast, error: showError } = useToast();
+  const { toasts, removeToast, error: showError, success: showSuccess } = useToast();
 
+  // Estados de Datos
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMonth, setIsLoadingMonth] = useState(false);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -39,11 +43,36 @@ function HistoryContent() {
   const [byStore, setByStore] = useState<StoreBreakdownType[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(monthParam || getCurrentMonth());
 
+  // ESTADOS PARA EL MODAL DE LISTA
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | undefined>(undefined);
+  const [isCreatingList, setIsCreatingList] = useState(false);
+
   const lastRequestedMonth = useRef<string | null>(null);
+
+  // HANDLER: Recibe el ID de la compra para que el modal se encargue de la selección
+  const handleQuickCreate = useCallback((purchaseId: string) => {
+    setSelectedPurchaseId(purchaseId);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCreateList = async (data: CreateShoppingListRequest) => {
+    setIsCreatingList(true);
+    try {
+      await shoppingListService.create(data);
+      showSuccess('Lista de compras creada exitosamente');
+      setIsModalOpen(false);
+      setSelectedPurchaseId(undefined);
+    } catch (err: any) {
+      showError(err.message || 'Error al crear la lista');
+    } finally {
+      setIsCreatingList(false);
+    }
+  };
 
   const loadMonthData = useCallback(async (month: string) => {
     lastRequestedMonth.current = month;
-    setIsLoadingMonth(true);
+    setIsLoadingMonth(true); 
 
     try {
       const [categoryRes, storeRes] = await Promise.all([
@@ -101,7 +130,6 @@ function HistoryContent() {
     [monthlyData, selectedMonth]
   );
 
-  // Lógica para detectar si el usuario es nuevo (no tiene ninguna compra en ningún mes)
   const hasAnyHistory = useMemo(() => 
     monthlyData.some(m => m.totalPurchases > 0), 
     [monthlyData]
@@ -160,7 +188,6 @@ function HistoryContent() {
         />
       ) : (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
-          {/* Summary */}
           <div className="w-full">
             <SummaryCard
               total={currentMonthData.totalSpent}
@@ -170,7 +197,6 @@ function HistoryContent() {
             />
           </div>
 
-          {/* Breakdowns */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
             <div className="flex">
               {isLoadingMonth ? (
@@ -183,17 +209,17 @@ function HistoryContent() {
             </div>
 
             <div className="flex">
-              {isLoadingMonth ? (
-                <div className="w-full h-full min-h-[400px] bg-muted/50 animate-pulse rounded-3xl" />
-              ) : (
-                <div className="flex-1 [&>div]:h-full">
-                  <StoreBreakdown stores={byStore} totalSpent={currentMonthData?.totalSpent || 0} />
-                </div>
-              )}
+              <div className="flex-1 [&>div]:h-full">
+                <StoreBreakdown 
+                  onQuickCreateList={handleQuickCreate} 
+                  stores={byStore} 
+                  totalSpent={currentMonthData?.totalSpent || 0} 
+                  isLoading={isLoadingMonth}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Trend Chart */}
           <div className="w-full pt-4">
             <TrendChart
               data={monthlyData}
@@ -204,6 +230,18 @@ function HistoryContent() {
         </div>
       )}
 
+      {/* MODAL: Ahora recibe la prop initialPurchaseId */}
+      <CreateListModal 
+        isOpen={isModalOpen}
+        isLoading={isCreatingList}
+        initialPurchaseId={selectedPurchaseId}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPurchaseId(undefined);
+        }}
+        onSubmit={handleCreateList}
+      />
+  
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );

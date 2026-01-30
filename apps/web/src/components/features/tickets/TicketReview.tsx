@@ -6,6 +6,8 @@ import { Store as StoreIcon, Calendar, Package, Check, AlertCircle, ChevronDown,
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+// Importamos el ConfirmModal
+import { ConfirmModal } from '@/components/ui/ConfirmModal'; 
 import { TicketItemRow } from './TicketItemRow';
 import { ConfirmPurchaseModal } from './ConfirmPurchaseModal';
 import { formatCurrency } from '@/utils/formatters';
@@ -45,7 +47,13 @@ export function TicketReview({
 }: TicketReviewProps) {
   const [showImage, setShowImage] = useState(false);
   const [showStoreSelector, setShowStoreSelector] = useState(false);
+  
+  // Estado para el modal de confirmación de compra
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  // NUEVO: Estado para el modal de confirmación de cancelación
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
   const [dateValue, setDateValue] = useState(
     data.detected_date ? data.detected_date.split('T')[0] : new Date().toISOString().split('T')[0]
   );
@@ -111,6 +119,17 @@ export function TicketReview({
   const handleFinalConfirm = () => {
     setShowConfirmModal(false);
     onConfirm();
+  };
+
+  // NUEVO: Manejador para el botón de cancelar
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
+
+  // NUEVO: Confirmación final de cancelación
+  const handleFinalCancel = () => {
+    setShowCancelModal(false);
+    onCancel();
   };
 
   return (
@@ -256,10 +275,10 @@ export function TicketReview({
               max={new Date().toISOString().split('T')[0]}
               className="w-full min-w-0 appearance-none [&::-webkit-date-and-time-value]:text-left"
               style={{ 
-    WebkitAppearance: 'none',
-    maxWidth: '100%',
-    boxSizing: 'border-box'
-  }}
+                WebkitAppearance: 'none',
+                maxWidth: '100%',
+                boxSizing: 'border-box'
+              }}
             />
 
             
@@ -379,7 +398,7 @@ export function TicketReview({
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             variant="secondary"
-            onClick={onCancel}
+            onClick={handleCancelClick} // Cambiado de onCancel directo a handleCancelClick
             disabled={isLoading}
             className="sm:flex-1"
           >
@@ -395,6 +414,7 @@ export function TicketReview({
         </div>
       </div>
 
+      {/* Modal para confirmar compra */}
       <ConfirmPurchaseModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
@@ -409,6 +429,19 @@ export function TicketReview({
           savings: totalSavings,
           discountedItemsCount: discountedItemsCount,
         }}
+        isLoading={isLoading}
+      />
+
+      {/* NUEVO: Modal para confirmar cancelación */}
+      <ConfirmModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleFinalCancel}
+        title="¿Descartar ticket?"
+        message="Si cancelas ahora, perderás todos los datos detectados y las correcciones realizadas en este ticket. Esta acción no se puede deshacer."
+        confirmText="Sí, descartar"
+        cancelText="Continuar revisando"
+        variant="danger"
         isLoading={isLoading}
       />
     </>
