@@ -473,7 +473,7 @@ export function CreateListModal({
                               </div>
                               <button
                                 onClick={() => removeProduct(product.id)}
-                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
