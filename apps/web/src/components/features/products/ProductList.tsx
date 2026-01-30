@@ -43,20 +43,21 @@ export function ProductList() {
 
   const currentCategories = Object.keys(categoryConfig);
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      setLoading(true);
-      try {
-        const response = await productService.getAll({ limit: 100 });
-        setProducts(response.products);
-      } catch (err: any) {
-        showError(err.message || 'Error al cargar los productos');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProducts();
-  }, [setLoading, setProducts, showError]);
+ useEffect(() => {
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await productService.getAllWithoutPagination();
+      setProducts(response.products);
+    } catch (err: any) {
+      showError(err.message || 'Error al cargar los productos');
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadProducts();
+}, [setLoading, setProducts, showError]);
+
 
   const filterOptions = [
     { value: 'all', label: 'Todas las categorías', count: categoryCounts.all },

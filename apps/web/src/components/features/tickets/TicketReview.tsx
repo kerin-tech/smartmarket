@@ -254,7 +254,15 @@ export function TicketReview({
               value={dateValue}
               onChange={handleDateChange}
               max={new Date().toISOString().split('T')[0]}
+              className="w-full min-w-0 appearance-none [&::-webkit-date-and-time-value]:text-left"
+              style={{ 
+    WebkitAppearance: 'none',
+    maxWidth: '100%',
+    boxSizing: 'border-box'
+  }}
             />
+
+            
             <p className="text-xs text-muted-foreground">
               {formatDateDisplay(dateValue)}
             </p>
