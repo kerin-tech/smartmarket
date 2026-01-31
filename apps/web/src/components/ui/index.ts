@@ -16,3 +16,6 @@ export * from './Skeleton';
 export * from './DropdownMenu';
 export * from './FilterSelect';
 export * from './ChipGroup';
+export * from './Table';
+export * from './Pagination';
+export * from './PageHeader';
